@@ -4,16 +4,24 @@
 #include "colors.h"
 #include "fonctions.h"
 #include "window.h"
+#include "errorCodes.h"
+#include "game.h"
+
 
 game_interface_t interface;
 
-
-int init_game();
-int init();
+// Boutons du menu et leurs onCLick
+const menuOption_t MENU_OPTIONS[] = {
+    {"Play", play},
+    {"Options", options},
+    {"Quit", quit}
+};
 
 int main(int argc, char* argv[]) {
     init();
-    init_game();
+    init_menu();
+    menu();
+    return EXIT_SUCCESS;
 }
 
 int init() {
@@ -29,12 +37,57 @@ int init() {
 
 
 //Initialisation et affichage de l'interface
-int init_game() {
-    newMenuWin(&interface.info, 10, 10, 30, 30);
-    wrefresh(stdscr);
-    getch();
-    ncurses_stop();
+int init_menu() {
+    newMenuWin(&interface.menu, MENU_OPTIONS);
     return EXIT_SUCCESS;
 }
 
+int menu() {
+    int inputChar;
+    MEVENT event;
+    while ((inputChar = getch()) != 'q') {
+        if(inputChar == KEY_MOUSE && getmouse(&event) == OK) { // Si l'action est une action de souris
+            switch(dispatchMenuClick(event, &interface.menu)) {
+                case EXIT_TO_MENU:
+                case EXIT_END_GAME:
+                    menuToFirstScene();
+                    break;
+                case EXIT_QUIT_GAME:
+                    cleanAndQuit();
+                    break;
+            }
+        }
+    }
+    cleanAndQuit();
+    return EXIT_SUCCESS;
+}
 
+/*
+ * Nettoyage de l'interface et sortie du programme
+ * TODO free memory
+ */
+int cleanAndQuit() {
+    delwin(interface.menu.boxwin);
+    delwin(interface.menu.win);
+    for(int i = 0; i < BUTTON_COUNT; i++) {
+        delwin(interface.menu.buttonWindows[i]);
+    }
+    ncurses_stop();
+    exit(0);
+}
+
+int menuToFirstScene() {
+    return 0;//TODO
+}
+
+int play() {
+    return 0;//TODO
+}
+
+int options() {
+    return 0;//TODO
+}
+
+int quit() {
+    return EXIT_QUIT_GAME;
+}

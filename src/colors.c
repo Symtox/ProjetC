@@ -1,6 +1,8 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include "colors.h"
+
+//TODO Comment + changer la palette
 int palette() {
     int ret = EXIT_FAILURE;
 

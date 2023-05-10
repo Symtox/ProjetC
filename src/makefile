@@ -3,8 +3,7 @@
 #
 
 EXEC = game
-OBJETS = fonctions.o colors.o window.o
-NOM_PROJET = ncurses_bases
+OBJETS = colors.o fonctions.o window.o
 
 #
 # SUFFIXES
@@ -65,6 +64,29 @@ clean:
 	@rm -f dependances
 	@echo "Termine."
 
+depend:
+	@echo "Creation des dependances..."
+	@sed -e "/^# DEPENDANCES/,$$ d" makefile > dependances
+	@echo "# DEPENDANCES" >> dependances
+	@for i in $(OBJETS_O); do \
+	$(CC) -MM -MT $$i $(CCFLAGS) `echo $$i | sed "s/\(.*\)\\.o$$/\1.c/"` >> dependances; \
+	done
+	@cat dependances > makefile
+	@rm dependances
+	@echo "Termine."
+
+#
+# CREATION ARCHIVE
+#
+
+ARCHIVE_FILES = *
+
+archive: clean
+	@echo "Creation de l'archive $(NOM_PROJET)$(shell date '+%y%m%d.tar.gz')..."
+	@REP=`basename "$$PWD"`; cd .. && tar zcf $(NOM_PROJET)$(shell date '+%y%m%d.tar.gz') $(addprefix "$$REP"/,$(ARCHIVE_FILES))
+	@echo "Termine."
+
+# DEPENDANCES
+colors.o: colors.c
 fonctions.o: fonctions.c fonctions.h
-window.o: window.c window.h
-colors.o: colors.c colors.h
+window.o: window.c fonctions.h
