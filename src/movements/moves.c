@@ -3,12 +3,14 @@
 #include <ncurses.h>
 #include "../entities/entities.h"
 
+#define getch() wgetch(stdscr)
+
 typedef struct _plateau {
     char table[10][10];
 } plateau;
 
 plateau * createPlateau() {
-    plateau * game = (plateau *)(malloc(sizeof(plateau *)));
+    plateau * game = malloc(sizeof(plateau));
     for(int i=0; i<10;i++){
         if (i == 0){
             for(int j=0; j<10;j++){
@@ -51,21 +53,21 @@ void printPlateau(plateau * game, player_t player){
 
 void play(plateau * game, player_t player){
     while(1){
-        char move;
+        int move;
         move = getch();
-        if(move == 'd'){
+        if(move == KEY_RIGHT){
             if(game->table[player.posX][player.posY+1] != '#');
                 player.posY++;
         }
-        if(move == 'q'){
+        if(move == KEY_LEFT){
             if(game->table[player.posX][player.posY-1] != '#');
                 player.posY--;
         }
-        if(move == 'z'){
+        if(move == KEY_UP){
             if(game->table[player.posX-1][player.posY] != '#');
                 player.posX--;
         }
-        if(move == 's'){
+        if(move == KEY_DOWN){
             if(game->table[player.posX+1][player.posY] != '#');
                 player.posX++;
         }
