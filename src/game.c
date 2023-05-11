@@ -1,10 +1,10 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <locale.h>
-#include "colors.h"
-#include "fonctions.h"
-#include "window.h"
-#include "errorCodes.h"
+#include "utils/colors.h"
+#include "utils/fonctions.h"
+#include "scenes/window.h"
+#include "utils/errorCodes.h"
 #include "game.h"
 
 
@@ -93,12 +93,13 @@ int destroyCurrentScene() {
     switch(interface.currentScene) {
         case MENU:
             return destroyMenuScene(interface.menu);
-            break;
         case GAME:
             //destroyGameScene();
             break;
         case OPTIONS:
             //destroyOptionsScene();
             break;
+        default:
+            return EXIT_INVALID_SCENE;
     }
 }
