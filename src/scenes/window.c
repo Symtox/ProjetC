@@ -6,7 +6,7 @@
 /*
  * Initialise une fenêtre de menu
  */
-int newMenuWin(MenuWin* win, const menuOption_t* buttons) {
+int newMenuWin(MenuScene* win, const menuOption_t* buttons) {
 
     const int buttonHeight = 3;
     const int buttonWidth = 20;
@@ -48,11 +48,30 @@ int newMenuWin(MenuWin* win, const menuOption_t* buttons) {
 }
 
 
-int dispatchMenuClick(MEVENT event, MenuWin * win) {
+int dispatchMenuClick(MEVENT event, MenuScene * win) {
     for(int i = 0; i < BUTTON_COUNT; i++) {
         if(wmouse_trafo(win->buttonWindows[i], &event.y, &event.x, FALSE)) {
             return win->buttons[i].callback();
         }
     }
     return -1;
+}
+
+int destroyMenuScene(MenuScene menu) {
+    for(int i = 0; i < BUTTON_COUNT; i++) {
+        wclear(menu.buttonWindows[i]);
+        wrefresh(menu.buttonWindows[i]);
+        delwin(menu.buttonWindows[i]);
+    }
+
+    wclear(menu.win);
+    wrefresh(menu.win);
+    delwin(menu.win);
+
+    wclear(menu.boxwin);
+    wrefresh(menu.boxwin);
+    delwin(menu.boxwin);
+
+    wrefresh(stdscr);
+    return 0;
 }

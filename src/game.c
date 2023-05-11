@@ -1,21 +1,16 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <locale.h>
-#include "colors.h"
-#include "fonctions.h"
-#include "window.h"
-#include "errorCodes.h"
+#include "utils/colors.h"
+#include "utils/fonctions.h"
+#include "scenes/window.h"
+#include "utils/errorCodes.h"
 #include "game.h"
+
 
 
 game_interface_t interface;
 
-// Boutons du menu et leurs onCLick
-const menuOption_t MENU_OPTIONS[] = {
-    {"Play", play},
-    {"Options", options},
-    {"Quit", quit}
-};
 
 int main(int argc, char* argv[]) {
     init();
@@ -77,10 +72,12 @@ int cleanAndQuit() {
 }
 
 int menuToFirstScene() {
+    destroyCurrentScene();
     return 0;//TODO
 }
 
 int play() {
+    destroyCurrentScene();
     return 0;//TODO
 }
 
@@ -90,4 +87,19 @@ int options() {
 
 int quit() {
     return EXIT_QUIT_GAME;
+}
+
+int destroyCurrentScene() {
+    switch(interface.currentScene) {
+        case MENU:
+            return destroyMenuScene(interface.menu);
+        case GAME:
+            //destroyGameScene();
+            break;
+        case OPTIONS:
+            //destroyOptionsScene();
+            break;
+        default:
+            return EXIT_INVALID_SCENE;
+    }
 }

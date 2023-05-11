@@ -7,4 +7,5 @@
 #define EXIT_QUIT_GAME 102
 #define EXIT_NO_CLICK_FOUND 103
 
+#define EXIT_INVALID_SCENE 200
 #endif
