@@ -6,10 +6,10 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 # C Compilation Configuration
-TARGET_EXEC ?= game.out
+TARGET_EXEC ?= app.out
 
 CC=gcc
-CFLAGS=-Wall -Wextra -g -lm -lncursesw
+CFLAGS=-Wall -g -lm -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -L lib/
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
