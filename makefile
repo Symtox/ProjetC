@@ -21,20 +21,19 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-.RECIPEPREFIX = >
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-> $(CC) $(OBJS) -o $@ $(CFLAGS)
+	$(CC) $(OBJS) -o $@ $(CFLAGS)
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c
-> $(MKDIR_P) $(dir $@)
-> $(CC) $(CFLAGS) -c $< -o $@
+	$(MKDIR_P) $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: clean
 
 clean:
-> $(RM) -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR)
 
 -include $(DEPS)
 
