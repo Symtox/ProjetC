@@ -8,14 +8,9 @@
 #include "game.h"
 
 
+
 game_interface_t interface;
 
-// Boutons du menu et leurs onCLick
-const menuOption_t MENU_OPTIONS[] = {
-    {"Play", play},
-    {"Options", options},
-    {"Quit", quit}
-};
 
 int main(int argc, char* argv[]) {
     init();
@@ -77,10 +72,12 @@ int cleanAndQuit() {
 }
 
 int menuToFirstScene() {
+    destroyCurrentScene();
     return 0;//TODO
 }
 
 int play() {
+    destroyCurrentScene();
     return 0;//TODO
 }
 
@@ -90,4 +87,18 @@ int options() {
 
 int quit() {
     return EXIT_QUIT_GAME;
+}
+
+int destroyCurrentScene() {
+    switch(interface.currentScene) {
+        case MENU:
+            return destroyMenuScene(interface.menu);
+            break;
+        case GAME:
+            //destroyGameScene();
+            break;
+        case OPTIONS:
+            //destroyOptionsScene();
+            break;
+    }
 }

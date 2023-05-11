@@ -22,12 +22,14 @@
         WINDOW * boxwin, * win;
         WINDOW * buttonWindows[BUTTON_COUNT];
         menuOption_t buttons[BUTTON_COUNT];
-    }MenuWin;
+    }MenuScene;
 
-    typedef struct  {
-        MenuWin menu;
-    } game_interface_t;
+    typedef struct {
+        WINDOW * gameWindow;
+    } GameScene;
 
-    int newMenuWin(MenuWin *, const menuOption_t *);
-    int dispatchButtonsClick(int);
+
+    int newMenuWin(MenuScene *, const menuOption_t *);
+    int dispatchMenuClick(MEVENT, MenuScene *);
+    int destroyMenuScene(MenuScene);
 #endif
