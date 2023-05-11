@@ -7,10 +7,6 @@
 /**
  * Initialisation de ncurses.
  */
-int init() {
-
-    return EXIT_SUCCESS;
-}
 
 void ncurses_init() {
     setlocale(LC_ALL, "");

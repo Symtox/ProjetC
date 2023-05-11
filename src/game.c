@@ -6,15 +6,11 @@
 #include "scenes/editor.h"
 #include "game.h"
 
-
-
 game_interface_t interface;
 
 
-
-
 int main(int argc, char* argv[]) {
-    init();
+    ncurses_init();
     newMenuWin(&interface.menu, MENU_OPTIONS);
     menu();
     return EXIT_SUCCESS;
@@ -45,11 +41,6 @@ int menu() {
  * TODO free memory
  */
 int cleanAndQuit() {
-    delwin(interface.menu.boxwin);
-    delwin(interface.menu.win);
-    for(int i = 0; i < BUTTON_COUNT; i++) {
-        delwin(interface.menu.buttonWindows[i]);
-    }
     destroyCurrentScene();
     ncurses_stop();
     exit(0);
@@ -67,6 +58,10 @@ int play() {
 
 int options() {
     return 0;//TODO
+}
+
+int edit() {
+    newEditorScene(&interface.editor);
 }
 
 int quit() {
@@ -91,6 +86,3 @@ int destroyCurrentScene() {
     }
 }
 
-int edit() {
-
-}

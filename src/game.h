@@ -1,10 +1,14 @@
 #ifndef PROJECT_GAME
 #define PROJECT_GAME
 
+#include "scenes/menu.h"
+#include "scenes/editor.h"
+
 typedef enum {
     MENU,
     GAME,
-    OPTIONS
+    OPTIONS,
+    EDITOR
 } scenes_e;
 
 typedef struct  {
@@ -35,7 +39,7 @@ int edit();
 const menuOption_t MENU_OPTIONS[] = {
         {"Play", play},
         {"Options", options},
-        {"Edit", edit}
+        {"Edit", edit},
         {"Quit", quit}
 };
 

@@ -9,7 +9,7 @@ MAKEFLAGS += --no-builtin-rules
 TARGET_EXEC ?= game.out
 
 CC=gcc
-CFLAGS=-Wall -Wextra -g -std=c99 -lm -lncursesw
+CFLAGS=-Wall -Wextra -g -lm -lncursesw
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -19,7 +19,6 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)

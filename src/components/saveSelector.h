@@ -1,8 +1,17 @@
-//
-// Created by 20015007@hq.corp.leroymerlin.com on 11/05/23.
-//
+#ifndef PROJECT_SAVESELECTOR_H
+#define PROJECT_SAVESELECTOR_H
 
-#ifndef PROJETC_SAVESELECTOR_H
-#define PROJETC_SAVESELECTOR_H
+    typedef struct {
+        int noFiles;
+        WINDOW * win;
+        struct dirent ** files;
+    }SaveSelector_c;
 
-#endif //PROJETC_SAVESELECTOR_H
+    int newSaveSelector(SaveSelector_c*, int, int, int);
+    int filterSaveFiles(const struct dirent *);
+
+
+
+
+
+#endif

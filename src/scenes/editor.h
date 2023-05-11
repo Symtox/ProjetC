@@ -1,5 +1,4 @@
-#define BUTTON_COUNT 3
-
+#include "../components/saveSelector.h"
 #ifndef PROJECT_EDITOR
 #define PROJECT_EDITOR
 
@@ -8,10 +7,12 @@
  */
 typedef struct {
     WINDOW * boxwin, * win;
-}MenuScene;
+    SaveSelector_c saveSelector;
+}EditorScene;
 
-int newMenuWin(MenuScene *, const menuOption_t *);
-int dispatchMenuClick(MEVENT, MenuScene *);
-int destroyMenuScene(MenuScene);
+int newEditorScene(EditorScene *);
+int dispatchEditorClick(MEVENT, EditorScene *);
+int destroyEditorScene(EditorScene);
+FILE** getAllSaves();
 
 #endif
