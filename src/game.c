@@ -1,10 +1,9 @@
 #include <ncurses.h>
 #include <stdlib.h>
-#include <locale.h>
-#include "utils/colors.h"
 #include "utils/fonctions.h"
-#include "scenes/window.h"
+#include "scenes/menu.h"
 #include "utils/errorCodes.h"
+#include "scenes/editor.h"
 #include "game.h"
 
 
@@ -12,28 +11,12 @@
 game_interface_t interface;
 
 
+
+
 int main(int argc, char* argv[]) {
     init();
-    init_menu();
-    menu();
-    return EXIT_SUCCESS;
-}
-
-int init() {
-    setlocale(LC_ALL, "");
-    ncurses_init();
-    ncurses_initsouris();
-    ncurses_couleurs();
-    palette();
-    bkgd(COLOR_PAIR(PAIR_BASIC));
-    refresh();
-    return EXIT_SUCCESS;
-}
-
-
-//Initialisation et affichage de l'interface
-int init_menu() {
     newMenuWin(&interface.menu, MENU_OPTIONS);
+    menu();
     return EXIT_SUCCESS;
 }
 
@@ -67,6 +50,7 @@ int cleanAndQuit() {
     for(int i = 0; i < BUTTON_COUNT; i++) {
         delwin(interface.menu.buttonWindows[i]);
     }
+    destroyCurrentScene();
     ncurses_stop();
     exit(0);
 }
@@ -99,7 +83,14 @@ int destroyCurrentScene() {
         case OPTIONS:
             //destroyOptionsScene();
             break;
+        case EDITOR:
+            //destroyEditorScene();
+            break;
         default:
             return EXIT_INVALID_SCENE;
     }
+}
+
+int edit() {
+
 }

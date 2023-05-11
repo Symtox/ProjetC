@@ -10,6 +10,7 @@ typedef enum {
 typedef struct  {
     MenuScene menu;
     GameScene game;
+    EditorScene editor;
     scenes_e currentScene;
 } game_interface_t;
 
@@ -28,11 +29,13 @@ int options();
 int quit();
 int destroyCurrentScene();
 int destroyGameScene();
+int edit();
 
 // Boutons du menu et leurs onCLick
 const menuOption_t MENU_OPTIONS[] = {
         {"Play", play},
         {"Options", options},
+        {"Edit", edit}
         {"Quit", quit}
 };
 
