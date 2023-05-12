@@ -1,3 +1,8 @@
+typedef struct position_t {
+    int x;
+    int y;
+} position_t;
+
 typedef struct player_t
 {
     int max_hp;
@@ -5,8 +10,7 @@ typedef struct player_t
     int defense;
     int attack;
     int nbKey;
-    int posX;
-    int posY;
+    position_t pos;
 } player_t;
 
 typedef struct monster_t
@@ -16,4 +20,3 @@ typedef struct monster_t
     int defense;
     int attack;
 } monster_t;
-
