@@ -10,4 +10,5 @@
 
 #define EXIT_INVALID_SCENE 200
 
+#define EXIT_INVALID_SCENE 200
 #endif

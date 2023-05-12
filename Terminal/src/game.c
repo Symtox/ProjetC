@@ -1,11 +1,23 @@
 #include <ncurses.h>
 #include <stdlib.h>
+<<<<<<< HEAD:Terminal/src/game.c
 #include "utils/fonctions.h"
 #include "scenes/menu.h"
 #include "utils/errorCodes.h"
 #include "scenes/editor.h"
 #include "game.h"
 
+=======
+#include <locale.h>
+#include "utils/colors.h"
+#include "utils/fonctions.h"
+#include "scenes/window.h"
+#include "utils/errorCodes.h"
+#include "game.h"
+
+
+
+>>>>>>> master:src/game.c
 game_interface_t interface;
 
 
@@ -78,6 +90,7 @@ int destroyCurrentScene() {
         case OPTIONS:
             //destroyOptionsScene();
             break;
+<<<<<<< HEAD:Terminal/src/game.c
         case EDITOR:
             //destroyEditorScene();
             break;
@@ -86,3 +99,9 @@ int destroyCurrentScene() {
     }
 }
 
+=======
+        default:
+            return EXIT_INVALID_SCENE;
+    }
+}
+>>>>>>> master:src/game.c
