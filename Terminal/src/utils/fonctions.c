@@ -1,18 +1,27 @@
 #include "fonctions.h"
 
-#include <ncurses.h>   // Pour toutes les fonctions/constantes ncurses
-#include <stdlib.h>    // Pour exit, EXIT_FAILURE
-
+#include <ncurses.h>
+#include <stdlib.h>
+#include <locale.h>
+#include "colors.h"
 /**
  * Initialisation de ncurses.
  */
+
 void ncurses_init() {
-  initscr();	        // Démarre le mode ncurses
-  cbreak();	            // Désactive la mise en buffer
-  noecho();             // Désactive l'affichage des caractères saisis
-  keypad(stdscr, TRUE);	// Active les touches spécifiques (flèches)
-  refresh();            // Met à jour l'affichage
-  curs_set(FALSE);      // Masque le curseur
+    setlocale(LC_ALL, "");
+    initscr();	        // Démarre le mode ncurses
+    cbreak();	            // Désactive la mise en buffer
+    noecho();             // Désactive l'affichage des caractères saisis
+    keypad(stdscr, TRUE);	// Active les touches spécifiques (flèches)
+    refresh();            // Met à jour l'affichage
+    curs_set(FALSE);      // Masque le curseur
+
+    ncurses_initsouris();
+    ncurses_couleurs();
+    palette();
+    bkgd(COLOR_PAIR(PAIR_BASIC));
+    refresh();
 }
 
 void ncurses_stop() {

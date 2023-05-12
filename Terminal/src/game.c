@@ -1,5 +1,13 @@
 #include <ncurses.h>
 #include <stdlib.h>
+<<<<<<< HEAD:Terminal/src/game.c
+#include "utils/fonctions.h"
+#include "scenes/menu.h"
+#include "utils/errorCodes.h"
+#include "scenes/editor.h"
+#include "game.h"
+
+=======
 #include <locale.h>
 #include "utils/colors.h"
 #include "utils/fonctions.h"
@@ -9,31 +17,14 @@
 
 
 
+>>>>>>> master:src/game.c
 game_interface_t interface;
 
 
 int main(int argc, char* argv[]) {
-    init();
-    init_menu();
-    menu();
-    return EXIT_SUCCESS;
-}
-
-int init() {
-    setlocale(LC_ALL, "");
     ncurses_init();
-    ncurses_initsouris();
-    ncurses_couleurs();
-    palette();
-    bkgd(COLOR_PAIR(PAIR_BASIC));
-    refresh();
-    return EXIT_SUCCESS;
-}
-
-
-//Initialisation et affichage de l'interface
-int init_menu() {
     newMenuWin(&interface.menu, MENU_OPTIONS);
+    menu();
     return EXIT_SUCCESS;
 }
 
@@ -62,11 +53,7 @@ int menu() {
  * TODO free memory
  */
 int cleanAndQuit() {
-    delwin(interface.menu.boxwin);
-    delwin(interface.menu.win);
-    for(int i = 0; i < BUTTON_COUNT; i++) {
-        delwin(interface.menu.buttonWindows[i]);
-    }
+    destroyCurrentScene();
     ncurses_stop();
     exit(0);
 }
@@ -85,6 +72,10 @@ int options() {
     return 0;//TODO
 }
 
+int edit() {
+    newEditorScene(&interface.editor);
+}
+
 int quit() {
     return EXIT_QUIT_GAME;
 }
@@ -99,7 +90,18 @@ int destroyCurrentScene() {
         case OPTIONS:
             //destroyOptionsScene();
             break;
+<<<<<<< HEAD:Terminal/src/game.c
+        case EDITOR:
+            //destroyEditorScene();
+            break;
         default:
             return EXIT_INVALID_SCENE;
     }
 }
+
+=======
+        default:
+            return EXIT_INVALID_SCENE;
+    }
+}
+>>>>>>> master:src/game.c

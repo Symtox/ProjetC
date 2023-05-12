@@ -1,4 +1,4 @@
-#define BUTTON_COUNT 3
+#define BUTTON_COUNT 4
 
 #ifndef PROJECT_WINDOW_H
 #define PROJECT_WINDOW_H

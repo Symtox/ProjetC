@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
-#include "window.h"
+#include "menu.h"
 
 
 /*
