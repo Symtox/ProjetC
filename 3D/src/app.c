@@ -15,9 +15,7 @@
 #include "../includes/rcamera.h"
 #include "./utils.h"
 #include "./physics.h"
-#include "./Const.h"
 #include <stdlib.h>
-#include "logger.h"
 
 int drawMap(int ***);
 int crouch();
