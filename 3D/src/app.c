@@ -33,9 +33,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    SetTraceLogCallback(CustomLog);
 
-    SetTraceLogLevel(LOG_INFO);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
 
     // Define the camera to look into our 3d world (position, target, up vector)
