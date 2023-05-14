@@ -1,76 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
+char * getCharFromLine(char* line, int index, int size);
+
+#define MAP_SIZE 30
 
 
-// int randomBoard (){
-//     char board[30][30];
-
-//     for (int i = 0; i < 30; i++) {
-//         for (int j = 0; j < 30; j++){
-//             if(i == 0 || i == 29 || j == 0 || j == 29){
-//                 board[i][j] = 1;
-//             }else {
-//                 board[i][j] = 0;
-//             }
-//         }
-//     }
-
-//     for (int i = 0; i < 30; i++) {
-//         for (int j = 0; j < 30; j++) {
-//             printf("%d", board[i][j]);
-//         }
-//         printf("\n");
-//     }
-//     return 0;
-// }
-
-
-
-
-// void readCSV(char* filename){
-//     char board[30][30];
-
-//     FILE * file = fopen("board.csv", "r");
-//     if (file == NULL){
-//         printf("Erreur lors de l'ouverture du fichier");
-//         return;
-//     }
-
-//     char ligne[1024];
-//     fgets(ligne, 1024, file);
-//     memmove(ligne, ligne+3, strlen(ligne)-2); // supprime les 3 premiers caractères (BOM) de la première ligne
-//     const char * separators = ";"; // séparateur de colonnes
-//     char * strtoken = strtok(ligne, separators); // découpe la ligne en colonnes
-
-//     while(strtoken){//boucle tant que le token n'est pas NULL
-//         printf("%s", strtoken); 
-//         strtoken = strtok(NULL, separators);
-//     }
-
-//     while(fgets(ligne, 1024, file)){//boucle sur chaque ligne du fichier (à partir de la deuxième ligne)
-//         strtoken = strtok(ligne, separators);// découpe la ligne en "tokens" séparés par le point-virgule et stocke le premier token dans la variable "strtoken"
-
-//         while(strtoken){
-//             printf("%s", strtoken);
-//             strtoken = strtok(NULL, separators);
-//         }
-//     }
-//     printf("\n");
-//     fclose(file);
-// }
-
-void readCSV(char* filename){
+void readCSV(char* filename, int x, int y){
+    char board[MAP_SIZE][MAP_SIZE];
+    char ligne[1024];
+    char * strippedLine;
+    const char * separators = ";"; // séparateur de colonnes
+    int row;
     srand(time(NULL));
-    double random_number = (double)rand() / RAND_MAX;
-    char board[30][30];
-    // row = 0  ou 40
-    // col = 0 ou 33
-    // int row[2]={0,40};
-    // int col[2]={0,33};
-
 
     FILE * file = fopen(filename, "r");
     if (file == NULL){
@@ -78,25 +21,29 @@ void readCSV(char* filename){
         return;
     }
 
-    char ligne[1024];
-    const char * separators = ";"; // séparateur de colonnes
-    int row = 1;
+    for(int i = 0; i < 30 * y; i++) {
+        fgets(ligne, 1024, file);
+    }
 
-    while(row <= 30 && fgets(ligne, 1024, file)){//boucle sur chaque ligne du fichier (à partir de la première ligne)
-        if (row == 1) {
+    for(row = 30 * x; row < 30 * (x + 1); row++){//boucle sur chaque ligne du fichier (à partir de la première ligne)
+        char * strToken;
+        int col;
+
+        fgets(ligne, 1024, file);
+
+        if (row == 0) {
             memmove(ligne, ligne+3, strlen(ligne)-2); // supprime les 3 premiers caractères (BOM) de la première ligne
         }
-        char * strtoken = strtok(ligne, separators);// découpe la ligne en "tokens" séparés par le point-virgule et stocke le premier token dans la variable "strtoken"
-        int col = 1;
 
-        while(strtoken){
-            if (row <= 30 && col <= 30) {
-                board[row-1][col-1] = *strtoken;
-            }
-            col++;
-            strtoken = strtok(NULL, separators);
+        strippedLine = getCharFromLine(ligne, 30 * x * 2, MAP_SIZE * 2);
+        printf("%s\n\n", strippedLine);
+
+        strToken = strtok(strippedLine, separators);// découpe la ligne en "tokens" séparés par le point-virgule et stocke le premier token dans la variable "strtoken"
+        for(col = 0; col < MAP_SIZE; col++) {
+            board[row - 30 * x][col] = strToken[0];
+            strToken = strtok(NULL, separators);
         }
-        row++;
+        free(strippedLine);
     }
 
     for (int i = 0; i < 30; i++) {
@@ -109,10 +56,22 @@ void readCSV(char* filename){
     fclose(file);
 }
 
+/*
+ * Recupere "size" caracteres a partir de l'index dans la ligne
+ */
+
+char * getCharFromLine(char* line, int index, int size) {
+    char * result = malloc(sizeof(char) * size * 2);
+    for (int col = 0; col < size; col++) {
+        result[col] = line[index + col];
+    }
+    return result;
+}
+
 
 int main ()
 {
 //    randomBoard();
-   readCSV("board.csv");
+   readCSV("board.csv", 1, 1);
     return 0;
 }
