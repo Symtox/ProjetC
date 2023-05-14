@@ -1,6 +1,6 @@
-#include "../includes/raylib.h"
-#include "../includes/raymath.h"
-#include "./Const.h"
+#include "../../includes/raylib.h"
+#include "../../includes/raymath.h"
+#include "../utils/const.h"
 
 
 #ifndef PROJECT_PHYSICS_H
@@ -21,15 +21,13 @@
     Vector3 getMovementVectorFromInputs();
     Vector3 getJumpMovementFromInputs(playerPhysics_t*);
     Vector3 getFallMovement(Vector3, playerPhysics_t*, int **);
-    Vector3 getCorrectedPlayerMovement(Vector3, Vector3, playerPhysics_t, int **);
+    Vector3 getCollisionFromMovement(Vector3 , Vector3 , Camera , float , int ** );
 
-    playerPhysics_t initPlayerPhysics();
+    Vector3 getCorrectedPlayerMovement(Vector3, Vector3, playerPhysics_t, int **);
 
     float getFallSpeed(playerPhysics_t);
     float getJumpSpeed(playerPhysics_t);
-
     float getDistanceFromGround(Vector3, int**);
-    Vector3 getCollisionFromMovement(Vector3 , Vector3 , Camera , float , playerPhysics_t , int ** );
 
 
 #endif

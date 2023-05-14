@@ -1,5 +1,5 @@
-#include "../includes/raylib.h"
-#include "./Const.h"
+#include "../../includes/raylib.h"
+#include "./const.h"
 #include "./utils.h"
 #include <stdlib.h>
 
@@ -13,9 +13,9 @@ int fillWithRandAndWalls(int *** map) {
         (*map)[i] = malloc(MAP_SIZE * sizeof(int));
         for(int j = 0; j < MAP_SIZE; j++) {
             if(i == 0 || j == 0 || i == MAP_SIZE-1 || j == MAP_SIZE-1) {
-                (*map)[i][j] = 1;
+                (*map)[i][j] = GetRandomValue(2, 6);
             } else {
-                (*map)[i][j] = GetRandomValue(-1, 0);;
+                (*map)[i][j] = GetRandomValue(1, 2);
             }
         }
     }

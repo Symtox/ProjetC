@@ -1,16 +1,14 @@
 #include "physics.h"
-#include "../includes/raylib.h"
-#include "./Const.h"
-#include <stdlib.h>
-#include "utils.h"
+#include "../utils/utils.h"
 
 
 
 
 
 int handlePlayerMovement(Camera *camera, playerPhysics_t * playerPhysics, int ** map) {
-    float playerZoom = GetMouseWheelMove() * 2.0f;
+    float playerZoom = GetMouseWheelMove() * PLAYER_SENSITIVITY;
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
+
     Vector3 playerRotation = (Vector3) {
             GetMouseDelta().x*0.05f,                            // Rotation: yaw
             GetMouseDelta().y*0.05f,                            // Rotation: pitch
@@ -20,7 +18,8 @@ int handlePlayerMovement(Camera *camera, playerPhysics_t * playerPhysics, int **
     playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs());
     playerMovement = Vector3Add(playerMovement, getFallMovement(camera->position, playerPhysics, map));
     playerMovement = Vector3Add(playerMovement, getJumpMovementFromInputs(playerPhysics));
-    playerMovement = getCollisionFromMovement(playerMovement, playerRotation, *camera, playerZoom, *playerPhysics, map);
+
+    playerMovement = getCollisionFromMovement(playerMovement, playerRotation, *camera, playerZoom, map);
     UpdateCameraPro(camera, playerMovement, playerRotation, playerZoom);
     return 0;
 }
@@ -34,9 +33,7 @@ Vector3 getMovementVectorFromInputs() {
             0.0f                            // Movement: forward-back
     };
 
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
-        playerMovement.x += MOVEMENT_SPEED;
-    }
+    playerMovement.x += (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * MOVEMENT_SPEED;
     if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) {
         playerMovement.x -= MOVEMENT_SPEED;
     }
@@ -124,11 +121,11 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
 }
 
 float getFallSpeed(playerPhysics_t player) {
-    return player.fallingSpeed + (player.fallTime * player.fallingSpeed / 100) ;
+    return player.fallingSpeed + (sqrt(player.fallTime) * player.fallingSpeed / 100) ;
 }
 
 float getJumpSpeed(playerPhysics_t player) {
-    return player.jumpingSpeed - (player.jumpTime * player.jumpingSpeed / 100) ;
+    return player.jumpingSpeed - (sqrt(player.jumpTime) * player.jumpingSpeed / 100) ;
 }
 
 float getDistanceFromGround(Vector3 playerPosition, int ** map) {
@@ -171,9 +168,9 @@ float getDistanceFromGround(Vector3 playerPosition, int ** map) {
     return playerPosition.y - (PLAYER_HEIGHT + maxHeight);
 }
 
-//TODO
-Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camera camera, float playerZoom, playerPhysics_t playerPhysics, int ** map) {
+Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camera camera, float playerZoom, int ** map) {
 
+    float APPROX = 0.001f;
     int caseAX;
     int caseAZ;
     int caseBX;
@@ -187,6 +184,7 @@ Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camer
     };
 
     Camera cameraAfterMove = camera;
+    //TODO convertir les vecteurs
     UpdateCameraPro(&cameraAfterMove, movement, playerRotation, playerZoom);
     caseAX = (int)cameraAfterMove.position.x;
     caseAZ = (int)cameraAfterMove.position.z;
@@ -224,9 +222,6 @@ Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camer
     }
 
     //On affiche les coordonnes et le mouvement
-    DrawText(TextFormat("X: %f, Y: %f, Z: %f, | X: %f, Y: %f, Z: %f,", cameraAfterMove.position.x, cameraAfterMove.position.y, cameraAfterMove.position.z, movement.x, movement.y, movement.z), 10, 10, 20, RED);
-    DrawText(TextFormat("mX: %d, mz: %d", multipleX, multipleZ), 10, 40, 20, RED);
-
     int isMoveOk = 1;
     for(int i=-1; i < PLAYER_HEIGHT -1; i++) {
         if(multipleX && multipleZ) {
@@ -243,5 +238,8 @@ Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camer
         return movement;
     }
     correctedMovement.z = movement.z;
+    if((int)cameraAfterMove.position.y != (int)(cameraAfterMove.position.y + APPROX)) {
+        correctedMovement.z = correctedMovement.z + APPROX;
+    }
     return correctedMovement;
 }

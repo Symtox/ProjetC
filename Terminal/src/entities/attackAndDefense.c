@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "entities.h"
+#include "../../../3D/src/entities.h"
 #include <math.h>
 
 
