@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 
 // int randomBoard (){
@@ -62,7 +63,14 @@
 // }
 
 void readCSV(char* filename){
+    srand(time(NULL));
+    double random_number = (double)rand() / RAND_MAX;
     char board[30][30];
+    // row = 0  ou 40
+    // col = 0 ou 33
+    // int row[2]={0,40};
+    // int col[2]={0,33};
+
 
     FILE * file = fopen(filename, "r");
     if (file == NULL){
