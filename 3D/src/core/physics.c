@@ -1,12 +1,7 @@
 #include "physics.h"
-#include "../includes/raylib.h"
-#include "./Const.h"
-#include <stdlib.h>
-#include "utils.h"
-
-
-
-
+#include "../utils/utils.h"
+#include <stdio.h>
+#define APPROX_Y 0.01
 
 int handlePlayerMovement(Camera *camera, playerPhysics_t * playerPhysics, int ** map) {
     float playerZoom = GetMouseWheelMove() * 2.0f;
@@ -223,25 +218,32 @@ Vector3 getCollisionFromMovement(Vector3 movement, Vector3 playerRotation, Camer
         caseBZ = (int)(cameraAfterMove.position.z - PLAYER_WIDTH);
     }
 
-    //On affiche les coordonnes et le mouvement
-    DrawText(TextFormat("X: %f, Y: %f, Z: %f, | X: %f, Y: %f, Z: %f,", cameraAfterMove.position.x, cameraAfterMove.position.y, cameraAfterMove.position.z, movement.x, movement.y, movement.z), 10, 10, 20, RED);
-    DrawText(TextFormat("mX: %d, mz: %d", multipleX, multipleZ), 10, 40, 20, RED);
-
     int isMoveOk = 1;
     for(int i=-1; i < PLAYER_HEIGHT -1; i++) {
         if(multipleX && multipleZ) {
-            isMoveOk = isMoveOk && cameraAfterMove.position.y+ i >= map[caseBX][caseBZ];
+            isMoveOk = isMoveOk && (int)(cameraAfterMove.position.y + i) >= map[caseBX][caseBZ];
         } else if (multipleX) {
-            isMoveOk = isMoveOk && cameraAfterMove.position.y + i >= map[caseBX][caseAZ];
+            isMoveOk = isMoveOk && (int)(cameraAfterMove.position.y + i) >= map[caseBX][caseAZ];
         } else if (multipleZ) {
-            isMoveOk = isMoveOk && cameraAfterMove.position.y + i >= map[caseAX][caseBZ];
+            isMoveOk = isMoveOk && (int)(cameraAfterMove.position.y + i) >= map[caseAX][caseBZ];
         } else {
-            isMoveOk = isMoveOk && cameraAfterMove.position.y + i >= map[caseAX][caseAZ];
+            isMoveOk = isMoveOk && (int)(cameraAfterMove.position.y + i) >= map[caseAX][caseAZ];
         }
     }
+
     if(isMoveOk) {
         return movement;
     }
+
     correctedMovement.z = movement.z;
+
+    DrawText(TextFormat("X: %f, Z: %f", cameraAfterMove.position.x, cameraAfterMove.position.z), 10, 10, 20, RED);
+    DrawText(TextFormat("X: %f, Z: %f", camera.position.x, camera.position.z), 10, 30, 20, RED);
+    DrawText(TextFormat("X: %f, Z: %f", Vector3Subtract(cameraAfterMove.position, camera.position).x, Vector3Subtract(cameraAfterMove.position, camera.position).z), 10, 50, 20, RED);
+    if((int)correctedMovement.z != (int)(correctedMovement.z + APPROX_Y)) {
+        correctedMovement.z = (int)(correctedMovement.z + APPROX_Y);
+    }
+    //correctedMovement.x = Vector3Subtract(cameraAfterMove.position, camera.position).x;
+   // correctedMovement.x = movement.x;
     return correctedMovement;
 }

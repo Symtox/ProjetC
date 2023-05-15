@@ -1,5 +1,5 @@
-#include "../includes/raylib.h"
-#include "./Const.h"
+#include "../../includes/raylib.h"
+#include "./const.h"
 #include "./utils.h"
 #include <stdlib.h>
 

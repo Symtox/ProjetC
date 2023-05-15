@@ -3,9 +3,8 @@
 //
 
 #ifndef PROJECT_CONST_H
-
     #define PROJECT_CONST_H
-    #define MAP_SIZE 40 // Dimension de la map
+    #define MAP_SIZE 30 // Dimension de la map
     #define WALL_HEIGHT 3 // Hauteur des murs
     #define WALL_COLOR CLITERAL(Color){ 200, 200, 200, 255 } // Couleur des murs
     #define JUMP_DURATION 15 // Durée du saut

@@ -1,6 +1,6 @@
-#include "../includes/raylib.h"
-#include "../includes/raymath.h"
-#include "./Const.h"
+#include "../../includes/raylib.h"
+#include "../../includes/raymath.h"
+#include "../utils/const.h"
 
 
 #ifndef PROJECT_PHYSICS_H
