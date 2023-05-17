@@ -29,7 +29,7 @@ int main(void)
     DisableCursor();                    // Limit cursor to relative movement inside the window
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    map = readCSV("./assets/board.csv", 1, 1);
+    map = readCSV("./assets/board.csv", 0, 0);
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         BeginDrawing();
