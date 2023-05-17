@@ -1,18 +1,19 @@
 #include "../components/saveSelector.h"
 #ifndef PROJECT_EDITOR
 #define PROJECT_EDITOR
+#include <stdio.h>
 
 /*
  * Structure de données pour le menu
  */
-typedef struct {
-    WINDOW * boxwin, * win;
+/*typedef struct {
+    //WINDOW * boxwin, * win;
     SaveSelector_c saveSelector;
-}EditorScene;
+}EditorScene;*/
 
-int newEditorScene(EditorScene *);
+//int newEditorScene(EditorScene *);
 int dispatchEditorClick(MEVENT, EditorScene *);
-int destroyEditorScene(EditorScene);
-FILE** getAllSaves();
+//int destroyEditorScene(EditorScene);
+//FILE** getAllSaves();
 
 #endif
