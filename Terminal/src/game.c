@@ -1,23 +1,10 @@
-#include <ncurses.h>
 #include <stdlib.h>
-<<<<<<< HEAD:Terminal/src/game.c
 #include "utils/fonctions.h"
 #include "scenes/menu.h"
 #include "utils/errorCodes.h"
 #include "scenes/editor.h"
 #include "game.h"
 
-=======
-#include <locale.h>
-#include "utils/colors.h"
-#include "utils/fonctions.h"
-#include "scenes/window.h"
-#include "utils/errorCodes.h"
-#include "game.h"
-
-
-
->>>>>>> master:src/game.c
 game_interface_t interface;
 
 
@@ -30,8 +17,8 @@ int main(int argc, char* argv[]) {
 
 int menu() {
     int inputChar;
-    MEVENT event;
-    while ((inputChar = getch()) != 'q') {
+    //MEVENT event;
+    /*while ((inputChar = getch()) != 'q') {
         if(inputChar == KEY_MOUSE && getmouse(&event) == OK) { // Si l'action est une action de souris
             switch(dispatchMenuClick(event, &interface.menu)) {
                 case EXIT_TO_MENU:
@@ -43,7 +30,7 @@ int menu() {
                     break;
             }
         }
-    }
+    }*/
     cleanAndQuit();
     return EXIT_SUCCESS;
 }
@@ -90,7 +77,6 @@ int destroyCurrentScene() {
         case OPTIONS:
             //destroyOptionsScene();
             break;
-<<<<<<< HEAD:Terminal/src/game.c
         case EDITOR:
             //destroyEditorScene();
             break;
@@ -98,10 +84,3 @@ int destroyCurrentScene() {
             return EXIT_INVALID_SCENE;
     }
 }
-
-=======
-        default:
-            return EXIT_INVALID_SCENE;
-    }
-}
->>>>>>> master:src/game.c

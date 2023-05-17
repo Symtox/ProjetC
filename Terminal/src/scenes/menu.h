@@ -18,7 +18,7 @@
     /*
      * Structure de données pour le menu
      */
-    typedef struct {
+    /*typedef struct {
         WINDOW * boxwin, * win;
         WINDOW * buttonWindows[BUTTON_COUNT];
         menuOption_t buttons[BUTTON_COUNT];
@@ -26,7 +26,7 @@
 
     typedef struct {
         WINDOW * gameWindow;
-    } GameScene;
+    } GameScene;*/
 
 
     int newMenuWin(MenuScene *, const menuOption_t *);
