@@ -16,7 +16,6 @@ SRC_DIRS ?= ./src
 
 SRCS := $(shell find $(SRC_DIRS) -name "*.c")
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 
@@ -34,6 +33,5 @@ $(BUILD_DIR)/%.c.o: %.c
 clean:
 	$(RM) -r $(BUILD_DIR)
 
--include $(DEPS)
 
 MKDIR_P ?= mkdir -p

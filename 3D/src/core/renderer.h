@@ -3,11 +3,15 @@
 //
 
 #include "../../includes/raylib.h"
+#include "../board/board.h"
 #ifndef PROJECT_RENDERER_H
 #define PROJECT_RENDERER_H
 
-void DrawMap(int **);
+void DrawMap(map_t);
+void DrawChunk(chunk_t);
+void setDrawCeiling(bool);
+
 void DrawOverlay(Camera);
-void Render(int **, Camera);
+void Render(map_t, Camera);
 
 #endif

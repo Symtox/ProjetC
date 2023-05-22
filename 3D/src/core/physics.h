@@ -1,6 +1,7 @@
 #include "../../includes/raylib.h"
 #include "../../includes/raymath.h"
 #include "../utils/const.h"
+#include "../board/board.h"
 
 
 #ifndef PROJECT_PHYSICS_H
@@ -14,22 +15,32 @@
         int fallTime;
         float fallingSpeed;
         float jumpingSpeed;
+        int freeWalk;
     }playerPhysics_t;
 
-    int handlePlayerMovement(Camera*, playerPhysics_t *, int **);
+    int handlePlayerMovement(Camera*, playerPhysics_t *, map_t);
+    void handleJump(playerPhysics_t *);
 
-    Vector3 getMovementVectorFromInputs();
+    Vector3 getMovementVectorFromInputs(bool freeWalk);
     Vector3 getJumpMovementFromInputs(playerPhysics_t*);
-    Vector3 getFallMovement(Vector3, playerPhysics_t*, int **);
-    Vector3 getCorrectedPlayerMovement(Vector3, Vector3, playerPhysics_t, int **);
+    Vector3 getFallMovement(Vector3, playerPhysics_t*, map_t);
+    Vector3 getCorrectedPlayerMovement(Vector3, Vector3, playerPhysics_t, map_t);
 
     playerPhysics_t initPlayerPhysics();
 
     float getFallSpeed(playerPhysics_t);
     float getJumpSpeed(playerPhysics_t);
+    float getMovementSpeed(bool);
 
-    float getDistanceFromGround(Vector3, int**);
-    Vector3 getCollisionFromMovement(Vector3 , Vector3 , Camera , float , playerPhysics_t , int ** );
+
+    void updateCameraCustom(Camera *, Vector3, Vector3);
+
+    float getDistanceFromGround(Vector3, map_t);
+    void correctMovementWithCollisions(Vector3 *, Vector3 , Camera , playerPhysics_t , map_t );
+
+    Vector3 getFreeWalkMovement(playerPhysics_t *);
+    int getTileFromCoordsAndMap(int, int, map_t);
+
 
 
 #endif

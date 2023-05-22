@@ -2,17 +2,16 @@
 #include "../includes/rcamera.h"
 #include "utils/utils.h"
 #include "core/physics.h"
-#include <stdlib.h>
-#include "board.h"
-#include <stdio.h>
+#include "board/board.h"
 #include "core/renderer.h"
+#include "core/gameController.h"
 
 playerPhysics_t physics = INIT_PLAYER_PHYSICS;
 
 
 int main(void)
 {
-    int ** map = NULL;
+    map_t map;
     const int screenWidth = 800;
     const int screenHeight = 450;
 
@@ -29,18 +28,18 @@ int main(void)
     DisableCursor();                    // Limit cursor to relative movement inside the window
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    map = readCSV("./assets/board.csv", 1, 1);
+    startLogger();
+    map = loadMap("./assets/board.csv", 0, 0);
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         BeginDrawing();
-
+        Tick(&camera, &physics, &map);
         Render(map, camera);
-        handlePlayerMovement(&camera, &physics, map);
         //----------------------------------------------------------------------------------
         EndDrawing();
 
     }
-
+    endLogger();
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
