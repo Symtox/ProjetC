@@ -6,16 +6,18 @@
 #include "core/renderer.h"
 #include "core/gameController.h"
 
-playerPhysics_t physics = INIT_PLAYER_PHYSICS;
-
 
 int main(void)
 {
-    map_t map;
+    chunkedMap_t map;
+    player_t player = BASE_PLAYER;
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    int loadMapFromSave = 0;
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
+    DisableCursor();                    // Limit cursor to relative movement inside the window
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -24,17 +26,19 @@ int main(void)
     camera.fovy = 90.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
+    player.camera = &camera;
 
-    DisableCursor();                    // Limit cursor to relative movement inside the window
+    initLogger();
+    initRenderer(&player);
+    initGameController(&player, &map, loadMapFromSave);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    startLogger();
-    map = loadMap("./assets/board.csv", 0, 0);
+
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         BeginDrawing();
-        Tick(&camera, &physics, &map);
-        Render(map, camera);
+        Tick(&map);
+        Render(map);
         //----------------------------------------------------------------------------------
         EndDrawing();
 

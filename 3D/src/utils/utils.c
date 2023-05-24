@@ -34,7 +34,7 @@ int logFile(const char * msg) {
     return 0;
 }
 
-void startLogger() {
+void initLogger() {
     fp = fopen("log.txt", "w");
     if(fp == NULL) {
         printf("null");

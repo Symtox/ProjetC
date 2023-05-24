@@ -6,12 +6,32 @@
 #include "../board/board.h"
 #ifndef PROJECT_RENDERER_H
 #define PROJECT_RENDERER_H
+#include "../entities.h"
+typedef struct {
+    int drawCeiling;
+    int drawDebug;
+    int drawOverlay;
+    Vector3 movement;
+    Vector3 direction;
+    player_t * player;
+    int tileUnder;
 
-void DrawMap(map_t);
+}drawBundle_t;
+
+void initRenderer(player_t * player);
+
+void DrawMap(chunkedMap_t);
 void DrawChunk(chunk_t);
-void setDrawCeiling(bool);
+void DrawOverlay();
+void DrawDebug();
 
-void DrawOverlay(Camera);
-void Render(map_t, Camera);
+void Render(chunkedMap_t);
+
+void toggleDrawCeiling();
+void toggleDrawDebug();
+void toggleDrawOverlay();
+
+drawBundle_t getDrawBundle();
+void setDrawBundle(drawBundle_t);
 
 #endif

@@ -11,15 +11,19 @@ typedef struct {
 typedef struct {
     int centerX;
     int centerY;
-    chunk_t chunks[MAP_SIZE][MAP_SIZE];
-} map_t;
+    chunk_t ** chunks;
+    int width;
+    int height;
+} chunkedMap_t;
 
-char * getCharFromLine(char*, int, int);
-void loadChunk(char*, chunk_t *, int, int);
-map_t loadMap(char *, int, int);
-void freeMap(map_t * map);
+typedef struct completeMap {
+    chunk_t ** chunks;
+    int width;
+    int height;
+} completeMap_t;
+
+void freeMap(chunkedMap_t * map);
 void freeChunk(chunk_t * chunk);
-int hasLeftChunk(map_t, Vector3);
-void loadCurrentMap(map_t *, Vector3);
+int hasLeftChunk(chunkedMap_t, Vector3);
 
 #endif

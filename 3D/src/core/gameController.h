@@ -3,5 +3,9 @@
 #include "../../includes/raylib.h"
 #include "../board/board.h"
 #include "physics.h"
-void Tick(Camera *, playerPhysics_t *, map_t *);
+void Tick(chunkedMap_t *);
+void handlePlayerShortcuts();
+void initGameController(player_t *, chunkedMap_t*, int);
+
+
 #endif

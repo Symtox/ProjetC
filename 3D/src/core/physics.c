@@ -3,15 +3,17 @@
 #include "../../includes/rcamera.h"
 #include "../board/board.h"
 #include "../board/tiles.h"
+#include "../core/renderer.h"
+#include "../entities.h"
 #define APPROX_Y 0.01
 
-int controlsToggles[1] = {0};
 
-typedef enum controls {
-    FREE_WALK = 0
-}controls_e;
 
-int handlePlayerMovement(Camera *camera, playerPhysics_t * playerPhysics, map_t map) {
+
+
+
+int handlePlayerMovement(player_t * player, chunkedMap_t map) {
+    drawBundle_t bundle = getDrawBundle();
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
     Vector3 playerRotation = (Vector3) {
             GetMouseDelta().x * PLAYER_SENSITIVITY,                            // Rotation: yaw
@@ -22,50 +24,45 @@ int handlePlayerMovement(Camera *camera, playerPhysics_t * playerPhysics, map_t 
 
 
 
-    playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs(playerPhysics->freeWalk));
-    playerMovement = Vector3Add(playerMovement, getFallMovement(camera->position, playerPhysics, map));
-    playerMovement = Vector3Add(playerMovement, getJumpMovementFromInputs(playerPhysics));
-    playerMovement = Vector3Add(playerMovement, getFreeWalkMovement(playerPhysics));
+    playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs(player->physics.noclip));
+    playerMovement = Vector3Add(playerMovement, getFallMovement(player->camera->position, &player->physics, map));
+    playerMovement = Vector3Add(playerMovement, getJumpMovementFromInputs(&player->physics));
+    playerMovement = Vector3Add(playerMovement, getNoclipMovement(&player->physics));
 
-    correctMovementWithCollisions(&playerMovement, playerRotation, *camera, *playerPhysics, map);
-    updateCameraCustom(camera, playerMovement, playerRotation);
+    correctMovementWithCollisions(&playerMovement, playerRotation, *player->camera, player->physics, map);
+    bundle.movement = playerMovement;
+    bundle.direction = playerRotation;
+    setDrawBundle(bundle);
+    updateCameraCustom(player->camera, playerMovement, playerRotation);
 
     return 0;
 }
 
-Vector3 getFreeWalkMovement(playerPhysics_t * playerPhysics) {
-    if(IsKeyDown(KEY_F) && !controlsToggles[FREE_WALK]) {
-        playerPhysics->freeWalk = !playerPhysics->freeWalk;
-        controlsToggles[FREE_WALK] = 1;
-    }
-    if(IsKeyUp(KEY_F) && controlsToggles[FREE_WALK]) {
-        controlsToggles[FREE_WALK] = 0;
-    }
-
+Vector3 getNoclipMovement(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
-    if(IsKeyDown(KEY_SPACE) && playerPhysics->freeWalk) {
+    if(IsKeyDown(KEY_SPACE) && playerPhysics->noclip) {
         playerMovement.y += FREE_WALK_MOVEMENT_SPEED;
     }
-    if(IsKeyDown(KEY_LEFT_SHIFT) && playerPhysics->freeWalk) {
+    if(IsKeyDown(KEY_LEFT_SHIFT) && playerPhysics->noclip) {
         playerMovement.y -= FREE_WALK_MOVEMENT_SPEED;
     }
     return playerMovement;
 
 }
 
-float getMovementSpeed(bool freeWalk) {
-    return freeWalk ? FREE_WALK_MOVEMENT_SPEED : MOVEMENT_SPEED;
+float getMovementSpeed(bool noclip) {
+    return noclip ? FREE_WALK_MOVEMENT_SPEED : MOVEMENT_SPEED;
 }
 
 
 
-Vector3 getMovementVectorFromInputs(bool freeWalk) {
+Vector3 getMovementVectorFromInputs(bool noclip) {
     Vector3 playerMovement = (Vector3) {
             (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)),
             0.0f,
             (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
     };
-    return Vector3Scale(Vector3Normalize(playerMovement), getMovementSpeed(freeWalk));
+    return Vector3Scale(Vector3Normalize(playerMovement), getMovementSpeed(noclip));
 }
 
 
@@ -76,7 +73,7 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
             0.0f                            // Movement: forward-back
     };
 
-    if(playerPhysics->freeWalk) {
+    if(playerPhysics->noclip) {
         return playerMovement;
     }
 
@@ -104,7 +101,7 @@ void handleJump(playerPhysics_t * playerPhysics) {
     }
 }
 
-Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics, map_t map) {
+Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics, chunkedMap_t map) {
     Vector3 playerMovement = (Vector3) {
             0.0f,                            // Movement: sideways
             0.0f,                            // Movement: up-down
@@ -114,7 +111,7 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
 
     float distance = getDistanceFromGround(playerPosition, map);
 
-    if(playerPhysics->isJumping || distance == 0 || playerPhysics->freeWalk) {
+    if(playerPhysics->isJumping || distance == 0 || playerPhysics->noclip) {
         return playerMovement;
     }
 
@@ -143,7 +140,7 @@ float getJumpSpeed(playerPhysics_t player) {
     return player.jumpingSpeed - (player.jumpTime * player.jumpingSpeed / 100) ;
 }
 
-float getDistanceFromGround(Vector3 playerPosition, map_t map) {
+float getDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
     int caseAX = (int)playerPosition.x;
     int caseAZ = (int)playerPosition.z;
     int caseBX;
@@ -184,16 +181,12 @@ float getDistanceFromGround(Vector3 playerPosition, map_t map) {
         logFile(TextFormat("case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map)));
     }
     if(multipleX && multipleZ) {
-        DrawText(TextFormat("multipleX && multipleZ: case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map), caseBX, caseBZ, getTileFromCoordsAndMap(caseBX, caseBZ, map)), 10, 10, 20, MAROON);
         maxHeight = MAX4(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseAX, caseBZ, map), getTileFromCoordsAndMap(caseBX, caseAZ, map), getTileFromCoordsAndMap(caseBX, caseBZ, map));
     } else if (multipleX) {
-        DrawText(TextFormat("multipleX: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map)), 10, 10, 20, MAROON);
         maxHeight = MAX2(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseBX, caseAZ, map));
     } else if (multipleZ) {
-        DrawText(TextFormat("multipleZ: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map)), 10, 10, 20, MAROON);
         maxHeight = MAX2(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseAX, caseBZ, map));
     } else {
-        DrawText(TextFormat("case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map)), 10, 10, 20, MAROON);
         maxHeight = getTileFromCoordsAndMap(playerPosition.x, playerPosition.z, map);
     }
 
@@ -201,7 +194,7 @@ float getDistanceFromGround(Vector3 playerPosition, map_t map) {
 }
 
 //TODO
-void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, playerPhysics_t playerPhysics, map_t map) {
+void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, playerPhysics_t playerPhysics, chunkedMap_t map) {
 
     int caseAX;
     int caseAZ;
@@ -324,8 +317,8 @@ void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
     // Zoom target distance
 }
 
-int getTileFromCoordsAndMap(int x, int y, map_t map) {
-    if(x < 0 || y < 0 || x >= CHUNK_SIZE * MAP_SIZE || y >= CHUNK_SIZE * MAP_SIZE) {
+int getTileFromCoordsAndMap(int x, int y, chunkedMap_t map) {
+    if(x < 0 || y < 0 || x >= CHUNK_SIZE * map.width || y >= CHUNK_SIZE * map.height) {
         return 0;
     }
     int playerChunkX = (int)(x / CHUNK_SIZE);
@@ -333,8 +326,8 @@ int getTileFromCoordsAndMap(int x, int y, map_t map) {
     int tileX = (int)(x - playerChunkX * CHUNK_SIZE);
     int tileY = (int)(y - playerChunkY * CHUNK_SIZE);
 
-    for(int i=0; i < MAP_SIZE; i++) {
-        for (int j = 0; j < MAP_SIZE; ++j) {
+    for(int i=0; i < map.width; i++) {
+        for (int j = 0; j < map.height; j++) {
             if(map.chunks[i][j].x != -1 && map.chunks[i][j].y != -1 && map.chunks[i][j].x == playerChunkX && map.chunks[i][j].y == playerChunkY) {
                 return getHeightFromTileType(map.chunks[i][j].chunk[tileX][tileY]);
             }

@@ -1,11 +1,15 @@
 #include "renderer.h"
+#define DEBUG_INFO_LINE_COUNT 5
+drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
-int drawCeiling = false;
+void initRenderer(player_t * player) {
+    drawBundle.player = player;
+}
 
-void DrawMap(map_t map) {
+void DrawMap(chunkedMap_t map) {
 
-    for(int i = 0; i < MAP_SIZE; i++) {
-        for(int j = 0; j < MAP_SIZE; j++) {
+    for(int i = 0; i < map.width; i++) {
+        for(int j = 0; j < map.height; j++) {
             if(map.chunks[i][j].x != -1) {
                 DrawChunk(map.chunks[i][j]);
             }
@@ -39,34 +43,59 @@ void DrawChunk(chunk_t chunk) {
                     break;
 
             }
-            if(drawCeiling) {
+            if(drawBundle.drawCeiling) {
                 DrawCube((Vector3){ i + 0.5, WALL_HEIGHT + 1 - 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color){ 255, 255, 255, 255} );
-                DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT-0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
+                DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
             }
         }
 
     }
 }
 
-void DrawOverlay(Camera camera) {
-    DrawText(TextFormat("- Position: (%06.3f, %06.3f, %06.3f)", camera.position.x, camera.position.y, camera.position.z), 610, 60, 10, BLACK);
-    DrawText(TextFormat("- Target: (%06.3f, %06.3f, %06.3f)", camera.target.x, camera.target.y, camera.target.z), 610, 75, 10, BLACK);
-    DrawText(TextFormat("- Up: (%06.3f, %06.3f, %06.3f)", camera.up.x, camera.up.y, camera.up.z), 610, 90, 10, BLACK);
+void DrawOverlay() {
+    if(drawBundle.drawOverlay) {
+        DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 50, 255, 50, 100});
+        DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, BLACK);
+        DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, BLACK);
+        DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, BLACK);
+    }
 }
 
-void Render(map_t map, Camera camera) {
+void DrawDebug() {
+
+    const char * infos[DEBUG_INFO_LINE_COUNT] = {
+            TextFormat("x: %f, y: %f, z: %f", drawBundle.player->camera->position.x, drawBundle.player->camera->position.y, drawBundle.player->camera->position.z),
+            TextFormat("cx: %d, cy: %d", ((int)drawBundle.player->camera->position.x) / CHUNK_SIZE, ((int)drawBundle.player->camera->position.z) / CHUNK_SIZE),
+            TextFormat("looking at: (%f, %f, %f)", drawBundle.player->camera->target.x, drawBundle.player->camera->target.y, drawBundle.player->camera->target.z),
+            TextFormat("move: (%f, %f, %f)", drawBundle.movement.x, drawBundle.movement.y, drawBundle.movement.z),
+            TextFormat("rot: (%f, %f, %f)", drawBundle.direction.x, drawBundle.direction.y, drawBundle.direction.z)
+    };
+
+    if(drawBundle.drawDebug) {
+        //DrawFPS(10, 10);
+        for(int i = 0; i < DEBUG_INFO_LINE_COUNT; i++) {
+            DrawText(infos[i], 10, 25 + 15 * i, 10, WHITE);
+        }
+    }
+}
+void Render(chunkedMap_t map) {
         ClearBackground(BLACK);
 
-        BeginMode3D(camera);
-
-            DrawMap(map);
+        BeginMode3D(*drawBundle.player->camera);
+        DrawMap(map);
 
         EndMode3D();
 
-        DrawOverlay(camera);
+        DrawOverlay();
+        DrawDebug();
 
 }
 
-void setDrawCeiling(bool value) {
-    drawCeiling = value;
+
+drawBundle_t getDrawBundle() {
+    return drawBundle;
+}
+
+void setDrawBundle(drawBundle_t bundle) {
+    drawBundle = bundle;
 }
