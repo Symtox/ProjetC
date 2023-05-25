@@ -103,8 +103,7 @@ map_t initTab() {
     int monsterIndex = 0;
 
 //mettre un monstre en fonction de sa classe dans le malloc monsters
-//relire toute la map pour quand jr trouve A B C j insere dans le tab la classe correspondante
-
+//relire toute la map pour quand jr trouve A B C j insere dans le tab la classe
     map.monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
     map.monsterClass = (monster_t*)malloc(sizeof(monster_t) * map.monsterClassCount);
     
