@@ -83,7 +83,7 @@ void Render(chunkedMap_t map) {
         BeginMode3D(*drawBundle.player->camera);
 
         DrawMap(map);
-        render3DText("caaca", (Vector3){0, 0, -3}, (Vector3){ 10, 3, 10});
+        render3DText("caaca", (Vector3){10, 10, -3}, (Vector3){ 10, 3, 10});
 
 
         EndMode3D();
