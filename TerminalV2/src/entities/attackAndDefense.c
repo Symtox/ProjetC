@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include <unistd.h>
 #include "attackAndDefense.h"
 #include "../utils/sleep.h"
 
@@ -101,7 +100,7 @@ int startCombat(player_t * player, char monsterName){
         }
     }
 
-    printf("\nVous avez fui le combat !\n")
+    printf("\nVous avez fui le combat !\n");
     wait(2000);
 
     return ESCAPE;
