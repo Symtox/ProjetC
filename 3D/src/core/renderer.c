@@ -11,7 +11,8 @@ void DrawMap(chunkedMap_t map) {
     for(int i = 0; i < map.width; i++) {
         for(int j = 0; j < map.height; j++) {
             if(map.chunks[i][j].x != -1) {
-                DrawChunk(map.chunks[i][j]);
+                //DrawChunk(map.chunks[i][j]);
+                DrawCube((Vector3) {0,0,0}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {125, 125, 125, 125});
             }
         }
     }
@@ -82,7 +83,7 @@ void Render(chunkedMap_t map) {
         BeginMode3D(*drawBundle.player->camera);
 
         DrawMap(map);
-        render3DText("caaca", (Vector3){ 3, 4, 3}, (Vector3){ 10, 3, 10});
+        render3DText("caaca", (Vector3){0, 0, -3}, (Vector3){ 10, 3, 10});
 
 
         EndMode3D();
@@ -126,11 +127,17 @@ int render3DText(char * text, Vector3 position, Vector3 orientation)
 
     textDimension = MeasureText3D(GetFontDefault(), text, 8.0f, 1.0f, 0.0f);
     position.x -= textDimension.x/2.0f;
-    rlPushMatrix();
-    //rlRotatef(90.0f, 0.0f, 0.0f, 0.0f);
-    rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
 
-    DrawText3D(GetFontDefault(), text, position, 8.0f, 1.0f, 0.0f, RED);
+    rlPushMatrix();
+
+    Vector3 posPlayer = drawBundle.player->camera->position;
+
+    float angleBetweenVectors = atan2f(posPlayer.x - position.x, posPlayer.z - position.z) * 180.0f / PI;
+    
+    rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    rlRotatef(angleBetweenVectors, 0.0f, 0.0f, -1.0f);
+
+    DrawText3D(GetFontDefault(), text, position, 8.0f, 5.0f, 0.0f, RED);
     rlPopMatrix();
 
     UnloadFont(font);
