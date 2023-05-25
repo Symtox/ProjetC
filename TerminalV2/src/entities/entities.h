@@ -16,6 +16,7 @@ typedef struct player_t
 
 typedef struct monster_t
 {
+    char name;
     int max_hp;
     int hp;
     int defense;

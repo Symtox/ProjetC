@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <windows.h>
 #include "entities/entities.h"
 #include "movements/moves.h"
 #include "main.h"
@@ -38,11 +39,11 @@ plateau * createPlateau() {
         game->table[1][1] = '2';
         game->table[8][8] = '1';
         game->table[5][5] = 'P';
+        game->table[6][6] = 'A';
     }
     return game;
 }
 
-#include <windows.h>
 void color(int t,int f)
 {
         HANDLE H=GetStdHandle(STD_OUTPUT_HANDLE);

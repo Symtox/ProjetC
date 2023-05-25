@@ -1,4 +1,4 @@
-#include "../entities/entities.h"
+#include "../entities/attackAndDefense.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "moves.h"
@@ -44,9 +44,27 @@ player_t moveOnPowerUp(player_t player, int x, int y, int power){
     }
 }
 
+void actionAfterFight(player_t * player, int x, int y, int fightResult){
+    if (fightResult == MONSTER_DIE){
+        player->pos.x = x;
+        player->pos.y = y;
+    }
+    else if (fightResult == PLAYER_DIE){
+        printf("+-------------------------+\n");
+        printf("|        GAME OVER        |\n");
+        printf("+-------------------------+\n");
+        exit(0);
+    }
+    else{
+        printf("You escaped\n");
+    }
+}
+
 player_t movements(plateau * game, player_t player, int addX, int addY){
     position_t newPos = {player.pos.x + addX, player.pos.y + addY};
     
+    int fightResult = -1;
+
     switch(game->table[newPos.x][newPos.y]){
         case '#':
             break;
@@ -74,10 +92,20 @@ player_t movements(plateau * game, player_t player, int addX, int addY){
             break;
         case '?':
             break;
+        case 'A':
+            fightResult = startCombat(&player, 'A');
+            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            break;
+        case 'B':
+            fightResult = startCombat(&player, 'B');
+            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            break;
+        case 'C':
+            fightResult = startCombat(&player, 'C');
+            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            break;
         case '>' || '<' || '^' || 'v':
             break;
-        case 'A':
-
         default:
             break;
     }
