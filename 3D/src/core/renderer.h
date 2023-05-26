@@ -34,7 +34,8 @@ void toggleDrawOverlay();
 drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
 
-int render3DText(char * , Vector3 , Vector3 );
-
+int render3DText(char * , Vector3 );
+void DrawKey(Vector3 position);
+void DrawPotion(Vector3 position);
 
 #endif

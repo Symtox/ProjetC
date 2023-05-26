@@ -11,8 +11,8 @@ int main(void)
 {
     chunkedMap_t map;
     player_t player = BASE_PLAYER;
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
 
     int loadMapFromSave = 0;
 

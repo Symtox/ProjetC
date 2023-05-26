@@ -33,6 +33,8 @@
     Vector3 getNoclipMovement(playerPhysics_t *);
     int getTileFromCoordsAndMap(int, int, chunkedMap_t);
 
+    Vector3 getPlayerOrientation();
+
 
 
 #endif

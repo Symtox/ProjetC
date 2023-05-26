@@ -1,23 +1,38 @@
 #include "renderer.h"
+#include "../../includes/raymath.h"
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
+Model keyModel;
+Model potionModel;
+Model cubeModel;
+
 void initRenderer(player_t * player) {
     drawBundle.player = player;
+    keyModel = LoadModel("./assets/key.obj");
+    potionModel = LoadModel("./assets/potion.obj");
+    Image image = LoadImage("./assets/cube.png");      // Load cubicmap image (RAM)
+    Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
+    DrawTextureEx(cubicmap, (Vector2){ 1080 - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
+
+    Mesh mesh = GenMeshCubicmap(image, (Vector3){ 1.0f, 1.0f, 1.0f });
+    cubeModel = LoadModelFromMesh(mesh);
+
+    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
+    cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 }
 
 void DrawMap(chunkedMap_t map) {
-
     for(int i = 0; i < map.width; i++) {
         for(int j = 0; j < map.height; j++) {
             if(map.chunks[i][j].x != -1) {
-                //DrawChunk(map.chunks[i][j]);
-                DrawCube((Vector3) {0,0,0}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {125, 125, 125, 125});
+                DrawChunk(map.chunks[i][j]);
             }
         }
     }
 }
 
+//TODO Optimize this
 void DrawChunk(chunk_t chunk) {
     for(int i = chunk.x * CHUNK_SIZE; i < (chunk.x + 1) * CHUNK_SIZE; i++) {
         for(int j = chunk.y * CHUNK_SIZE; j < (chunk.y + 1) * CHUNK_SIZE; j++) {
@@ -44,9 +59,10 @@ void DrawChunk(chunk_t chunk) {
 
             }
             if(drawBundle.drawCeiling) {
-                DrawCube((Vector3){ i + 0.5, WALL_HEIGHT + 1 - 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color){ 255, 255, 255, 255} );
                 DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
+                DrawCube((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE );
             }
+
         }
 
     }
@@ -54,10 +70,10 @@ void DrawChunk(chunk_t chunk) {
 
 void DrawOverlay() {
     if(drawBundle.drawOverlay) {
-        DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 50, 255, 50, 100});
-        DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, BLACK);
-        DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, BLACK);
-        DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, BLACK);
+        DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 0, 0, 0, 100});
+        DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, WHITE);
+        DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, WHITE);
+        DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, WHITE);
     }
 }
 
@@ -79,13 +95,15 @@ void DrawDebug() {
 }
 void Render(chunkedMap_t map) {
         ClearBackground(BLACK);
-
         BeginMode3D(*drawBundle.player->camera);
 
         DrawMap(map);
-        render3DText("caaca", (Vector3){10, 10, -3}, (Vector3){ 10, 3, 10});
 
+        render3DText("caaca", (Vector3){10, 3, 10});
 
+        DrawKey((Vector3){10, 1, 10});
+        DrawPotion((Vector3){10, 1, 11});
+        DrawModel(cubeModel, (Vector3){10, 1, 12}, 1.0f, RED);
         EndMode3D();
 
         DrawOverlay();
@@ -115,10 +133,10 @@ void setDrawBundle(drawBundle_t bundle) {
 static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, float fontSize, Color tint);
 // Draw a 2D text in 3D space
 static void DrawText3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, Color tint);
-// Measure a text in 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
+// Measure a text works but the text is not drin 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
 static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
-int render3DText(char * text, Vector3 position, Vector3 orientation)
+int render3DText(char * text, Vector3 position)
 {
     Vector3 textDimension;
     // Initialization
@@ -126,18 +144,16 @@ int render3DText(char * text, Vector3 position, Vector3 orientation)
     Font font = GetFontDefault();
 
     textDimension = MeasureText3D(GetFontDefault(), text, 8.0f, 1.0f, 0.0f);
-    position.x -= textDimension.x/2.0f;
 
     rlPushMatrix();
 
-    Vector3 posPlayer = drawBundle.player->camera->position;
-
-    float angleBetweenVectors = atan2f(posPlayer.x - position.x, posPlayer.z - position.z) * 180.0f / PI;
-    
+    Vector3 direction = Vector3Normalize(Vector3Subtract(drawBundle.player->camera->position, position));
+    float angleBetweenVectors = atan2f(direction.x, direction.z) * 180.0f / PI;
+    rlTranslatef(position.x, position.y, position.z);
     rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     rlRotatef(angleBetweenVectors, 0.0f, 0.0f, -1.0f);
 
-    DrawText3D(GetFontDefault(), text, position, 8.0f, 5.0f, 0.0f, RED);
+    DrawText3D(GetFontDefault(), text, (Vector3){-textDimension.x/2, 0, 0}, 5.0f, 2.0f, 0.0f, RED);
     rlPopMatrix();
 
     UnloadFont(font);
@@ -146,7 +162,7 @@ int render3DText(char * text, Vector3 position, Vector3 orientation)
 
 //--------------------------------------------------------------------------------------
 // Module Functions Definitions
-//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------raylib
 // Draw codepoint at specified position in 3D space
 static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, float fontSize, Color tint)
 {
@@ -310,6 +326,17 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+
+void DrawKey(Vector3 position) {
+    keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
+    DrawModel(keyModel, position, 0.10f, GOLD);
+}
+
+void DrawPotion(Vector3 position) {
+    position.y = position.y-1 + sin((float)GetTime() * 2) * 0.1f;
+    potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
+    DrawModel(potionModel, position, 0.015f, CLITERAL(Color){ 255, 100, 100, 220 });
+}
 
 
 

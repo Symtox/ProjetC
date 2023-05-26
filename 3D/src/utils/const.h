@@ -14,7 +14,9 @@
     #define MAX_FALL_SPEED 12 // Vitesse maximale de la chute
     #define PLAYER_HEIGHT 1.0f // Hauteur du joueur
     #define PLAYER_WIDTH 0.1f // Largeur du joueur
-    #define PLAYER_SENSITIVITY 0.02f // Sensibilité de la souris
+    #define PLAYER_SENSITIVITY_MOUSE 0.02f // Sensibilité de la souris
+    #define PLAYER_SENSITIVITY_GAMEPAD 2 // Sensibilité de la souris
+
     #define MOVEMENT_SPEED 0.15f // Vitesse de déplacement
     #define FREE_WALK_MOVEMENT_SPEED 1.0f
 #define WALL_HEIGHT 4

@@ -15,11 +15,7 @@
 int handlePlayerMovement(player_t * player, chunkedMap_t map) {
     drawBundle_t bundle = getDrawBundle();
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
-    Vector3 playerRotation = (Vector3) {
-            GetMouseDelta().x * PLAYER_SENSITIVITY,                            // Rotation: yaw
-            GetMouseDelta().y * PLAYER_SENSITIVITY,                            // Rotation: pitch
-            0.0f                                              // Rotation: roll
-    };
+    Vector3 playerRotation = getPlayerOrientation();
 
 
 
@@ -40,10 +36,10 @@ int handlePlayerMovement(player_t * player, chunkedMap_t map) {
 
 Vector3 getNoclipMovement(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
-    if(IsKeyDown(KEY_SPACE) && playerPhysics->noclip) {
+    if((IsKeyDown(KEY_SPACE) || (IsGamepadAvailable(0) && IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2))) && playerPhysics->noclip) {
         playerMovement.y += FREE_WALK_MOVEMENT_SPEED;
     }
-    if(IsKeyDown(KEY_LEFT_SHIFT) && playerPhysics->noclip) {
+    if((IsKeyDown(KEY_LEFT_SHIFT) || (IsGamepadAvailable(0) && IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2))) && playerPhysics->noclip) {
         playerMovement.y -= FREE_WALK_MOVEMENT_SPEED;
     }
     return playerMovement;
@@ -57,14 +53,28 @@ float getMovementSpeed(bool noclip) {
 
 
 Vector3 getMovementVectorFromInputs(bool noclip) {
-    Vector3 playerMovement = (Vector3) {
-            (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)),
-            0.0f,
-            (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
-    };
-    return Vector3Scale(Vector3Normalize(playerMovement), getMovementSpeed(noclip));
+    Vector3 playerMovement = {0};
+    if(IsGamepadAvailable(0)) {
+        float approx = 0.25f;
+        playerMovement.x = -GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);
+        playerMovement.z = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
+        playerMovement.x = fabsf(playerMovement.x) < approx ? 0 : playerMovement.x;
+        playerMovement.z = fabsf(playerMovement.z) < approx ? 0 : playerMovement.z;
+        return Vector3Scale(playerMovement, getMovementSpeed(noclip));
+    } else {
+        playerMovement.x = (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN));
+        playerMovement.z = (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT));
+        return Vector3Scale(Vector3Normalize(playerMovement), getMovementSpeed(noclip));
+
+    }
 }
 
+Vector3 getPlayerOrientation() {
+    if(IsGamepadAvailable(0)) {
+        return (Vector3){ GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * PLAYER_SENSITIVITY_GAMEPAD, GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * PLAYER_SENSITIVITY_GAMEPAD, 0.0f};
+    }
+    return (Vector3){GetMouseDelta().x * PLAYER_SENSITIVITY_MOUSE, GetMouseDelta().y * PLAYER_SENSITIVITY_MOUSE, 0.0f};
+}
 
 Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = (Vector3) {
@@ -96,9 +106,12 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
 }
 
 void handleJump(playerPhysics_t * playerPhysics) {
-    if(IsKeyPressed(KEY_SPACE) && !playerPhysics->isJumping && !playerPhysics->isFalling) {
-        playerPhysics->isJumping = 1;
+    if(IsKeyPressed(KEY_SPACE) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
+        if(!playerPhysics->isJumping && !playerPhysics->isFalling) {
+            playerPhysics->isJumping = 1;
+        }
     }
+
 }
 
 Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics, chunkedMap_t map) {

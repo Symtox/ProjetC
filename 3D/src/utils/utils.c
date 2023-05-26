@@ -44,3 +44,4 @@ void initLogger() {
 void endLogger() {
     fclose(fp);
 }
+
