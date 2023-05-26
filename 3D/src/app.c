@@ -2,21 +2,22 @@
 #include "../includes/rcamera.h"
 #include "utils/utils.h"
 #include "core/physics.h"
-#include <stdlib.h>
-#include "board.h"
-#include <stdio.h>
+#include "board/board.h"
 #include "core/renderer.h"
-
-playerPhysics_t physics = INIT_PLAYER_PHYSICS;
+#include "core/gameController.h"
 
 
 int main(void)
 {
-    int ** map = NULL;
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    chunkedMap_t map;
+    player_t player = BASE_PLAYER;
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
+
+    int loadMapFromSave = 0;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
+    DisableCursor();                    // Limit cursor to relative movement inside the window
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -25,22 +26,24 @@ int main(void)
     camera.fovy = 90.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
+    player.camera = &camera;
 
-    DisableCursor();                    // Limit cursor to relative movement inside the window
+    initLogger();
+    initRenderer(&player);
+    initGameController(&player, &map, loadMapFromSave);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    map = readCSV("./assets/board.csv", 1, 1);
+
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         BeginDrawing();
-
-        Render(map, camera);
-        handlePlayerMovement(&camera, &physics, map);
+        Tick(&map);
+        Render(map);
         //----------------------------------------------------------------------------------
         EndDrawing();
 
     }
-
+    endLogger();
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
@@ -48,10 +51,6 @@ int main(void)
 
     return 0;
 }
-
-
-
-
 
 
 
