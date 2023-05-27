@@ -3,23 +3,28 @@
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
+
 Model keyModel;
 Model potionModel;
 Model cubeModel;
+Texture2D heartFull;
+Texture2D heartEmpty;
+Texture2D armor;
+Texture2D sword;
+Texture2D keycount;
+Texture2D background;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
     keyModel = LoadModel("./assets/key.obj");
     potionModel = LoadModel("./assets/potion.obj");
-    Image image = LoadImage("./assets/cube.png");      // Load cubicmap image (RAM)
-    Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
-    DrawTextureEx(cubicmap, (Vector2){ 1080 - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
+    heartFull = LoadTexture("./assets/heart.png");
+    heartEmpty = LoadTexture("./assets/heart_empty.png");
+    armor = LoadTexture("./assets/armor.png");
+    sword = LoadTexture("./assets/sword.png");
+    keycount = LoadTexture("./assets/keycount.png");
+    background = LoadTexture("./assets/background.png");
 
-    Mesh mesh = GenMeshCubicmap(image, (Vector3){ 1.0f, 1.0f, 1.0f });
-    cubeModel = LoadModelFromMesh(mesh);
-
-    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 }
 
 void DrawMap(chunkedMap_t map) {
@@ -69,12 +74,37 @@ void DrawChunk(chunk_t chunk) {
 }
 
 void DrawOverlay() {
-    if(drawBundle.drawOverlay) {
-        DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 0, 0, 0, 100});
-        DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, WHITE);
-        DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, WHITE);
-        DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, WHITE);
-    }
+    // if(drawBundle.drawOverlay) {
+    //     DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 0, 0, 0, 100});
+    //     DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, WHITE);
+    //     DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, WHITE);
+    //     DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, WHITE);
+    // }
+     if(drawBundle.drawOverlay) {
+        int i = 0;
+
+        DrawTexture(background, 0, 0, WHITE);
+        for(i = 0; i < drawBundle.player->statistics.health; i++) {
+            DrawTexture(heartFull, 7 + 36 * i, 15, WHITE);
+        }
+        for(i = drawBundle.player->statistics.health; i < drawBundle.player->statistics.maxHealth; i++) {
+            DrawTexture(heartEmpty, 12 + 35 * i, 15, WHITE);
+          
+        }
+        for(i = 0; i < drawBundle.player->statistics.armor; i++) {
+            DrawTexture(armor, 5 + 36* i, 48, WHITE);
+        }
+        for(i = 0; i < drawBundle.player->statistics.damage; i++) {
+            DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
+        }
+            DrawTexture(keycount, 150, 133, WHITE);
+            DrawText(TextFormat("x %d", drawBundle.player->inventory.keyCount),190,140, 15, WHITE);
+    
+        
+        //DrawText(TextFormat("- Keys : %d, Power-up :  %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 15, 200, 15,YELLOW);
+        
+
+     }
 }
 
 void DrawDebug() {
