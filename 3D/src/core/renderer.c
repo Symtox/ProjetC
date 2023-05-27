@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
+#include "../board/tiles.h"
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
@@ -42,20 +43,21 @@ void DrawChunk(chunk_t chunk) {
     for(int i = chunk.x * CHUNK_SIZE; i < (chunk.x + 1) * CHUNK_SIZE; i++) {
         for(int j = chunk.y * CHUNK_SIZE; j < (chunk.y + 1) * CHUNK_SIZE; j++) {
             switch (chunk.chunk[i % CHUNK_SIZE][j % CHUNK_SIZE]) {
-                case 0:
+                case GROUND:
                     DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
                     DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     break;
-                case 1:
+                case WALL:
                     for (int k = 0; k < WALL_HEIGHT; k++) {
                         DrawCube((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
                         DrawCubeWires((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     }
                     break;
 
-                case 2:
-                    DrawCube((Vector3) {i + 0.5, 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 100, 100, 100});
-                    DrawCubeWires((Vector3) {i + 0.5, 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                case POWER_UP:
+                    DrawPotion((Vector3) {i + 0.5, 0.5, j + 0.5});
+                    DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
+
                     break;
                 default:
                     DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {0, 255, 100, 255});
@@ -74,12 +76,6 @@ void DrawChunk(chunk_t chunk) {
 }
 
 void DrawOverlay() {
-    // if(drawBundle.drawOverlay) {
-    //     DrawRectangle(600, 50, 200, 60, CLITERAL(Color){ 0, 0, 0, 100});
-    //     DrawText(TextFormat("- Health: %03.2f / %03.2f", drawBundle.player->statistics.health,  drawBundle.player->statistics.health), 610, 60, 15, WHITE);
-    //     DrawText(TextFormat("- Armor: %03.2f, Attack: %03.2f", drawBundle.player->statistics.armor, drawBundle.player->statistics.damage), 610, 75, 15, WHITE);
-    //     DrawText(TextFormat("- Keys: %d, Power-up %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 610, 90, 15, WHITE);
-    // }
      if(drawBundle.drawOverlay) {
         int i = 0;
 
@@ -97,12 +93,9 @@ void DrawOverlay() {
         for(i = 0; i < drawBundle.player->statistics.damage; i++) {
             DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
         }
-            DrawTexture(keycount, 150, 133, WHITE);
-            DrawText(TextFormat("x %d", drawBundle.player->inventory.keyCount),190,140, 15, WHITE);
+        DrawTexture(keycount, 150, 133, WHITE);
+        DrawText(TextFormat("x %d", drawBundle.player->inventory.keyCount),190,140, 15, WHITE);
     
-        
-        //DrawText(TextFormat("- Keys : %d, Power-up :  %d", drawBundle.player->inventory.keyCount, drawBundle.player->inventory.potionCount), 15, 200, 15,YELLOW);
-        
 
      }
 }
@@ -133,7 +126,6 @@ void Render(chunkedMap_t map) {
 
         DrawKey((Vector3){10, 1, 10});
         DrawPotion((Vector3){10, 1, 11});
-        DrawModel(cubeModel, (Vector3){10, 1, 12}, 1.0f, RED);
         EndMode3D();
 
         DrawOverlay();
@@ -363,7 +355,7 @@ void DrawKey(Vector3 position) {
 }
 
 void DrawPotion(Vector3 position) {
-    position.y = position.y-1 + sin((float)GetTime() * 2) * 0.1f;
+    position.y = position.y + sin((float)GetTime() * 2) * 0.1f;
     potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
     DrawModel(potionModel, position, 0.015f, CLITERAL(Color){ 255, 100, 100, 220 });
 }

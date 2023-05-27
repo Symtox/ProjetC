@@ -1,10 +1,8 @@
 #include "physics.h"
 #include "../utils/utils.h"
 #include "../../includes/rcamera.h"
-#include "../board/board.h"
 #include "../board/tiles.h"
 #include "../core/renderer.h"
-#include "../entities.h"
 #define APPROX_Y 0.01
 
 
@@ -124,11 +122,13 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
 
     float distance = getDistanceFromGround(playerPosition, map);
 
+
     if(playerPhysics->isJumping || distance == 0 || playerPhysics->noclip) {
         return playerMovement;
     }
 
     float fallingSpeed = getFallSpeed(*playerPhysics);
+    logFile(TextFormat("Falling: Distance: %f, x: %f, y: %f\n", distance, playerPosition.x, playerPosition.y));
 
     logFile(TextFormat("Falling: Falling speed: %f %d\n", fallingSpeed, playerPhysics->fallTime));
     playerPhysics->isFalling = 1;
@@ -331,8 +331,8 @@ void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
 }
 
 int getTileFromCoordsAndMap(int x, int y, chunkedMap_t map) {
-    if(x < 0 || y < 0 || x >= CHUNK_SIZE * map.width || y >= CHUNK_SIZE * map.height) {
-        return 0;
+    if(x < 0 || y < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || y >= CHUNK_SIZE * MAP_CHUNK_HEIGHT) {
+        return -10;
     }
     int playerChunkX = (int)(x / CHUNK_SIZE);
     int playerChunkY = (int)(y / CHUNK_SIZE);

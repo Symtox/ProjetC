@@ -2,6 +2,7 @@
 #define PROJECT_BOARD_H
 #include "../utils/const.h"
 #include "../../includes/raylib.h"
+#include "tiles.h"
 typedef struct {
     int x;
     int y;
@@ -25,5 +26,5 @@ typedef struct completeMap {
 void freeMap(chunkedMap_t * map);
 void freeChunk(chunk_t * chunk);
 int hasLeftChunk(chunkedMap_t, Vector3);
-
+int getHeightFromTileType(tileTypes_e type);
 #endif
