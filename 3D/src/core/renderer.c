@@ -1,13 +1,18 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
 #include "../board/tiles.h"
+#include "../utils/utils.h"
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
+
+void DrawDoor(door_t door);
 
 
 Model keyModel;
 Model potionModel;
 Model cubeModel;
+Model doorModel;
+
 Texture2D heartFull;
 Texture2D heartEmpty;
 Texture2D armor;
@@ -18,6 +23,7 @@ Texture2D background;
 void initRenderer(player_t * player) {
     drawBundle.player = player;
     keyModel = LoadModel("./assets/key.obj");
+    doorModel = LoadModel("./assets/door.obj");
     potionModel = LoadModel("./assets/potion.obj");
     heartFull = LoadTexture("./assets/heart.png");
     heartEmpty = LoadTexture("./assets/heart_empty.png");
@@ -31,47 +37,46 @@ void initRenderer(player_t * player) {
 void DrawMap(chunkedMap_t map) {
     for(int i = 0; i < map.width; i++) {
         for(int j = 0; j < map.height; j++) {
-            if(map.chunks[i][j].x != -1) {
+        }
+    }
+    //DrawChunk(map.chunks[0][0]);
+    for (int i = 0; i < map.width; i++) {
+        for (int j = 0; j < map.height; j++) {
+            if (map.chunks[i][j].x != -1) {
                 DrawChunk(map.chunks[i][j]);
             }
         }
     }
 }
 
-//TODO Optimize this
+//TODO Add DrawCeilling & DrawGround
 void DrawChunk(chunk_t chunk) {
-    for(int i = chunk.x * CHUNK_SIZE; i < (chunk.x + 1) * CHUNK_SIZE; i++) {
-        for(int j = chunk.y * CHUNK_SIZE; j < (chunk.y + 1) * CHUNK_SIZE; j++) {
-            switch (chunk.chunk[i % CHUNK_SIZE][j % CHUNK_SIZE]) {
-                case GROUND:
-                    DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
-                    DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                    break;
-                case WALL:
-                    for (int k = 0; k < WALL_HEIGHT; k++) {
-                        DrawCube((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
-                        DrawCubeWires((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                    }
-                    break;
-
-                case POWER_UP:
-                    DrawPotion((Vector3) {i + 0.5, 0.5, j + 0.5});
-                    DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
-
-                    break;
-                default:
-                    DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {0, 255, 100, 255});
-                    DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                    break;
-
+    //GROUND
+    DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, -0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
+    for(int x = chunk.x * CHUNK_SIZE; x < (chunk.x + 1) * CHUNK_SIZE; x++) {
+        for(int y = 1; y < MAX_Y; y++) {
+            for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
+                switch (chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]) {
+                    case WALL:
+                        DrawCube((Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, y * 30, 255, 255});
+                        DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                        break;
+                }
             }
-            if(drawBundle.drawCeiling) {
-                DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
-                DrawCube((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE );
-            }
-
         }
-
+    }
+    for(int i = 0; i < chunk.doorCount; i++) {
+        DrawDoor(chunk.doors[i]);
+    }
+    for(int i = 0; i < chunk.powerUpCount; i++) {
+        DrawPotion(chunk.powerUps[i]);
+    }
+    for(int i = 0; i < chunk.keyCount; i++) {
+        //DrawKey(chunk.keys[i]);
+    }
+    if(drawBundle.drawCeiling) {
+        //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
+        DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, WALL_HEIGHT + 0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
     }
 }
 
@@ -94,23 +99,23 @@ void DrawOverlay() {
             DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
         }
         DrawTexture(keycount, 150, 133, WHITE);
-        DrawText(TextFormat("x %d", drawBundle.player->inventory.keyCount),190,140, 15, WHITE);
-    
+        DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
+         DrawFPS(900, 10);
 
      }
 }
 
 void DrawDebug() {
-
-    const char * infos[DEBUG_INFO_LINE_COUNT] = {
-            TextFormat("x: %f, y: %f, z: %f", drawBundle.player->camera->position.x, drawBundle.player->camera->position.y, drawBundle.player->camera->position.z),
-            TextFormat("cx: %d, cy: %d", ((int)drawBundle.player->camera->position.x) / CHUNK_SIZE, ((int)drawBundle.player->camera->position.z) / CHUNK_SIZE),
-            TextFormat("looking at: (%f, %f, %f)", drawBundle.player->camera->target.x, drawBundle.player->camera->target.y, drawBundle.player->camera->target.z),
-            TextFormat("move: (%f, %f, %f)", drawBundle.movement.x, drawBundle.movement.y, drawBundle.movement.z),
-            TextFormat("rot: (%f, %f, %f)", drawBundle.direction.x, drawBundle.direction.y, drawBundle.direction.z)
-    };
-
     if(drawBundle.drawDebug) {
+
+        const char * infos[DEBUG_INFO_LINE_COUNT] = {
+                TextFormat("cx: %d, cy: %d", ((int)drawBundle.player->camera->position.x) / CHUNK_SIZE, ((int)drawBundle.player->camera->position.z) / CHUNK_SIZE),
+                TextFormat("x: %f, y: %f, z: %f", drawBundle.player->camera->position.x, drawBundle.player->camera->position.y, drawBundle.player->camera->position.z),
+                TextFormat("looking at: (%f, %f, %f)", drawBundle.player->camera->target.x, drawBundle.player->camera->target.y, drawBundle.player->camera->target.z),
+                TextFormat("move: (%f, %f, %f)", drawBundle.movement.x, drawBundle.movement.y, drawBundle.movement.z),
+                TextFormat("rot: (%f, %f, %f)", drawBundle.direction.x, drawBundle.direction.y, drawBundle.direction.z)
+        };
+
         for(int i = 0; i < DEBUG_INFO_LINE_COUNT; i++) {
             DrawText(infos[i], 10, 25 + 15 * i, 10, WHITE);
         }
@@ -122,10 +127,8 @@ void Render(chunkedMap_t map) {
 
         DrawMap(map);
 
-        render3DText("caaca", (Vector3){10, 3, 10});
+        //render3DText("caaca", (Vector3){10, 3, 10});
 
-        DrawKey((Vector3){10, 1, 10});
-        DrawPotion((Vector3){10, 1, 11});
         EndMode3D();
 
         DrawOverlay();
@@ -349,19 +352,25 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
 }
 
 
-void DrawKey(Vector3 position) {
-    keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
-    DrawModel(keyModel, position, 0.10f, GOLD);
+void DrawKey(DoorKey_t key) {
+    key.position.y++;
+    logFile(TextFormat("Key position: %f, %f, %f\n", key.position.x, key.position.y, key.position.z));
+   // keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
+    DrawModel(keyModel, key.position, 0.10f, GOLD);
 }
 
-void DrawPotion(Vector3 position) {
-    position.y = position.y + sin((float)GetTime() * 2) * 0.1f;
+void DrawPotion(powerUp_t powerUp) {
+    powerUp.position.y = powerUp.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
     potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, position, 0.015f, CLITERAL(Color){ 255, 100, 100, 220 });
+    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 255, 100, 100, 220 });
 }
 
 
-
+void DrawDoor(door_t door) {
+    Model currModel = doorModel;
+    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, door.rotation * DEG2RAD });
+    DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
+}
 
 
 

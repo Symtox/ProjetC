@@ -6,7 +6,7 @@
 #include "../board/board.h"
 #ifndef PROJECT_RENDERER_H
 #define PROJECT_RENDERER_H
-#include "../entities.h"
+#include "../board/entities.h"
 typedef struct {
     int drawCeiling;
     int drawDebug;
@@ -35,7 +35,7 @@ drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
 
 int render3DText(char * , Vector3 );
-void DrawKey(Vector3 position);
-void DrawPotion(Vector3 position);
+void DrawKey(DoorKey_t);
+void DrawPotion(powerUp_t);
 
 #endif

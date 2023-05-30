@@ -10,14 +10,15 @@
 int main(void)
 {
     chunkedMap_t map;
-    player_t player = BASE_PLAYER;
-    const int screenWidth = 1920;
+    player_t player = {0};
+    const int screenWidth = 1700;
     const int screenHeight = 1080;
 
     int loadMapFromSave = 0;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
     DisableCursor();                    // Limit cursor to relative movement inside the window
+    initLogger();
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -28,7 +29,6 @@ int main(void)
 
     player.camera = &camera;
 
-    initLogger();
     initRenderer(&player);
     initGameController(&player, &map, loadMapFromSave);
 

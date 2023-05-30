@@ -2,7 +2,7 @@
 #include "../../includes/raymath.h"
 #include "../utils/const.h"
 #include "../board/board.h"
-#include "../entities.h"
+#include "../board/entities.h"
 
 #ifndef PROJECT_PHYSICS_H
     #define PROJECT_PHYSICS_H
@@ -27,11 +27,11 @@
 
     void updateCameraCustom(Camera *, Vector3, Vector3);
 
-    float getDistanceFromGround(Vector3, chunkedMap_t);
+    float getPlayerDistanceFromGround(Vector3, chunkedMap_t);
     void correctMovementWithCollisions(Vector3 *, Vector3 , Camera , playerPhysics_t , chunkedMap_t );
 
     Vector3 getNoclipMovement(playerPhysics_t *);
-    int getTileFromCoordsAndMap(int, int, chunkedMap_t);
+    float getTileDistanceFromGround(int, float, int, chunkedMap_t);
 
     Vector3 getPlayerOrientation();
 
