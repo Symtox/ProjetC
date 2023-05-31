@@ -3,7 +3,7 @@
 #include "../includes/raylib.h"
 #include "utils/const.h"
 #define BASE_PLAYER { \
-    {5, 10, 10, 5, 0, 0}, \
+    {30, 30, 25, 35, 0, 0}, \
     0, \
     {10, 10},         \
     {0, 0, 0, 0, FALL_BASE_SPEED, JUMP_BASE_SPEED, 0} \

@@ -2,7 +2,7 @@
 #include "../../includes/raymath.h"
 #include "../board/tiles.h"
 #define DEBUG_INFO_LINE_COUNT 5
-drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
+drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
 
 Model keyModel;
@@ -14,6 +14,10 @@ Texture2D armor;
 Texture2D sword;
 Texture2D keycount;
 Texture2D background;
+Texture2D bigheart;
+Texture2D bigarmor;
+Texture2D bigsword;
+Texture2D wingsheart;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -25,6 +29,10 @@ void initRenderer(player_t * player) {
     sword = LoadTexture("./assets/sword.png");
     keycount = LoadTexture("./assets/keycount.png");
     background = LoadTexture("./assets/background.png");
+    bigheart = LoadTexture("./assets/bigheart.png");
+    bigarmor = LoadTexture("./assets/bigarmor.png");
+    bigsword = LoadTexture("./assets/bigsword.png");
+    wingsheart = LoadTexture("./assets/wingsheart.png");
 
 }
 
@@ -74,28 +82,92 @@ void DrawChunk(chunk_t chunk) {
 
     }
 }
-
+// gerer le max health et faire un design
+// quand triche faire un design armor et epee different
 void DrawOverlay() {
+    int bigHeart = 0;
+    int smallheart = drawBundle.player->statistics.health;
+    int bigArmor = 0;
+    int smallarmor = drawBundle.player->statistics.armor;
+    int bigDamage = 0;
+    int smalldamage = drawBundle.player->statistics.damage;
+
+
+    if(smallheart % 10 == 0){
+        smallheart = 10;
+        bigHeart = (drawBundle.player->statistics.health / 10)-1;
+    }
+    else {
+        smallheart = smallheart % 10;
+        bigHeart = drawBundle.player->statistics.health / 10;
+    }
+    if(smallarmor % 10 == 0){
+        smallarmor = 10;
+        bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
+    }
+    else {
+        smallarmor = smallarmor % 10;
+        bigArmor = drawBundle.player->statistics.armor / 10;
+    }
+    if(smalldamage % 10 == 0){
+        smalldamage = 10;
+        bigDamage = (drawBundle.player->statistics.damage/ 10)-1;
+    }
+    else {
+        smalldamage = smalldamage % 10;
+        bigDamage = drawBundle.player->statistics.damage / 10;
+    }
+
+
+
+            //                 if(smallarmor % 10 == 0){
+            //     smallheart = 10;
+            //     bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
+            // }
+            //             else {
+            //     small armor = smallarmor % 10;
+            //     bigArmor = drawBundle.player->statistics.armor / 10;
+            // }
+            //         DrawTexture(bigheart,7 + 36 * 11, 15, WHITE); 
+            //     DrawText(TextFormat("x %d", bigarmor), 30 + 36 * i,15, 15,WHITE);
+            // }
+
      if(drawBundle.drawOverlay) {
         int i = 0;
 
         DrawTexture(background, 0, 0, WHITE);
-        for(i = 0; i < drawBundle.player->statistics.health; i++) {
+        for(i = 0; i < 10; i++) {
+            DrawTexture(heartEmpty, 7 + 36 * i, 15, WHITE);
+        }
+        for(i = 0; i < smallheart; i++) {
+           
             DrawTexture(heartFull, 7 + 36 * i, 15, WHITE);
         }
-        for(i = drawBundle.player->statistics.health; i < drawBundle.player->statistics.maxHealth; i++) {
-            DrawTexture(heartEmpty, 12 + 35 * i, 15, WHITE);
-          
+        
+
+        if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
+                DrawTexture(wingsheart, 430, 13, WHITE);
+                
         }
-        for(i = 0; i < drawBundle.player->statistics.armor; i++) {
+        else {
+                DrawTexture(bigheart,400, 13, WHITE); 
+                DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
+            }
+          
+        for(i = 0; i < smallarmor; i++) {
             DrawTexture(armor, 5 + 36* i, 48, WHITE);
         }
-        for(i = 0; i < drawBundle.player->statistics.damage; i++) {
-            DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
+        for(i = 0; i < smalldamage; i++) {
+            DrawTexture(sword, 2 + 36 * i, 86, WHITE);
         }
         DrawTexture(keycount, 150, 133, WHITE);
         DrawText(TextFormat("x %d", drawBundle.player->inventory.keyCount),190,140, 15, WHITE);
-    
+
+        DrawTexture(bigarmor,400, 47, WHITE); 
+        DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
+
+        DrawTexture(bigsword,400, 87, WHITE);
+        DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
      }
 }
