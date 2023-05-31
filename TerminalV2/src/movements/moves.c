@@ -3,46 +3,46 @@
 #include <stdlib.h>
 #include "moves.h"
 
-player_t moveOnKey(player_t player, int x, int y){
-    player.nbKey += 1;
-    player.pos.x = x;
-    player.pos.y = y;
-    return player;
+void moveOnKey(player_t * player, int x, int y){
+    player->nbKey += 1;
+    player->pos.x = x;
+    player->pos.y = y;
+    return;
 }
 
-player_t moveOnDoor(player_t player, int x, int y){
-    if (player.nbKey > 0){
-        player.nbKey -= 1;
-        player.pos.x = x;
-        player.pos.y = y;
+void moveOnDoor(player_t * player, int x, int y){
+    if (player->nbKey > 0){
+        player->nbKey -= 1;
+        player->pos.x = x;
+        player->pos.y = y;
     }
-    return player;
+    return;
 }
 
-player_t moveOnPotion(player_t player, int x, int y){
-    player.hp = player.max_hp;
-    player.pos.x = x;
-    player.pos.y = y;
-    return player;
+void moveOnPotion(player_t * player, int x, int y){
+    player->hp = player->max_hp;
+    player->pos.x = x;
+    player->pos.y = y;
+    return;
 }
 
-player_t moveOnPowerUp(player_t player, int x, int y, int power){
-    player.pos.x = x;
-    player.pos.y = y;
+void moveOnPowerUp(player_t * player, int x, int y, int power){
+    player->pos.x = x;
+    player->pos.y = y;
 
     if (power == 1) {
-        player.attack += 1;
-        return player;
+        player->attack += 1;
     }
     else if(power == 2){
-        player.defense += 1;
-        return player;
+        player->defense += 1;
     }
     else{
-        player.max_hp += 3;
-        return player;
+        player->max_hp += 3;
     }
+
+    return;
 }
+
 
 void actionAfterFight(player_t * player, int x, int y, int fightResult){
     if (fightResult == MONSTER_DIE){
@@ -60,8 +60,8 @@ void actionAfterFight(player_t * player, int x, int y, int fightResult){
     }
 }
 
-player_t movements(plateau * game, player_t player, int addX, int addY){
-    position_t newPos = {player.pos.x + addX, player.pos.y + addY};
+void movements(plateau * game, player_t * player, int addX, int addY){
+    position_t newPos = {player->pos.x + addX, player->pos.y + addY};
     
     int fightResult = -1;
 
@@ -69,26 +69,26 @@ player_t movements(plateau * game, player_t player, int addX, int addY){
         case '#':
             break;
         case ' ':
-            player.pos.x = newPos.x;
-            player.pos.y = newPos.y;
+            player->pos.x = newPos.x;
+            player->pos.y = newPos.y;
             break;
         case '!':
-            player = moveOnKey(player, newPos.x, newPos.y);
+            moveOnKey(&player, newPos.x, newPos.y);
             break;
         case 'o':
-            player = moveOnDoor(player, newPos.x, newPos.y);
+            moveOnDoor(&player, newPos.x, newPos.y);
             break;
         case '1':
-            player = moveOnPowerUp(player, newPos.x, newPos.y, 1);
+            moveOnPowerUp(&player, newPos.x, newPos.y, 1);
             break;
         case '2':
-            player = moveOnPowerUp(player, newPos.x, newPos.y, 2);
+            moveOnPowerUp(&player, newPos.x, newPos.y, 2);
             break;
         case '3':
-            player = moveOnPowerUp(player, newPos.x, newPos.y, 3);
+            moveOnPowerUp(&player, newPos.x, newPos.y, 3);
             break;
         case 'P':
-            player = moveOnPotion(player, newPos.x, newPos.y);
+            moveOnPotion(&player, newPos.x, newPos.y);
             break;
         case '?':
             break;
@@ -110,5 +110,5 @@ player_t movements(plateau * game, player_t player, int addX, int addY){
             break;
     }
 
-    return player;
+    return;
 }

@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "entities.h"
+#include "attackAndDefense.h"
 #include <math.h>
 #include <ctype.h>
-#include "attackAndDefense.h"
 #include "../utils/sleep.h"
 
 monster_t monsters[] = {
@@ -12,6 +13,7 @@ monster_t monsters[] = {
     [2] = { .name = 'C', .max_hp = 10, .hp = 10, .defense = 3, .attack = 3 },
     [3] = { .name = 'D', .max_hp = 10, .hp = 10, .defense = 4, .attack = 4 }
 }; 
+
 
 monster_t getMonsterByName(char name){
     for(int i = 0; i < 4; i++){

@@ -83,13 +83,13 @@ void printItemColor(char item){
     color(15,0);
 }
 
-void printPlateau(plateau * game, player_t player){
+void printPlateau(plateau * game, player_t * player){
     //Suppression de l'objet récupéré / ancienne position du joueur
-    game->table[player.pos.x][player.pos.y] = ' ';
+    game->table[player->pos.x][player->pos.y] = ' ';
 
     for(int i=0; i<10;i++){
         for(int j=0; j<10;j++){
-            if (i == player.pos.x && j == player.pos.y)
+            if (i == player->pos.x && j == player->pos.y)
                 printf("@");
             else
                 printItemColor(game->table[i][j]);
@@ -98,46 +98,46 @@ void printPlateau(plateau * game, player_t player){
                 color(12,0);
                 printf(" HP ");
                 color(15,0);
-                printf(" : %d/%d", player.hp, player.max_hp);
+                printf(" : %d/%d", player->hp, player->max_hp);
             }
             else if (i == 2 && j == 9) {
                 color(10, 0);
                 printf(" ATK ");
                 color(15,0);
-                printf(": %d", player.attack);
+                printf(": %d", player->attack);
             }
             else if (i == 3 && j == 9) {
                 color(9, 0);
                 printf(" DEF ");
                 color(15,0);
-                printf(": %d", player.defense);
+                printf(": %d", player->defense);
             }
             else if (i == 4 && j == 9) {
                 color(14, 0);
                 printf(" KEY ");
                 color(15,0);
-                printf(": %d", player.nbKey);
+                printf(": %d", player->nbKey);
             }
         }
         printf("\n");
     }
 }
 
-void play(plateau * game, player_t player){
+void play(plateau * game, player_t * player){
     int move = 0;
     while(1){
         char move = _getch();
         if(move == 77){
-            player = movements(game, player, 0, 1);
+            movements(game, player, 0, 1);
         }
         else if(move == 75){
-            player = movements(game, player, 0, -1);
+            movements(game, player, 0, -1);
         }
         else if(move == 72){
-            player = movements(game, player, -1, 0);
+            movements(game, player, -1, 0);
         }
         else if(move == 80){
-            player = movements(game, player, 1, 0);
+            movements(game, player, 1, 0);
         }
         else if (move == 'q'){
             break;
@@ -154,7 +154,7 @@ int main() {
     player_t player = {10, 10, 1, 2, 0, {4, 8}};
     plateau * game = createPlateau();
     system("CLS");
-    printPlateau(game, player);
-    play(game, player);
+    printPlateau(game, &player);
+    play(game, &player);
     return 0;
 }
