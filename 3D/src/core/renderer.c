@@ -2,6 +2,7 @@
 #include "../../includes/raymath.h"
 #include "../board/tiles.h"
 #include "../utils/utils.h"
+#include <stdlib.h>
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
@@ -35,11 +36,6 @@ void initRenderer(player_t * player) {
 }
 
 void DrawMap(chunkedMap_t map) {
-    for(int i = 0; i < map.width; i++) {
-        for(int j = 0; j < map.height; j++) {
-        }
-    }
-    //DrawChunk(map.chunks[0][0]);
     for (int i = 0; i < map.width; i++) {
         for (int j = 0; j < map.height; j++) {
             if (map.chunks[i][j].x != -1) {
@@ -58,8 +54,8 @@ void DrawChunk(chunk_t chunk) {
             for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
                 switch (chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]) {
                     case WALL:
-                        DrawCube((Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, y * 30, 255, 255});
-                        DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                        DrawCube((Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {30, 50 , 100 , 255});
+                        //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                         break;
                 }
             }
@@ -72,7 +68,7 @@ void DrawChunk(chunk_t chunk) {
         DrawPotion(chunk.powerUps[i]);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
-        //DrawKey(chunk.keys[i]);
+        DrawKey(chunk.keys[i]);
     }
     if(drawBundle.drawCeiling) {
         //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
@@ -127,7 +123,6 @@ void Render(chunkedMap_t map) {
 
         DrawMap(map);
 
-        //render3DText("caaca", (Vector3){10, 3, 10});
 
         EndMode3D();
 
@@ -361,8 +356,10 @@ void DrawKey(DoorKey_t key) {
 
 void DrawPotion(powerUp_t powerUp) {
     powerUp.position.y = powerUp.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    powerUp.position.x += 0.5f;
+    powerUp.position.z += 0.5f;
     potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 255, 100, 100, 220 });
+    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
 }
 
 

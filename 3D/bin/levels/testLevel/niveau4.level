@@ -28,9 +28,9 @@
 ##############################
 ##############################
 ##############################
-Est : niveau2.level
+Est :
 Sud : niveau3.level
-Ouest :
+Ouest : niveau2.level
 Nord :
 
 A

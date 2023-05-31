@@ -56,16 +56,10 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         return;
     }
 
-    for(int i = 0; i < CHUNK_SIZE; i++) {
+    for(int i = CHUNK_SIZE - 1; i >= 0; i--) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             char currChar = fgetc(file);
             printf("%c", currChar);
-            if(currChar == '\n') {
-                currChar = fgetc(file);
-            }
-            if(currChar == '\r') {
-                currChar = fgetc(file);
-            }
             switch (currChar) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
@@ -109,6 +103,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                 chunk->monsterCount++;
             }
         }
+        fgetc(file);
+        fgetc(file);
     }
 
     char * line = NULL;
@@ -235,18 +231,18 @@ void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
 
     chunkCount++;
     if(chunkBuffer[currentChunkNo].east != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x+1, y);
+        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
     }
     if(chunkBuffer[currentChunkNo].south != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x, y-1);
+        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
     }
     if(chunkBuffer[currentChunkNo].west != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x-1, y);
+        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
     }
     if(chunkBuffer[currentChunkNo].north != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x, y+1);
+        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
     }
-    //free(fullPath);
+    free(fullPath);
 }
 
 
