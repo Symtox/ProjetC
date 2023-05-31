@@ -5,43 +5,44 @@
 #include "entities/entities.h"
 #include "movements/moves.h"
 #include "main.h"
+#include "utils/fileReader.h"
 
 
-plateau * createPlateau() {
-    plateau * game = malloc(sizeof(plateau));
+map_t * createPlateau() {
+    map_t * map = malloc(sizeof(map_t));
     for(int i=0; i<10;i++){
         if (i == 0){
             for(int j=0; j<10;j++){
-                game->table[i][j] = '#';
+                map->table[i][j] = '#';
             }
         }
         else if (i == 9){
             for(int j=0; j<10;j++){
-                game->table[i][j] = '#';
+                map->table[i][j] = '#';
             }
         }
         else{
             for(int j=0; j<10;j++){
                 if (j == 0){
-                    game->table[i][j] = '#';
+                    map->table[i][j] = '#';
                 }
                 else if (j == 9){
-                    game->table[i][j] = '#';
+                    map->table[i][j] = '#';
                 }
                 else{
-                    game->table[i][j] = ' ';
+                    map->table[i][j] = ' ';
                 }
             }
         }
-        game->table[2][2] = '!';
-        game->table[3][3] = '3';
-        game->table[7][7] = 'o';
-        game->table[1][1] = '2';
-        game->table[8][8] = '1';
-        game->table[5][5] = 'P';
-        game->table[6][6] = 'A';
+        map->table[2][2] = '!';
+        map->table[3][3] = '3';
+        map->table[7][7] = 'o';
+        map->table[1][1] = '2';
+        map->table[8][8] = '1';
+        map->table[5][5] = 'P';
+        map->table[6][6] = 'A';
     }
-    return game;
+    return map;
 }
 
 void color(int t,int f)
@@ -83,16 +84,16 @@ void printItemColor(char item){
     color(15,0);
 }
 
-void printPlateau(plateau * game, player_t * player){
+void printMap(map_t * map, player_t * player){
     //Suppression de l'objet récupéré / ancienne position du joueur
-    game->table[player->pos.x][player->pos.y] = ' ';
+    map->table[player->pos.x][player->pos.y] = ' ';
 
     for(int i=0; i<10;i++){
         for(int j=0; j<10;j++){
             if (i == player->pos.x && j == player->pos.y)
                 printf("@");
             else
-                printItemColor(game->table[i][j]);
+                printItemColor(map->table[i][j]);
             
             if (i == 1 && j == 9) {
                 color(12,0);
@@ -123,21 +124,21 @@ void printPlateau(plateau * game, player_t * player){
     }
 }
 
-void play(plateau * game, player_t * player){
+void play(map_t * map, player_t * player){
     int move = 0;
     while(1){
         char move = _getch();
         if(move == 77){
-            movements(game, player, 0, 1);
+            movements(map, player, 0, 1);
         }
         else if(move == 75){
-            movements(game, player, 0, -1);
+            movements(map, player, 0, -1);
         }
         else if(move == 72){
-            movements(game, player, -1, 0);
+            movements(map, player, -1, 0);
         }
         else if(move == 80){
-            movements(game, player, 1, 0);
+            movements(map, player, 1, 0);
         }
         else if (move == 'q'){
             break;
@@ -146,15 +147,16 @@ void play(plateau * game, player_t * player){
             continue;
         }
         system("CLS");
-        printPlateau(game, player);
+        printMap(map, player);
     }
 }
 
 int main() {
     player_t player = {10, 10, 1, 2, 0, {4, 8}};
-    plateau * game = createPlateau();
+    tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
+    map_t map = initMap("niveau1.level", tabMonsters);
     system("CLS");
-    printPlateau(game, &player);
-    play(game, &player);
+    printMap(&map, &player);
+    play(&map, &player);
     return 0;
 }

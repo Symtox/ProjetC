@@ -19,7 +19,7 @@ UTILS_DIR = utils
 BIN_DIR = obj
 
 #OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-OBJS ?= $(SRC_DIR)/$(ENTITIES_DIR)/attackAndDefense.c $(SRC_DIR)/$(MOVEMENTS_DIR)/moves.c $(SRC_DIR)/main.c $(SRC_DIR)/$(UTILS_DIR)/sleep.c
+OBJS ?= $(SRC_DIR)/$(ENTITIES_DIR)/attackAndDefense.c $(SRC_DIR)/$(MOVEMENTS_DIR)/moves.c $(SRC_DIR)/main.c $(SRC_DIR)/$(UTILS_DIR)/sleep.c $(SRC_DIR)/$(UTILS_DIR)/fileReader.c
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): $(OBJS)

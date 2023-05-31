@@ -11,4 +11,4 @@ void moveOnPotion(player_t * player, int x, int y);
 void moveOnPowerUp(player_t * player, int x, int y, int power);
 
 /*Gestion des déplacements du joueur*/
-void movements(plateau * game, player_t * player, int addX, int addY);
+void movements(map_t * map, player_t * player, int addX, int addY);

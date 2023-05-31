@@ -60,12 +60,12 @@ void actionAfterFight(player_t * player, int x, int y, int fightResult){
     }
 }
 
-void movements(plateau * game, player_t * player, int addX, int addY){
+void movements(map_t * map, player_t * player, int addX, int addY){
     position_t newPos = {player->pos.x + addX, player->pos.y + addY};
     
     int fightResult = -1;
 
-    switch(game->table[newPos.x][newPos.y]){
+    switch(map->table[newPos.x][newPos.y]){
         case '#':
             break;
         case ' ':

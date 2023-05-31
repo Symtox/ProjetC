@@ -1,9 +1,9 @@
 /*Création plateau*/
-plateau * createPlateau();
+map_t * createPlateau();
 
 /*Affichage plateau*/
-void printPlateau(plateau * game, player_t * player);
+void printMap(map_t * game, player_t * player);
 
 /*Initialisation du jeu*/
-void play(plateau * game, player_t * player);
+void play(map_t * game, player_t * player);
 
