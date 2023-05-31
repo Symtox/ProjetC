@@ -1,14 +1,14 @@
 /*Déplacement du joueur sur une clé*/
-player_t moveOnKey(player_t player, int x, int y);
+void moveOnKey(player_t * player, int x, int y);
 
 /*Déplacement du joueur sur une porte*/
-player_t moveOnDoor(player_t player, int x, int y);
+void moveOnDoor(player_t * player, int x, int y);
 
 /*Déplacement du joueur sur une potion*/
-player_t moveOnPotion(player_t player, int x, int y);
+void moveOnPotion(player_t * player, int x, int y);
 
 /*Déplacement du joueur sur un powerup*/
-player_t moveOnPowerUp(player_t player, int x, int y, int power);
+void moveOnPowerUp(player_t * player, int x, int y, int power);
 
 /*Gestion des déplacements du joueur*/
-player_t movements(plateau * game, player_t player, int addX, int addY);
+void movements(plateau * game, player_t * player, int addX, int addY);
