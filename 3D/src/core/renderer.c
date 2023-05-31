@@ -3,8 +3,9 @@
 #include "../board/tiles.h"
 #include "../utils/utils.h"
 #include <stdlib.h>
+#include "../../includes/rlgl.h"
 #define DEBUG_INFO_LINE_COUNT 5
-drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
+drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
 void DrawDoor(door_t door);
 
@@ -20,6 +21,12 @@ Texture2D armor;
 Texture2D sword;
 Texture2D keycount;
 Texture2D background;
+Texture2D bigheart;
+Texture2D bigarmor;
+Texture2D bigsword;
+Texture2D wingsheart;
+Texture2D wall;
+Texture2D floorTexture;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -32,6 +39,12 @@ void initRenderer(player_t * player) {
     sword = LoadTexture("./assets/sword.png");
     keycount = LoadTexture("./assets/keycount.png");
     background = LoadTexture("./assets/background.png");
+    bigheart = LoadTexture("./assets/bigheart.png");
+    bigarmor = LoadTexture("./assets/bigarmor.png");
+    bigsword = LoadTexture("./assets/bigsword.png");
+    wingsheart = LoadTexture("./assets/wingsheart.png");
+    wall = LoadTexture("./assets/wall.png");
+    floorTexture = LoadTexture("./assets/floor.png");
 
 }
 
@@ -54,7 +67,7 @@ void DrawChunk(chunk_t chunk) {
             for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
                 switch (chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]) {
                     case WALL:
-                        DrawCube((Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {30, 50 , 100 , 255});
+                        DrawCubeCustom(floorTexture, (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                         //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                         break;
                 }
@@ -76,27 +89,220 @@ void DrawChunk(chunk_t chunk) {
     }
 }
 
+void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
+            float x = position.x;
+            float y = position.y;
+            float z = position.z;
+
+            rlSetTexture(texture.id);
+
+            rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            // NOTE: Enable texture 1 for Front, Back
+            rlEnableTexture(texture.id);
+
+            // Front Face
+            // Normal Pointing Towards Viewer
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Back Face
+            // Normal Pointing Away From Viewer
+            rlNormal3f(0.0f, 0.0f, -1.0f);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // NOTE: Enable texture 2 for Top, Bottom, Left and Right
+            rlEnableTexture(texture.id);
+
+            // Top Face
+            // Normal Pointing Up
+            rlNormal3f(0.0f, 1.0f, 0.0f);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Face
+            // Normal Pointing Down
+            rlNormal3f(0.0f, -1.0f, 0.0f);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Right face
+            // Normal Pointing Right
+            rlNormal3f(1.0f, 0.0f, 0.0f);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Left Face
+            // Normal Pointing Left
+            rlNormal3f(-1.0f, 0.0f, 0.0f);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+            rlEnd();
+
+            rlDisableTexture();
+        }
+
+
+// gerer le max health et faire un design
+// quand triche faire un design armor et epee different
 void DrawOverlay() {
+    int bigHeart = 0;
+    int smallheart = drawBundle.player->statistics.health;
+    int bigArmor = 0;
+    int smallarmor = drawBundle.player->statistics.armor;
+    int bigDamage = 0;
+    int smalldamage = drawBundle.player->statistics.damage;
+
+
+    if(smallheart % 10 == 0){
+        smallheart = 10;
+        bigHeart = (drawBundle.player->statistics.health / 10)-1;
+    }
+    else {
+        smallheart = smallheart % 10;
+        bigHeart = drawBundle.player->statistics.health / 10;
+    }
+    if(smallarmor % 10 == 0){
+        smallarmor = 10;
+        bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
+    }
+    else {
+        smallarmor = smallarmor % 10;
+        bigArmor = drawBundle.player->statistics.armor / 10;
+    }
+    if(smalldamage % 10 == 0){
+        smalldamage = 10;
+        bigDamage = (drawBundle.player->statistics.damage/ 10)-1;
+    }
+    else {
+        smalldamage = smalldamage % 10;
+        bigDamage = drawBundle.player->statistics.damage / 10;
+    }
+
+
      if(drawBundle.drawOverlay) {
         int i = 0;
 
         DrawTexture(background, 0, 0, WHITE);
-        for(i = 0; i < drawBundle.player->statistics.health; i++) {
+        for(i = 0; i < 10; i++) {
+            DrawTexture(heartEmpty, 7 + 36 * i, 15, WHITE);
+        }
+        for(i = 0; i < smallheart; i++) {
+           
             DrawTexture(heartFull, 7 + 36 * i, 15, WHITE);
         }
-        for(i = drawBundle.player->statistics.health; i < drawBundle.player->statistics.maxHealth; i++) {
-            DrawTexture(heartEmpty, 12 + 35 * i, 15, WHITE);
-          
+        
+
+        if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
+                DrawTexture(wingsheart, 430, 13, WHITE);
+                
         }
-        for(i = 0; i < drawBundle.player->statistics.armor; i++) {
+        else {
+                DrawTexture(bigheart,400, 13, WHITE); 
+                DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
+            }
+          
+        for(i = 0; i < smallarmor; i++) {
             DrawTexture(armor, 5 + 36* i, 48, WHITE);
         }
-        for(i = 0; i < drawBundle.player->statistics.damage; i++) {
-            DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
+        for(i = 0; i < smalldamage; i++) {
+            DrawTexture(sword, 2 + 36 * i, 86, WHITE);
         }
         DrawTexture(keycount, 150, 133, WHITE);
         DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
-         DrawFPS(900, 10);
+
+        DrawTexture(bigarmor,400, 47, WHITE); 
+        DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
+
+        DrawTexture(bigsword,400, 87, WHITE);
+        DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
      }
 }
@@ -123,7 +329,6 @@ void Render(chunkedMap_t map) {
 
         DrawMap(map);
 
-
         EndMode3D();
 
         DrawOverlay();
@@ -142,10 +347,6 @@ void setDrawBundle(drawBundle_t bundle) {
 
 
 
-#include "../../includes/rlgl.h"
-
-#include <stddef.h>     // Required for: NULL
-#include <math.h>       // Required for: sinf()
 
 #define RAYLIB_NEW_RLGL
 
