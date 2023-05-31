@@ -73,36 +73,36 @@ void movements(plateau * game, player_t * player, int addX, int addY){
             player->pos.y = newPos.y;
             break;
         case '!':
-            moveOnKey(&player, newPos.x, newPos.y);
+            moveOnKey(player, newPos.x, newPos.y);
             break;
         case 'o':
-            moveOnDoor(&player, newPos.x, newPos.y);
+            moveOnDoor(player, newPos.x, newPos.y);
             break;
         case '1':
-            moveOnPowerUp(&player, newPos.x, newPos.y, 1);
+            moveOnPowerUp(player, newPos.x, newPos.y, 1);
             break;
         case '2':
-            moveOnPowerUp(&player, newPos.x, newPos.y, 2);
+            moveOnPowerUp(player, newPos.x, newPos.y, 2);
             break;
         case '3':
-            moveOnPowerUp(&player, newPos.x, newPos.y, 3);
+            moveOnPowerUp(player, newPos.x, newPos.y, 3);
             break;
         case 'P':
-            moveOnPotion(&player, newPos.x, newPos.y);
+            moveOnPotion(player, newPos.x, newPos.y);
             break;
         case '?':
             break;
         case 'A':
-            fightResult = startCombat(&player, 'A');
-            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            fightResult = startCombat(player, 'A');
+            actionAfterFight(player, newPos.x, newPos.y, fightResult);
             break;
         case 'B':
-            fightResult = startCombat(&player, 'B');
-            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            fightResult = startCombat(player, 'B');
+            actionAfterFight(player, newPos.x, newPos.y, fightResult);
             break;
         case 'C':
-            fightResult = startCombat(&player, 'C');
-            actionAfterFight(&player, newPos.x, newPos.y, fightResult);
+            fightResult = startCombat(player, 'C');
+            actionAfterFight(player, newPos.x, newPos.y, fightResult);
             break;
         case '>' || '<' || '^' || 'v':
             break;

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "entities.h"
 #include "attackAndDefense.h"
 #include <math.h>
 #include <ctype.h>

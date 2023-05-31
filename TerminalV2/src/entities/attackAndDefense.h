@@ -1,19 +1,23 @@
 #include "entities.h"
 
-#define MONSTER_DIE 0
-#define PLAYER_DIE 1
-#define ESCAPE 2
+#ifndef MONSTER_DIE
 
-monster_t getMonsterByName(char name);
+    #define MONSTER_DIE 0
+    #define PLAYER_DIE 1
+    #define ESCAPE 2
 
-void printStartCombat(monster_t * monster, player_t * player);
+    monster_t getMonsterByName(char name);
 
-void printPlayerAttack(monster_t * monster, player_t * player);
+    void printStartCombat(monster_t * monster, player_t * player);
 
-void printMonsterAttack(monster_t * monster, player_t * player);
+    void printPlayerAttack(monster_t * monster, player_t * player);
 
-void playerAttack(player_t * player, monster_t * monster);
+    void printMonsterAttack(monster_t * monster, player_t * player);
 
-void monsterAttack(monster_t * monster, player_t * player);
+    void playerAttack(player_t * player, monster_t * monster);
 
-int startCombat(player_t * player, char monsterName);
+    void monsterAttack(monster_t * monster, player_t * player);
+
+    int startCombat(player_t * player, char monsterName);
+    
+#endif
