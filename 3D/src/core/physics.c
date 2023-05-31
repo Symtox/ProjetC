@@ -1,14 +1,11 @@
 #include "physics.h"
 #include "../utils/utils.h"
 #include "../../includes/rcamera.h"
-#include "../board/tiles.h"
 #include "../core/renderer.h"
 #define APPROX_Y 0.01
 
 
 
-int isTileFree(int x, int y, int z, chunkedMap_t map);
-void toChunkCoords(int * x, int * y, int * chunkX, int * chunkY, chunkedMap_t map);
 
 
 int handlePlayerMovement(player_t * player, chunkedMap_t map) {

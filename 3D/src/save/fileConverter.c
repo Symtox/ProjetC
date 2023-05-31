@@ -10,6 +10,7 @@
 
 
 
+
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
@@ -252,6 +253,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     Camera camera = BASE_CAMERA;
     player.camera = &camera;
     Vector2 min = {0,0};
+    Vector2 max = {0,0};
     chunkCount = 0;
     createSaveFromLevelFilesR(path, filename, 0, 0);
 
@@ -262,7 +264,15 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         if(chunkBuffer[i].y < min.y) {
             min.y = chunkBuffer[i].y;
         }
+        if(chunkBuffer[i].x > max.x) {
+            max.x = chunkBuffer[i].x;
+        }
+        if(chunkBuffer[i].y > max.y) {
+            max.y = chunkBuffer[i].y;
+        }
     }
+    setMapSize(max.x - min.x + 1, max.y - min.y + 1);
+
     for(int i = 0; i < chunkCount; i++) {
         chunkBuffer[i].x -= min.x;
         chunkBuffer[i].y -= min.y;

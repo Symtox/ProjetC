@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
+int mapWidth = 0;
+int mapHeight = 0;
 
 char * getCharFromLine(char* line, int index, int size) {
     char * result = malloc(sizeof(char) * size * 2);
@@ -616,6 +617,12 @@ void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y) {
     }
     chunk->x = -1;
     chunk->y = -1;
+}
+
+
+void setMapSize(int width, int height) {
+    mapWidth = width;
+    mapHeight = height;
 }
 
 

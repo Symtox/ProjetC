@@ -25,12 +25,8 @@ void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
     if(!save) {
         createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
     }
-    //loadPlayerFromSave(fd, playerP);
-    logFile(TextFormat("Player loaded %f %f %f", playerP->camera->position.x, playerP->camera->position.y, playerP->camera->position.z));
-    logFile(TextFormat("Player loaded %f %f %f", playerP->camera->target.x, playerP->camera->target.y, playerP->camera->target.z));
+    loadPlayerFromSave(fd, playerP);
     *map = loadMapFromSave(fd, 0, 0, 3, 3);
-
-    logFile("Map loaded");
 
     player = playerP;
 }
