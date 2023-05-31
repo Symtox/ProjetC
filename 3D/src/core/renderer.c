@@ -20,8 +20,8 @@ Texture2D bigheart;
 Texture2D bigarmor;
 Texture2D bigsword;
 Texture2D wingsheart;
-Texture2D blockTexture;
-Texture2D glass;
+Texture2D wall;
+Texture2D floorTexture;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -37,8 +37,8 @@ void initRenderer(player_t * player) {
     bigarmor = LoadTexture("./assets/bigarmor.png");
     bigsword = LoadTexture("./assets/bigsword.png");
     wingsheart = LoadTexture("./assets/wingsheart.png");
-    blockTexture = LoadTexture("./assets/cobblestone2.png");
-    glass = LoadTexture("./assets/glass.png");
+    wall = LoadTexture("./assets/wall.png");
+    floorTexture = LoadTexture("./assets/floor.png");
 
 }
 
@@ -59,14 +59,14 @@ void DrawChunk(chunk_t chunk) {
             switch (chunk.chunk[i % CHUNK_SIZE][j % CHUNK_SIZE]) {
                 case GROUND:
                     // DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
-                    DrawCubeCustom(glass, (Vector3){i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
-                    DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                    DrawCubeCustom(floorTexture, (Vector3){i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    //DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     break;
                 case WALL:
                     for (int k = 0; k < WALL_HEIGHT; k++) {
                         // DrawCube((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
-                         DrawCubeCustom(blockTexture, (Vector3){i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
-                        DrawCubeWires((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                         DrawCubeCustom(wall, (Vector3){i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                       // DrawCubeWires((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     }
                     break;
 
@@ -77,12 +77,12 @@ void DrawChunk(chunk_t chunk) {
                     break;
                 default:
                     DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {0, 255, 100, 255});
-                    DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
+                   // DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     break;
 
             }
             if(drawBundle.drawCeiling) {
-                DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
+               // DrawCubeWires((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
                 DrawCube((Vector3){ i + 0.5, WALL_HEIGHT +1 -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE );
             }
 
@@ -332,7 +332,6 @@ void Render(chunkedMap_t map) {
         DrawMap(map);
 
         render3DText("caaca", (Vector3){10, 3, 10});
-        DrawCubeCustom(blockTexture, (Vector3){10, 0.5, 10}, 1.0f, 1.0f, 1.0f, WHITE);
         DrawKey((Vector3){10, 1, 10});
         DrawPotion((Vector3){10, 1, 11});
         EndMode3D();
