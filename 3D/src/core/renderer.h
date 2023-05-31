@@ -24,6 +24,7 @@ void DrawMap(chunkedMap_t);
 void DrawChunk(chunk_t);
 void DrawOverlay();
 void DrawDebug();
+void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
 
 void Render(chunkedMap_t);
 

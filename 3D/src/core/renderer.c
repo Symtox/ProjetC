@@ -1,6 +1,8 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
 #include "../board/tiles.h"
+#include "../../includes/rlgl.h"
+#include "raylib.h"
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
@@ -18,6 +20,8 @@ Texture2D bigheart;
 Texture2D bigarmor;
 Texture2D bigsword;
 Texture2D wingsheart;
+Texture2D blockTexture;
+Texture2D glass;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -33,6 +37,8 @@ void initRenderer(player_t * player) {
     bigarmor = LoadTexture("./assets/bigarmor.png");
     bigsword = LoadTexture("./assets/bigsword.png");
     wingsheart = LoadTexture("./assets/wingsheart.png");
+    blockTexture = LoadTexture("./assets/cobblestone2.png");
+    glass = LoadTexture("./assets/glass.png");
 
 }
 
@@ -52,12 +58,14 @@ void DrawChunk(chunk_t chunk) {
         for(int j = chunk.y * CHUNK_SIZE; j < (chunk.y + 1) * CHUNK_SIZE; j++) {
             switch (chunk.chunk[i % CHUNK_SIZE][j % CHUNK_SIZE]) {
                 case GROUND:
-                    DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
+                    // DrawCube((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
+                    DrawCubeCustom(glass, (Vector3){i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                     DrawCubeWires((Vector3) {i + 0.5, -0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     break;
                 case WALL:
                     for (int k = 0; k < WALL_HEIGHT; k++) {
-                        DrawCube((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
+                        // DrawCube((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {255, 255, 255, 255});
+                         DrawCubeCustom(blockTexture, (Vector3){i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                         DrawCubeWires((Vector3) {i + 0.5, k + 0.5, j + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                     }
                     break;
@@ -82,6 +90,148 @@ void DrawChunk(chunk_t chunk) {
 
     }
 }
+
+void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
+            float x = position.x;
+            float y = position.y;
+            float z = position.z;
+
+            rlSetTexture(texture.id);
+
+            rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            // NOTE: Enable texture 1 for Front, Back
+            rlEnableTexture(texture.id);
+
+            // Front Face
+            // Normal Pointing Towards Viewer
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Back Face
+            // Normal Pointing Away From Viewer
+            rlNormal3f(0.0f, 0.0f, -1.0f);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // NOTE: Enable texture 2 for Top, Bottom, Left and Right
+            rlEnableTexture(texture.id);
+
+            // Top Face
+            // Normal Pointing Up
+            rlNormal3f(0.0f, 1.0f, 0.0f);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Bottom Face
+            // Normal Pointing Down
+            rlNormal3f(0.0f, -1.0f, 0.0f);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Right face
+            // Normal Pointing Right
+            rlNormal3f(1.0f, 0.0f, 0.0f);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+            // Left Face
+            // Normal Pointing Left
+            rlNormal3f(-1.0f, 0.0f, 0.0f);
+
+            // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+            // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+            // Top Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+            // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+            rlEnd();
+
+            rlDisableTexture();
+        }
+
+
 // gerer le max health et faire un design
 // quand triche faire un design armor et epee different
 void DrawOverlay() {
@@ -118,19 +268,6 @@ void DrawOverlay() {
         bigDamage = drawBundle.player->statistics.damage / 10;
     }
 
-
-
-            //                 if(smallarmor % 10 == 0){
-            //     smallheart = 10;
-            //     bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
-            // }
-            //             else {
-            //     small armor = smallarmor % 10;
-            //     bigArmor = drawBundle.player->statistics.armor / 10;
-            // }
-            //         DrawTexture(bigheart,7 + 36 * 11, 15, WHITE); 
-            //     DrawText(TextFormat("x %d", bigarmor), 30 + 36 * i,15, 15,WHITE);
-            // }
 
      if(drawBundle.drawOverlay) {
         int i = 0;
@@ -195,7 +332,7 @@ void Render(chunkedMap_t map) {
         DrawMap(map);
 
         render3DText("caaca", (Vector3){10, 3, 10});
-
+        DrawCubeCustom(blockTexture, (Vector3){10, 0.5, 10}, 1.0f, 1.0f, 1.0f, WHITE);
         DrawKey((Vector3){10, 1, 10});
         DrawPotion((Vector3){10, 1, 11});
         EndMode3D();
@@ -216,10 +353,6 @@ void setDrawBundle(drawBundle_t bundle) {
 
 
 
-#include "../../includes/rlgl.h"
-
-#include <stddef.h>     // Required for: NULL
-#include <math.h>       // Required for: sinf()
 
 #define RAYLIB_NEW_RLGL
 
