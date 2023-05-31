@@ -1,10 +1,12 @@
 #include "gameController.h"
-#include "../utils/const.h"
 #include "physics.h"
 #include "renderer.h"
-#include "../entities.h"
 #include "../save/save.h"
-
+#include "../save/fileConverter.h"
+#include <fcntl.h>
+#include "../utils/utils.h"
+#include <stdio.h>
+#include <stdlib.h>
 int controlsToggles[4] = {0, 0, 0, 0};
 
 typedef enum controls {
@@ -16,18 +18,27 @@ typedef enum controls {
 
 player_t * player;
 
-void initGameController(player_t * playerP, chunkedMap_t * map, int loadMapFromSave) {
-    if(!loadMapFromSave) {
-        //createSaveFromLevelFiles("bin/saves/board.bin", "bin/levels/board/board.csv");
+int fd = -1;
+
+void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
+    fd = open("bin/saves/caca", O_RDWR | O_CREAT | O_TRUNC, 0666);
+    if(!save) {
+        createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
     }
-    *map = loadMap("bin/levels/board/board.csv", 0, 0, 3, 3, 0);
+    //loadPlayerFromSave(fd, playerP);
+    logFile(TextFormat("Player loaded %f %f %f", playerP->camera->position.x, playerP->camera->position.y, playerP->camera->position.z));
+    logFile(TextFormat("Player loaded %f %f %f", playerP->camera->target.x, playerP->camera->target.y, playerP->camera->target.z));
+    *map = loadMapFromSave(fd, 0, 0, 3, 3);
+
+    logFile("Map loaded");
+
     player = playerP;
 }
 
 void Tick(chunkedMap_t * map) {
     handlePlayerMovement(player, *map);
     handlePlayerShortcuts();
-    loadCurrentMap(map, player->camera->position);
+    loadCurrentMap(fd, map, player->camera->position);
     //checkForBunuses();
     //loadCurrentChunks();
     //handlerMobMouvements();
@@ -41,10 +52,12 @@ void Tick(chunkedMap_t * map) {
 
 void handlePlayerShortcuts() {
     drawBundle_t drawBundle = getDrawBundle();
+
     if(IsKeyDown(KEY_F) && !controlsToggles[FREE_WALK]) {
         player->physics.noclip = !player->physics.noclip;
         controlsToggles[FREE_WALK] = 1;
     }
+
     if(IsKeyUp(KEY_F) && controlsToggles[FREE_WALK]) {
         controlsToggles[FREE_WALK] = 0;
     }

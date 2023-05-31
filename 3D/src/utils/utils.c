@@ -30,7 +30,10 @@ int fillWithRandAndWalls(int *** map) {
 }
 
 int logFile(const char * msg) {
+    printf("%s\n", msg);
+    fflush(stdout);
     fwrite(msg, sizeof(char), strlen(msg), fp);
+    fwrite("\n", sizeof(char), 1, fp);
     return 0;
 }
 

@@ -7,7 +7,8 @@
 
 
 
-
+int isTileFree(int x, int y, int z, chunkedMap_t map);
+void toChunkCoords(int * x, int * y, int * chunkX, int * chunkY, chunkedMap_t map);
 
 
 int handlePlayerMovement(player_t * player, chunkedMap_t map) {
@@ -99,7 +100,10 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
             playerPhysics->jumpTime = 0;
             playerPhysics->jumpingSpeed = JUMP_BASE_SPEED;
         }
+    } else {
+        logFile(TextFormat("Falling: Jump time: %d\n", playerPhysics->jumpTime));
     }
+
     return playerMovement;
 }
 
@@ -120,7 +124,7 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
     };
 
 
-    float distance = getDistanceFromGround(playerPosition, map);
+    float distance = getPlayerDistanceFromGround(playerPosition, map);
 
 
     if(playerPhysics->isJumping || distance == 0 || playerPhysics->noclip) {
@@ -128,7 +132,7 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
     }
 
     float fallingSpeed = getFallSpeed(*playerPhysics);
-    logFile(TextFormat("Falling: Distance: %f, x: %f, y: %f\n", distance, playerPosition.x, playerPosition.y));
+    logFile(TextFormat("Falling: Distance: %f, x: %f, y: %f, z: %f\n", distance, playerPosition.x, playerPosition.y, playerPosition.z));
 
     logFile(TextFormat("Falling: Falling speed: %f %d\n", fallingSpeed, playerPhysics->fallTime));
     playerPhysics->isFalling = 1;
@@ -153,14 +157,14 @@ float getJumpSpeed(playerPhysics_t player) {
     return player.jumpingSpeed - (player.jumpTime * player.jumpingSpeed / 100) ;
 }
 
-float getDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
+float getPlayerDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
     int caseAX = (int)playerPosition.x;
     int caseAZ = (int)playerPosition.z;
     int caseBX;
     int caseBZ;
     int multipleX = 0;
     int multipleZ = 0;
-    int maxHeight;
+    float minDistance;
 
     if((int)playerPosition.x != (int)(playerPosition.x + PLAYER_WIDTH)) {
         multipleX = 1;
@@ -180,33 +184,35 @@ float getDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
         caseBZ = (int)(playerPosition.z - PLAYER_WIDTH);
     }
 
-    logFile(TextFormat("Player position: %f %f\n", playerPosition.x, playerPosition.z));
     if(multipleX && multipleZ) {
-        logFile(TextFormat("multipleX && multipleZ: case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map), caseBX, caseBZ, getTileFromCoordsAndMap(caseBX, caseBZ, map)));
-    }
-    else if(multipleX) {
-        logFile(TextFormat("multipleX: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map)));
-    }
-    else if(multipleZ) {
-        logFile(TextFormat("multipleZ: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map)));
-    }
-    else {
-        logFile(TextFormat("case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map)));
-    }
-    if(multipleX && multipleZ) {
-        maxHeight = MAX4(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseAX, caseBZ, map), getTileFromCoordsAndMap(caseBX, caseAZ, map), getTileFromCoordsAndMap(caseBX, caseBZ, map));
-    } else if (multipleX) {
-        maxHeight = MAX2(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseBX, caseAZ, map));
-    } else if (multipleZ) {
-        maxHeight = MAX2(getTileFromCoordsAndMap(caseAX, caseAZ, map), getTileFromCoordsAndMap(caseAX, caseBZ, map));
-    } else {
-        maxHeight = getTileFromCoordsAndMap(playerPosition.x, playerPosition.z, map);
+        minDistance = MIN4(
+                getTileDistanceFromGround(caseAX, playerPosition.y, caseAZ, map),
+                getTileDistanceFromGround(caseAX, playerPosition.y, caseBZ, map),
+                getTileDistanceFromGround(caseBX, playerPosition.y, caseAZ, map),
+                getTileDistanceFromGround(caseBX, playerPosition.y, caseBZ, map)
+        );
     }
 
-    return playerPosition.y - (PLAYER_HEIGHT + maxHeight);
+    else if (multipleX) {
+        minDistance = MIN2(
+                getTileDistanceFromGround(caseAX, playerPosition.y, caseAZ, map),
+                getTileDistanceFromGround(caseBX, playerPosition.y, caseAZ, map)
+        );
+    }
+
+    else if (multipleZ) {
+        minDistance = MIN2(
+                getTileDistanceFromGround(caseAX, playerPosition.y, caseAZ, map),
+                getTileDistanceFromGround(caseAX, playerPosition.y, caseBZ, map)
+        );
+    } else {
+        minDistance = getTileDistanceFromGround(playerPosition.x, playerPosition.y, playerPosition.z, map);
+    }
+
+    logFile(TextFormat("Falling: Max height: %f\n", minDistance));
+    return minDistance - PLAYER_HEIGHT;
 }
 
-//TODO
 void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, playerPhysics_t playerPhysics, chunkedMap_t map) {
 
     int caseAX;
@@ -219,21 +225,7 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
     updateCameraCustom(&cameraAfterMove, *movement, playerRotation);
     caseAX = (int)cameraAfterMove.position.x;
     caseAZ = (int)cameraAfterMove.position.z;
-/*
-    if(cameraAfterMove.position.x <= PLAYER_WIDTH
-       || cameraAfterMove.position.x + PLAYER_WIDTH >= CHUNK_SIZE
-       || cameraAfterMove.position.z - PLAYER_WIDTH <= 0 ||
-       cameraAfterMove.position.z + PLAYER_WIDTH >= CHUNK_SIZE
-            ) {
-        movement->x = 0;
-        movement->z = 0;
-        return;
-    }
 
-*/
-    // On verifie que le joueur ne sort pas de la map
-
-    // ON verifie quvalidateMovemente le joueur ne rentre pas dans un mur
     if((int)cameraAfterMove.position.x != (int)(cameraAfterMove.position.x + PLAYER_WIDTH)) {
         multipleX = 1;
         caseBX = (int)(cameraAfterMove.position.x + PLAYER_WIDTH);
@@ -253,44 +245,20 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
         multipleZ = 1;
         caseBZ = (int)(cameraAfterMove.position.z - PLAYER_WIDTH);
     }
-
-    logFile(TextFormat("Collision:\n before: %f, %f, %f\n after: %f, %f, %f\n", camera.position.x, camera.position.y, camera.position.z, cameraAfterMove.position.x, cameraAfterMove.position.y, cameraAfterMove.position.z));
-    if(multipleX && multipleZ) {
-        logFile(TextFormat("multipleX && multipleZ: case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map), caseBX, caseBZ, getTileFromCoordsAndMap(caseBX, caseBZ, map)));
-    }
-    else if(multipleX) {
-        logFile(TextFormat("multipleX: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map)));
-    }
-    else if(multipleZ) {
-        logFile(TextFormat("multipleZ: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map)));
-    }
-
-
     int isMoveOk = 1;
     for(int i=0; i < PLAYER_HEIGHT; i++) {
         if(multipleX && multipleZ) {
-            isMoveOk = isMoveOk && (cameraAfterMove.position.y - PLAYER_HEIGHT + i) >= getTileFromCoordsAndMap(caseBX, caseBZ, map);
+            isMoveOk = isMoveOk && isTileFree(caseBX, (int)(cameraAfterMove.position.y - PLAYER_HEIGHT + i + 1), caseBZ, map);
         }
         if (multipleX) {
-            isMoveOk = isMoveOk && (cameraAfterMove.position.y - PLAYER_HEIGHT + i) >= getTileFromCoordsAndMap(caseBX, caseAZ, map);
+            isMoveOk = isMoveOk && isTileFree(caseBX, (int)(cameraAfterMove.position.y - PLAYER_HEIGHT + i + 1), caseAZ, map);
         }
         if (multipleZ) {
-            isMoveOk = isMoveOk && (cameraAfterMove.position.y - PLAYER_HEIGHT + i) >= getTileFromCoordsAndMap(caseAX, caseBZ, map);
+            isMoveOk = isMoveOk && isTileFree(caseAX, (int)(cameraAfterMove.position.y - PLAYER_HEIGHT + i + 1), caseBZ, map);
         }
-        isMoveOk = isMoveOk && (cameraAfterMove.position.y - PLAYER_HEIGHT + i) >= getTileFromCoordsAndMap(caseAX, caseAZ, map);
-
+        isMoveOk = isMoveOk && isTileFree(caseAX, (int)(cameraAfterMove.position.y - PLAYER_HEIGHT + i + 1), caseAZ, map);
     }
 
-    logFile(TextFormat("Collision:\n before: %f, %f, %f\n after: %f, %f, %f\n", camera.position.x, camera.position.y, camera.position.z, cameraAfterMove.position.x, cameraAfterMove.position.y, cameraAfterMove.position.z));
-    if(multipleX && multipleZ) {
-        logFile(TextFormat("multipleX && multipleZ: case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map), caseBX, caseBZ, getTileFromCoordsAndMap(caseBX, caseBZ, map)));
-    }
-    else if(multipleX) {
-        logFile(TextFormat("multipleX: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseBX, caseAZ, getTileFromCoordsAndMap(caseBX, caseAZ, map)));
-    }
-    else if(multipleZ) {
-        logFile(TextFormat("multipleZ: case[%d][%d]: %d case[%d][%d]: %d\n", caseAX, caseAZ, getTileFromCoordsAndMap(caseAX, caseAZ, map), caseAX, caseBZ, getTileFromCoordsAndMap(caseAX, caseBZ, map)));
-    }
     if(isMoveOk) {
         return;
     }
@@ -299,6 +267,7 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
    // correctedMovement.x = movement.x;
     movement->x = 0;
     movement->z = 0;
+    movement->y = 0;
 }
 
 void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
@@ -330,21 +299,54 @@ void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
     // Zoom target distance
 }
 
-int getTileFromCoordsAndMap(int x, int y, chunkedMap_t map) {
-    if(x < 0 || y < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || y >= CHUNK_SIZE * MAP_CHUNK_HEIGHT) {
-        return -10;
+float getTileDistanceFromGround(int x, float y, int z, chunkedMap_t map) {
+    int chunkIndexX, chunkIndexY;
+    if(x < 0 || z < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || z >= CHUNK_SIZE * MAP_CHUNK_HEIGHT || y < 0 || y >= MAX_Y) {
+        return 10;
     }
-    int playerChunkX = (int)(x / CHUNK_SIZE);
-    int playerChunkY = (int)(y / CHUNK_SIZE);
-    int tileX = (int)(x - playerChunkX * CHUNK_SIZE);
-    int tileY = (int)(y - playerChunkY * CHUNK_SIZE);
+    toChunkCoords(&x, &z, &chunkIndexX, &chunkIndexY, map);
+    if(chunkIndexX == -1 || chunkIndexY == -1) {
+        return 10;
+    }
+
+
+    for(int i=y - PLAYER_HEIGHT; i >= 0; i--) {
+        if(map.chunks[chunkIndexX][chunkIndexY].chunk[x][i][z] != 0) {
+            return y - i;
+        }
+    }
+
+
+    return y;
+}
+
+int isTileFree(int x, int y, int z, chunkedMap_t map) {
+    int chunkIndexX, chunkIndexY;
+    if(x < 0 || z < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || z >= CHUNK_SIZE * MAP_CHUNK_HEIGHT || y < 0 || y >= MAX_Y) {
+        return 1;
+    }
+    toChunkCoords(&x, &z, &chunkIndexX, &chunkIndexY, map);
+    if(chunkIndexX == -1 || chunkIndexY == -1) {
+        return 1;
+    }
+    return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0;
+}
+
+void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t map) {
+    int playerChunkX = (int)(*x / CHUNK_SIZE);
+    int playerChunkY = (int)(*z / CHUNK_SIZE);
+    *chunkX = -1;
+    *chunkY = -1;
+    *x = (int)(*x - playerChunkX * CHUNK_SIZE);
+    *z = (int)(*z - playerChunkY * CHUNK_SIZE);
+
 
     for(int i=0; i < map.width; i++) {
         for (int j = 0; j < map.height; j++) {
             if(map.chunks[i][j].x != -1 && map.chunks[i][j].y != -1 && map.chunks[i][j].x == playerChunkX && map.chunks[i][j].y == playerChunkY) {
-                return getHeightFromTileType(map.chunks[i][j].chunk[tileX][tileY]);
+                *chunkX = i;
+                *chunkY = j;
             }
         }
     }
-    return 0;
 }

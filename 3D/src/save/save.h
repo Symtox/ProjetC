@@ -6,38 +6,66 @@
 #include <unistd.h>
 #include "../board/board.h"
 #define PROJECT_SAVE_H
-#define INDEX_SIZE 10
 
 
 typedef struct {
-    int chunkCoords[INDEX_SIZE][2];
-    off_t chunkFilePosition[INDEX_SIZE][2];
-    off_t next;
+    int chunkCount;
+    int ** chunkCoords;
+    off_t ** chunkFilePosition;
+
 }index_t;
 
 
-char * getCharFromLine(char*, int, int);
-void loadChunk(char*, chunk_t *, int, int);
-chunkedMap_t loadMap(char *, int, int, int, int, int);
-void loadCurrentMap(chunkedMap_t *, Vector3);
-
-void createSaveFromLevelFiles(char * , char * );
-
-
-void saveChunk(int, chunk_t);
+void loadRandomChunk(chunk_t * chunk, int chunkX, int chunkY);
+char * getCharFromLine(char* line, int index, int size);
+void loadChunk(char* filename, chunk_t * chunk, int chunkX, int chunkY);
 void savePlayerContext(int fd, player_t player);
+void readPlayerContext(int fd, player_t * player);
+off_t sizeofPlayerContext(); //TODO
 
-void readIndex(int, index_t *);
-void writeIndex(int, index_t);
-
-
-
-void initIndex(index_t *);
-
-int sizeofChunk();
-int sizeofIndex();
+void readIndex(int fd, index_t * index);
+void writeIndex(int fd, index_t index);
+size_t sizeofIndex(int indexSize);
 
 
+size_t sizeofMonster();
+void saveMonster(int fd, monster_t monster);
+void readMonster(int fd, monster_t * monster);
 
+size_t sizeofDoor();
+void saveDoor(int fd, door_t door);
+void readDoor(int fd, door_t * door);
+
+size_t sizeofPotion();
+void savePotion(int fd, potion_t potion);
+void readPotion(int fd, potion_t * potion);
+
+size_t sizeofKey();
+void saveKey(int fd, DoorKey_t key);
+void readKey(int fd, DoorKey_t * key);
+
+size_t sizeofPowerUp();
+void savePowerUp(int fd, powerUp_t powerUp);
+void readPowerUp(int fd, powerUp_t * powerUp);
+
+size_t sizeofChunkTXT(chunk_txt chunk);
+void writeChunk(int fd, chunk_txt chunk);
+void readChunk(int fd, chunk_t * chunk);
+
+size_t sizeofStatistics();
+void saveStatistics(int fd, statistics_t statistics);
+void readStatistics(int fd, statistics_t * statistics);
+
+size_t sizeofPhysics();
+void savePhysics(int fd, playerPhysics_t physics);
+void readPhysics(int fd, playerPhysics_t * physics);
+
+
+void loadCurrentMap(int, chunkedMap_t * map, Vector3 playerPos);
+chunkedMap_t loadMap(char * filename, int x, int y, int width, int height, int fromSave);
+
+void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y);
+chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height);
+void loadPlayerFromSave(int fd, player_t * player);
 
 #endif //PROJECT_SAVE_H
