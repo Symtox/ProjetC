@@ -6,8 +6,8 @@
     #define PLAYER_DIE 1
     #define ESCAPE 2
 
-    monster_t getMonsterByName(char name);
-
+    monster_t * getMonster(tabMonsters_t ** tabMonsters, position_t pos, int generatedNumber);
+    
     void printStartCombat(monster_t * monster, player_t * player);
 
     void printPlayerAttack(monster_t * monster, player_t * player);
@@ -18,6 +18,6 @@
 
     void monsterAttack(monster_t * monster, player_t * player);
 
-    int startCombat(player_t * player, char monsterName);
+    int startCombat(player_t * player, tabMonsters_t ** tabMonsters, position_t pos, int generatedNumber);
     
 #endif

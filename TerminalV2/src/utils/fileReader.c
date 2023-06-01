@@ -53,98 +53,116 @@ map_t readTXT(char * path){
 
     // Fermer le fichier
     fclose(file);
-
+    
     return map;
 }
 
 char * substr(char *src, int pos) {
-    char *dest = malloc(sizeof(char*)*1000);
+    if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
+        return NULL;
+    }
+    char *dest = malloc(sizeof(char) * (strlen(src) - pos + 1));
 
-    int i = pos;
     int cpt = 0;
-    for(i; src[i] != '\0'; i++) {
+    for(int i = pos; src[i] != '\0' && src[i] != '\n' && src[i] != '\r' ; i++) {
         dest[cpt]=src[i];
         cpt++;
     }
-
+    dest[cpt] = '\0';
     return dest;
 }
 
 map_t initMap(char * fileName, tabMonsters_t ** tabMonsters) {
     FILE *file;
-    char* ligne = NULL;
-    int longueur = 0;
-    int tailleLigne = 100;
 
-    char * path =(char*) malloc((strlen(fileName) + 1 + strlen("../../bin/levels/"))*sizeof(char)); // +1 for the null-terminator
-    strcpy(path, "../../bin/levels/");
+    char * path =(char*) malloc((strlen(fileName) + 1 + strlen("./bin/levels/"))*sizeof(char)); // +1 for the null-terminator
+    strcpy(path, "./bin/levels/");
     strcat(path, fileName);
-
+    
     map_t map = readTXT(path);
-    file = fopen(path, "r");
     map.name = fileName;
 
-    int monsterIndex = 0;
-    tabMonsters[nbRoomGenerated]->levelName = fileName;
-    nbRoomGenerated++;
 
-    int cptRoom = 0;
+    int cptRoom = -1;
     for(int i=0;i<nbRoomGenerated;i++){
         if(tabMonsters[i]->levelName == fileName){
-            cptRoom++;
+            cptRoom = i;
             break;
         }
     }
-    tabMonsters[cptRoom]->monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
-    map.monsterClass = (monsterClass_t*)malloc(sizeof(monsterClass_t) * map.monsterClassCount);
 
+
+
+    if(cptRoom == -1){
+        cptRoom = nbRoomGenerated;
+        tabMonsters[cptRoom] = (tabMonsters_t *)malloc(sizeof(tabMonsters_t));
+        tabMonsters[cptRoom]->levelName = fileName;
+        printf("test");
+        map.generatedNumber = nbRoomGenerated;
+        nbRoomGenerated++;
+    }
+
+    printf("BG 1\n");
+    tabMonsters[cptRoom]->nbMonsters = map.monsterCount;
+    tabMonsters[cptRoom]->monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
+    map.monsterClass = (monsterClass_t *)malloc(sizeof(monsterClass_t)*map.monsterClassCount);
+
+    file = fopen(path, "r");
     if (file == NULL) {
         printf("Impossible d'ouvrir le fichier.\n");
     }
 
-    while ((tailleLigne = getline(&ligne, &longueur, file)) != -1) {
+    char * line = NULL;
+    size_t len = 0;
+    int cptMonsterClass = 0;
+    while (getline(&line, &len, file) != -1) {
 
-        if (strstr(ligne,"Est")!= NULL){
-            char * mapName = substr(ligne, 6);
-            map.east = mapName;
+        if (strstr(line,"Est")!= NULL) {
+            map.east = substr(line, 6);
         }
-        else if (strstr(ligne,"Sud")!= NULL){
-            char * mapName = substr(ligne, 6);
-            map.south = mapName;
+        else if (strstr(line,"Sud")!= NULL) {
+            map.south = substr(line, 6);
         }
-        else if (strstr(ligne, "Ouest") != NULL) {
-            char * mapName = substr(ligne, 8);
-            map.west = mapName;
+        else if (strstr(line, "Ouest") != NULL) {
+            map.west = substr(line, 8);
         }
-        else if (strstr(ligne,"Nord")!= NULL){
-            char * mapName = substr(ligne, 7);
-            map.north = mapName;
+        else if (strstr(line,"Nord")!= NULL){
+            map.north = substr(line, 7);
         }
-        else if(ligne[0] >= 'A' && ligne[0] <= 'Z') {
-            printf("Reading monster class : %d %c\n", monsterIndex, ligne[0]);
-            map.monsterClass[monsterIndex].name = (char)ligne[0];
-            getline(&ligne, &longueur, file);
-            map.monsterClass[monsterIndex].max_hp = atoi(substr(ligne,5));
+        else if(line[0] >= 'A' && line[0] <= 'Z') {
+            char * monsterLine = NULL;
+            monster_t monstre = {0};
 
-            getline(&ligne, &longueur, file);
-            map.monsterClass[monsterIndex].attack = atoi(substr(ligne,8));
+            map.monsterClass[cptMonsterClass].name = line[0];
 
-            getline(&ligne, &longueur, file);
-            map.monsterClass[monsterIndex].defense = atoi(substr(ligne,8));
-            monsterIndex++;
+            getline(&monsterLine, &len, file);
+            map.monsterClass[cptMonsterClass].max_hp = atoi(substr(monsterLine,5));
+            free(monsterLine);
+
+            monsterLine = NULL;
+            getline(&monsterLine, &len, file);
+            map.monsterClass[cptMonsterClass].attack = atoi(substr(monsterLine,8));
+            free(monsterLine);
+
+            monsterLine = NULL;
+            getline(&monsterLine, &len, file);
+            map.monsterClass[cptMonsterClass].defense = atoi(substr(monsterLine,9));
+
+            cptMonsterClass++;
+
+            free(line);
+            line = NULL;
         }
     }
-
-    free(ligne);
     fclose(file);
 
-    monsterIndex = 0;
+    int monsterIndex = 0;
     for(int i=0;i<MAX_SIZE;i++){
         for(int j=0;j<MAX_SIZE;j++){
             if(map.table[i][j] >= 'A' && map.table[i][j] <= 'Z') {
-                for(int cpt;cpt<map.monsterClassCount;cpt++){
+                for(int cpt=0;cpt<map.monsterClassCount;cpt++){
                     if(map.monsterClass[cpt].name == map.table[i][j]){
-                        tabMonsters[cptRoom]->monsters[monsterIndex].name    = monsterIndex;
+                        tabMonsters[cptRoom]->monsters[monsterIndex].name    = 'A'+monsterIndex;
                         tabMonsters[cptRoom]->monsters[monsterIndex].max_hp  = map.monsterClass[cpt].max_hp;
                         tabMonsters[cptRoom]->monsters[monsterIndex].hp      = map.monsterClass[cpt].max_hp;
                         tabMonsters[cptRoom]->monsters[monsterIndex].attack  = map.monsterClass[cpt].attack;

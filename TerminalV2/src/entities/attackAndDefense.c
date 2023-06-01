@@ -6,20 +6,16 @@
 #include <ctype.h>
 #include "../utils/sleep.h"
 
-monster_t monsters[] = {
-    [0] = { .name = 'A', .max_hp = 5, .hp = 5, .defense = 1, .attack = 1 },
-    [1] = { .name = 'B', .max_hp = 5, .hp = 5, .defense = 2, .attack = 2 },
-    [2] = { .name = 'C', .max_hp = 10, .hp = 10, .defense = 3, .attack = 3 },
-    [3] = { .name = 'D', .max_hp = 10, .hp = 10, .defense = 4, .attack = 4 }
-}; 
 
-
-monster_t getMonsterByName(char name){
-    for(int i = 0; i < 4; i++){
-        if(monsters[i].name == name){
-            return monsters[i];
+monster_t * getMonster(tabMonsters_t ** tabMonsters, position_t pos, int generatedNumber){
+    for(int i=0;i<tabMonsters[generatedNumber]->nbMonsters;i++){
+        if (tabMonsters[generatedNumber]->monsters[i].pos.x == pos.x &&
+            tabMonsters[generatedNumber]->monsters[i].pos.y == pos.y)
+        {
+            return &tabMonsters[generatedNumber]->monsters[i];
         }
     }
+    return NULL;
 }
 
 void printStats(player_t * player, monster_t * monster){
@@ -63,15 +59,15 @@ void monsterAttack(monster_t * monster, player_t * player) {
     player->hp = player->hp - (monster->attack>player->defense ? monster->attack - player->defense : 1);
 }
 
-int startCombat(player_t * player, char monsterName){
-    monster_t monster = getMonsterByName(monsterName);
-    printStartCombat(&monster, player);
+int startCombat(player_t * player, tabMonsters_t ** tabMonsters, position_t pos, int generatedNumber){
+    monster_t * monster = getMonster(tabMonsters, pos, generatedNumber);
+    printStartCombat(monster, player);
 
     char choice = ' ';
     while(toupper(choice) != 'F') {
-        printPlayerAttack(&monster, player);
-        playerAttack(player, &monster);
-        if(monster.hp <= 0){
+        printPlayerAttack(monster, player);
+        playerAttack(player, monster);
+        if(monster->hp <= 0){
             printf("\nVous avez vaincu le monstre !\n");
             printf("Vous gagnez 1 HP max et 1 ATK\n");
             player->max_hp++;
@@ -80,8 +76,8 @@ int startCombat(player_t * player, char monsterName){
             system("CLS");
             return MONSTER_DIE;
         }
-        printMonsterAttack(&monster, player);
-        monsterAttack(&monster, player);
+        printMonsterAttack(monster, player);
+        monsterAttack(monster, player);
         if(player->hp <= 0){
             printf("\nVous avez perdu !\n");
             wait(2000);
@@ -95,9 +91,11 @@ int startCombat(player_t * player, char monsterName){
         while(toupper(choice) != 'F' && toupper(choice) != 'A'){
             choice = ' ';
             system("CLS");
-            printStats(player, &monster);
+            printStats(player, monster);
             printf("Que voulez-vous faire ?\n    F : Fuir\n    A : Attaquer\nVotre choix : ");
             scanf("%c", &choice);
+            if(choice == '@')
+                return MONSTER_DIE;
         }
     }
 

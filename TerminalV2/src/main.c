@@ -69,7 +69,7 @@ void printItemColor(char item){
             color(5, 0);
             printf("%c", item);
             break;
-        case 'P':
+        case '$':
             color(12, 0);
             printf("%c", item);
             break;
@@ -88,32 +88,32 @@ void printMap(map_t * map, player_t * player){
     //Suppression de l'objet récupéré / ancienne position du joueur
     map->table[player->pos.x][player->pos.y] = ' ';
 
-    for(int i=0; i<10;i++){
-        for(int j=0; j<10;j++){
+    for(int i=0; i<MAX_SIZE;i++){
+        for(int j=0; j<MAX_SIZE;j++){
             if (i == player->pos.x && j == player->pos.y)
                 printf("@");
             else
                 printItemColor(map->table[i][j]);
             
-            if (i == 1 && j == 9) {
+            if (i == 1 && j == MAX_SIZE-1) {
                 color(12,0);
                 printf(" HP ");
                 color(15,0);
                 printf(" : %d/%d", player->hp, player->max_hp);
             }
-            else if (i == 2 && j == 9) {
+            else if (i == 2 && j == MAX_SIZE-1) {
                 color(10, 0);
                 printf(" ATK ");
                 color(15,0);
                 printf(": %d", player->attack);
             }
-            else if (i == 3 && j == 9) {
+            else if (i == 3 && j == MAX_SIZE-1) {
                 color(9, 0);
                 printf(" DEF ");
                 color(15,0);
                 printf(": %d", player->defense);
             }
-            else if (i == 4 && j == 9) {
+            else if (i == 4 && j == MAX_SIZE-1) {
                 color(14, 0);
                 printf(" KEY ");
                 color(15,0);
@@ -124,21 +124,21 @@ void printMap(map_t * map, player_t * player){
     }
 }
 
-void play(map_t * map, player_t * player){
+void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters){
     int move = 0;
     while(1){
         char move = _getch();
         if(move == 77){
-            movements(map, player, 0, 1);
+            movements(map, player, tabMonsters, 0, 1);
         }
         else if(move == 75){
-            movements(map, player, 0, -1);
+            movements(map, player, tabMonsters, 0, -1);
         }
         else if(move == 72){
-            movements(map, player, -1, 0);
+            movements(map, player, tabMonsters, -1, 0);
         }
         else if(move == 80){
-            movements(map, player, 1, 0);
+            movements(map, player, tabMonsters, 1, 0);
         }
         else if (move == 'q'){
             break;
@@ -151,12 +151,16 @@ void play(map_t * map, player_t * player){
     }
 }
 
+// TODO : Faire un tableau de map où on stock les maps quand elles sont générées
+// et avant de générer une map, on regarde si elle existe déjà dans le tableau
+// si elle existe : map = map du tableau
+// sinon on génère la map et on l'ajoute au tableau
 int main() {
-    player_t player = {10, 10, 1, 2, 0, {4, 8}};
+    player_t player = {10, 10, 1, 2, 0, {14, 14}};
     tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
     map_t map = initMap("niveau1.level", tabMonsters);
     system("CLS");
     printMap(&map, &player);
-    play(&map, &player);
+    play(&map, &player, tabMonsters);
     return 0;
 }
