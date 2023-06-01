@@ -35,7 +35,7 @@ void toggleDrawOverlay();
 drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
 
-int render3DText(char * , Vector3 );
+int render3DText(char * , Vector3 , float);
 void DrawKey(DoorKey_t);
 void DrawPotion(powerUp_t);
 
