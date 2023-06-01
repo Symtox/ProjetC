@@ -8,12 +8,14 @@
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
 void DrawDoor(door_t door);
+void DrawMonster(monster_t monsteRR, int, int);
 
 
 Model keyModel;
 Model potionModel;
 Model cubeModel;
 Model doorModel;
+Model monsterModel;
 
 Texture2D heartFull;
 Texture2D heartEmpty;
@@ -27,9 +29,13 @@ Texture2D bigsword;
 Texture2D wingsheart;
 Texture2D wall;
 Texture2D floorTexture;
+Texture2D dirtyWall;
+Texture2D crackedWall;
+Texture2D monsterCount;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
+    monsterModel = LoadModel("./assets/monster2.glTF");
     keyModel = LoadModel("./assets/key.obj");
     doorModel = LoadModel("./assets/door.obj");
     potionModel = LoadModel("./assets/potion.obj");
@@ -45,8 +51,25 @@ void initRenderer(player_t * player) {
     wingsheart = LoadTexture("./assets/wingsheart.png");
     wall = LoadTexture("./assets/wall.png");
     floorTexture = LoadTexture("./assets/floor.png");
+    //dirtyWall = LoadTexture("./assets/dirtywall.png");
+    crackedWall = LoadTexture("./assets/crackedwall.png");
+    //monsterCount = LoadTexture("./assets/monster2.glTF");
 
 }
+
+
+Texture2D getTextureWall(int nbTexture){
+    switch(nbTexture){
+        case 1:
+            return wall;
+        case 2:
+            return floorTexture;
+        case 3 :
+            return crackedWall;
+    }
+}
+
+
 
 void DrawMap(chunkedMap_t map) {
     for (int i = 0; i < map.width; i++) {
@@ -61,15 +84,22 @@ void DrawMap(chunkedMap_t map) {
 //TODO Add DrawCeilling & DrawGround
 void DrawChunk(chunk_t chunk) {
     //GROUND
-    DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, -0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
     for(int x = chunk.x * CHUNK_SIZE; x < (chunk.x + 1) * CHUNK_SIZE; x++) {
-        for(int y = 1; y < MAX_Y; y++) {
+        for(int y = 0; y < MAX_Y; y++) {
             for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
-                switch (chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]) {
-                    case WALL:
-                        DrawCubeCustom(floorTexture, (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                if(y == 0){
+                    DrawCubeCustom(floorTexture, (Vector3){x + 0.5, -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    continue;
+                }
+                if(y==5 && drawBundle.drawCeiling){
+                    DrawCubeCustom(floorTexture, (Vector3){x + 0.5, 4.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    
+                }
+            
+                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0){
+                        DrawCubeCustom(getTextureWall(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]), (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                         //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                        break;
+                
                 }
             }
         }
@@ -83,10 +113,14 @@ void DrawChunk(chunk_t chunk) {
     for(int i = 0; i < chunk.keyCount; i++) {
         DrawKey(chunk.keys[i]);
     }
-    if(drawBundle.drawCeiling) {
-        //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
-        DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, WALL_HEIGHT + 0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
+    for(int i = 0; i < chunk.monsterCount; i++) {
+        DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
     }
+    
+    // if(drawBundle.drawCeiling) {
+    //     //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
+    //     DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, WALL_HEIGHT + 0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
+    // }
 }
 
 void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
@@ -330,7 +364,6 @@ void Render(chunkedMap_t map) {
         DrawMap(map);
 
         EndMode3D();
-
         DrawOverlay();
         DrawDebug();
 
@@ -357,14 +390,14 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 // Measure a text works but the text is not drin 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
 static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
-int render3DText(char * text, Vector3 position)
+int render3DText(char * text, Vector3 position,float fontSize)
 {
     Vector3 textDimension;
     // Initialization
     //--------------------------------------------------------------------------------------
     Font font = GetFontDefault();
 
-    textDimension = MeasureText3D(GetFontDefault(), text, 8.0f, 1.0f, 0.0f);
+    textDimension = MeasureText3D(GetFontDefault(), text, fontSize, 1.0f, 0.0f);
 
     rlPushMatrix();
 
@@ -374,7 +407,7 @@ int render3DText(char * text, Vector3 position)
     rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     rlRotatef(angleBetweenVectors, 0.0f, 0.0f, -1.0f);
 
-    DrawText3D(GetFontDefault(), text, (Vector3){-textDimension.x/2, 0, 0}, 5.0f, 2.0f, 0.0f, RED);
+    DrawText3D(GetFontDefault(), text, (Vector3){-textDimension.x/2, 0, 0}, fontSize, 2.0f, 0.0f, RED);
     rlPopMatrix();
 
     UnloadFont(font);
@@ -568,6 +601,26 @@ void DrawDoor(door_t door) {
     Model currModel = doorModel;
     currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, door.rotation * DEG2RAD });
     DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
+}
+
+void DrawMonster(monster_t monster, int x, int y){
+    
+    monster.position.y = (monster.position.y)+1.5;
+    monster.position.x += 0.5f + x * CHUNK_SIZE;
+    monster.position.z += 0.5f + y * CHUNK_SIZE;
+
+    DrawModel(monsterModel, monster.position, 0.25f,WHITE);
+   
+    render3DText(
+        TextFormat("Health : %d \nArmor : %d\nDamage : %d",(int)monster.statistics.health,(int)monster.statistics.armor,(int)monster.statistics.damage),
+        (Vector3){monster.position.x,(monster.position.y)+2,monster.position.z},
+        2.0
+    );
+
+
+    
+
+
 }
 
 
