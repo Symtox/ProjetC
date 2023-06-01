@@ -8,7 +8,7 @@
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
 void DrawDoor(door_t door);
-void DrawMonster(monster_t monsteRR, int, int);
+void DrawMonster(monster_t, int, int);
 
 
 Model keyModel;
@@ -29,9 +29,8 @@ Texture2D bigsword;
 Texture2D wingsheart;
 Texture2D wall;
 Texture2D floorTexture;
-Texture2D dirtyWall;
 Texture2D crackedWall;
-Texture2D monsterCount;
+
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -51,9 +50,7 @@ void initRenderer(player_t * player) {
     wingsheart = LoadTexture("./assets/wingsheart.png");
     wall = LoadTexture("./assets/wall.png");
     floorTexture = LoadTexture("./assets/floor.png");
-    //dirtyWall = LoadTexture("./assets/dirtywall.png");
     crackedWall = LoadTexture("./assets/crackedwall.png");
-    //monsterCount = LoadTexture("./assets/monster2.glTF");
 
 }
 
@@ -117,10 +114,6 @@ void DrawChunk(chunk_t chunk) {
         DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
     }
     
-    // if(drawBundle.drawCeiling) {
-    //     //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
-    //     DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, WALL_HEIGHT + 0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
-    // }
 }
 
 void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
