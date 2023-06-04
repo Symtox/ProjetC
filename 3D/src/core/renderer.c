@@ -1,13 +1,11 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
-#include "../board/tiles.h"
 #include "../utils/utils.h"
-#include <stdlib.h>
 #include "../../includes/rlgl.h"
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
-void DrawDoor(door_t door);
+void DrawDoor(door_t door, int, int);
 void DrawMonster(monster_t, int, int);
 
 
@@ -16,6 +14,9 @@ Model potionModel;
 Model cubeModel;
 Model doorModel;
 Model monsterModel;
+Model powerUpAttackModel;
+Model powerUpShieldModel;
+Model powerUpHealthModel;
 
 Texture2D heartFull;
 Texture2D heartEmpty;
@@ -55,12 +56,13 @@ void initRenderer(player_t * player) {
 }
 
 
-Texture2D getTextureWall(int nbTexture){
-    switch(nbTexture){
+
+Texture2D getWallTexture(int type) {
+    switch (type) {
         case 1:
-            return wall;
-        case 2:
             return floorTexture;
+        case 2:
+            return wall;
         case 3 :
             return crackedWall;
     }
@@ -93,19 +95,20 @@ void DrawChunk(chunk_t chunk) {
                     
                 }
             
-                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0){
-                        DrawCubeCustom(getTextureWall(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]), (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
-                        //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                
+                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0) {
+                    DrawCubeCustom(getWallTexture(chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]),
+                                   (Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                 }
+                
             }
         }
     }
     for(int i = 0; i < chunk.doorCount; i++) {
-        DrawDoor(chunk.doors[i]);
+        DrawDoor(chunk.doors[i], chunk.x, chunk.y);
     }
-    for(int i = 0; i < chunk.powerUpCount; i++) {
-        DrawPotion(chunk.powerUps[i]);
+    for(int i = 0; i < chunk.potionCount; i++) {
+        DrawPotion(chunk.potions[i], chunk.x, chunk.y);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
         DrawKey(chunk.keys[i]);
@@ -113,7 +116,10 @@ void DrawChunk(chunk_t chunk) {
     for(int i = 0; i < chunk.monsterCount; i++) {
         DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
     }
-    
+    for(int i = 0; i < chunk.powerUpCount; i++) {
+        DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
+    }
+
 }
 
 void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
@@ -383,7 +389,7 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 // Measure a text works but the text is not drin 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
 static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
-int render3DText(char * text, Vector3 position,float fontSize)
+int render3DText(const char * text, Vector3 position,float fontSize)
 {
     Vector3 textDimension;
     // Initialization
@@ -575,24 +581,56 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
 
 
 void DrawKey(DoorKey_t key) {
+    if(key.pickedUp) {
+        return;
+    }
     key.position.y++;
     logFile(TextFormat("Key position: %f, %f, %f\n", key.position.x, key.position.y, key.position.z));
-   // keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
+    keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
     DrawModel(keyModel, key.position, 0.10f, GOLD);
 }
 
-void DrawPotion(powerUp_t powerUp) {
-    powerUp.position.y = powerUp.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
-    powerUp.position.x += 0.5f;
-    powerUp.position.z += 0.5f;
+void DrawPotion(potion_t potion, int chunkX, int chunkY) {
+    if(potion.pickedUp) {
+        return;
+    }
+    potion.position.y = potion.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    potion.position.x += 0.5f + chunkX * CHUNK_SIZE;
+    potion.position.z += 0.5f + chunkY * CHUNK_SIZE;
     potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
+    DrawModel(potionModel, potion.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
+}
+
+void DrawPowerUp(powerUp_t powerup, int chunkX, int chunkY) {
+    if(powerup.pickedUp) {
+        return;
+    }
+    powerup.position.y = powerup.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f ;
+    powerup.position.x += 0.5f + chunkX * CHUNK_SIZE;
+    powerup.position.z += 0.5f + chunkY * CHUNK_SIZE;
+    switch (powerup.type) {
+        case MAX_HP:
+            powerUpHealthModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
+            DrawModel(powerUpHealthModel, powerup.position, 0.07f, CLITERAL(Color){ 100, 0, 100, 150 });
+            break;
+        case ATTACK:
+            powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
+            DrawModel(powerUpAttackModel, powerup.position, 0.07f, CLITERAL(Color){ 200, 0, 100, 150 });
+            break;
+        case DEFENSE:
+            powerUpShieldModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
+            DrawModel(powerUpShieldModel, powerup.position, 0.07f, CLITERAL(Color){ 100, 200, 0, 150 });
+            break;
+    }
 }
 
 
-void DrawDoor(door_t door) {
+void DrawDoor(door_t door, int x, int y) {
+
     Model currModel = doorModel;
-    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, door.rotation * DEG2RAD });
+    door.position.x += x * CHUNK_SIZE;
+    door.position.z += y * CHUNK_SIZE;
+    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0 });
     DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
 }
 

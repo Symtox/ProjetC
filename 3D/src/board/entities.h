@@ -18,10 +18,10 @@
 }
 
 typedef struct {
-    float health;
-    float maxHealth;
-    float armor;
-    float damage;
+    int health;
+    int maxHealth;
+    int armor;
+    int damage;
 } statistics_t;
 
 

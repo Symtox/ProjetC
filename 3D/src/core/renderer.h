@@ -25,6 +25,7 @@ void DrawChunk(chunk_t);
 void DrawOverlay();
 void DrawDebug();
 void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
+void DrawPowerUp(powerUp_t powerup, int chunkX, int chunkY);
 
 void Render(chunkedMap_t);
 
@@ -35,8 +36,8 @@ void toggleDrawOverlay();
 drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
 
-int render3DText(char * , Vector3 , float);
+int render3DText(const char * , Vector3 , float);
 void DrawKey(DoorKey_t);
-void DrawPotion(powerUp_t);
+void DrawPotion(potion_t, int ,int);
 
 #endif

@@ -58,7 +58,6 @@
 //     }
 // }
 
-
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
@@ -113,7 +112,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = rand()% 3 +1;
-                        
                     }
                     break;
 
@@ -128,7 +126,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                         chunk->chunk[i][k][j] = 1;
                     }
                     doors[chunk->doorCount].opened = 0;
-                    doors[chunk->doorCount].rotation = 90;
                     doors[chunk->doorCount].position = (Vector3) {i, 0, j};
                     chunk->doorCount++;
                     break;
@@ -271,27 +268,20 @@ int isChunkInBuffer(int x, int y) {
 
 void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
     int currentChunkNo = chunkCount;
-    char * fullPath = concatPath(path, filename);
-    if(isChunkInBuffer(x, y)) {
+    if(isChunkInBuffer(x, y) || filename == NULL) {
         return;
     }
+    char * fullPath = concatPath(path, filename);
     loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath);
+
     chunkBuffer[currentChunkNo].x = x;
     chunkBuffer[currentChunkNo].y = y;
-
     chunkCount++;
-    if(chunkBuffer[currentChunkNo].east != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
-    }
-    if(chunkBuffer[currentChunkNo].south != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
-    }
-    if(chunkBuffer[currentChunkNo].west != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
-    }
-    if(chunkBuffer[currentChunkNo].north != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
-    }
+
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
     free(fullPath);
 }
 
@@ -354,7 +344,8 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     writeIndex(fd, index);
 
     for(int i = 0; i < chunkCount; i++) {
-        writeChunk(fd, chunkBuffer[i]);
+        writeChunkTXT(fd, chunkBuffer[i]);
+        freeChunkTXT(chunkBuffer[i]);
     }
-    logFile("Done writing");
+    freeIndex(index);
 }

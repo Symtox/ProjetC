@@ -85,7 +85,6 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
 
 
     handleJump(playerPhysics);
-
     if(playerPhysics->isJumping && !playerPhysics->isFalling) {
         logFile(TextFormat("Jumping: Jump time: %d\n", playerPhysics->jumpTime));
         if(playerPhysics->jumpTime < JUMP_DURATION) {
@@ -261,10 +260,8 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
     }
 
     //correctedMovement.x = Vector3Subtract(cameraAfterMove.position, camera.position).x;
-   // correctedMovement.x = movement.x;
     movement->x = 0;
     movement->z = 0;
-    movement->y = 0;
 }
 
 void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
@@ -319,6 +316,7 @@ float getTileDistanceFromGround(int x, float y, int z, chunkedMap_t map) {
 
 int isTileFree(int x, int y, int z, chunkedMap_t map) {
     int chunkIndexX, chunkIndexY;
+    bool isDoorFree = true;
     if(x < 0 || z < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || z >= CHUNK_SIZE * MAP_CHUNK_HEIGHT || y < 0 || y >= MAX_Y) {
         return 1;
     }
@@ -326,7 +324,18 @@ int isTileFree(int x, int y, int z, chunkedMap_t map) {
     if(chunkIndexX == -1 || chunkIndexY == -1) {
         return 1;
     }
-    return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0;
+    for(int i = 0; i < map.chunks[chunkIndexX][chunkIndexY].doorCount; i++) {
+        if(map.chunks[chunkIndexX][chunkIndexY].doors[i].position.x == x
+            && (
+                    map.chunks[chunkIndexX][chunkIndexY].doors[i].position.y == y
+                    || map.chunks[chunkIndexX][chunkIndexY].doors[i].position.y + 1 == y
+              )
+            && map.chunks[chunkIndexX][chunkIndexY].doors[i].position.z == z
+            && !map.chunks[chunkIndexX][chunkIndexY].doors[i].opened) {
+                isDoorFree = false;
+        }
+    }
+    return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0 && isDoorFree;
 }
 
 void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t map) {
