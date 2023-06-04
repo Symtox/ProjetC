@@ -7,8 +7,13 @@
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
-void DrawDoor(door_t door);
+void DrawDoor(door_t door,int,int);
 void DrawMonster(monster_t, int, int);
+// void DrawKey(DoorKey_t);
+// void DrawPotion(potion_t);
+// void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
+// void DrawSword(powerUp_t,int,int);
+// void DrawShield(powerUp_t,int,int);
 
 
 Model keyModel;
@@ -16,6 +21,8 @@ Model potionModel;
 Model cubeModel;
 Model doorModel;
 Model monsterModel;
+Model swordModel;
+Model shieldModel;
 
 Texture2D heartFull;
 Texture2D heartEmpty;
@@ -30,6 +37,11 @@ Texture2D wingsheart;
 Texture2D wall;
 Texture2D floorTexture;
 Texture2D crackedWall;
+Texture2D doorUp;
+Texture2D doorDown;
+Texture2D potion;
+Texture2D sword;
+Texture2D armor;
 
 
 void initRenderer(player_t * player) {
@@ -37,7 +49,7 @@ void initRenderer(player_t * player) {
     monsterModel = LoadModel("./assets/monster2.glTF");
     keyModel = LoadModel("./assets/key.obj");
     doorModel = LoadModel("./assets/door.obj");
-    potionModel = LoadModel("./assets/potion.obj");
+    potionModel = LoadModel("./assets/potion1.obj");
     heartFull = LoadTexture("./assets/heart.png");
     heartEmpty = LoadTexture("./assets/heart_empty.png");
     armor = LoadTexture("./assets/armor.png");
@@ -48,9 +60,18 @@ void initRenderer(player_t * player) {
     bigarmor = LoadTexture("./assets/bigarmor.png");
     bigsword = LoadTexture("./assets/bigsword.png");
     wingsheart = LoadTexture("./assets/wingsheart.png");
-    wall = LoadTexture("./assets/wall.png");
-    floorTexture = LoadTexture("./assets/floor.png");
-    crackedWall = LoadTexture("./assets/crackedwall.png");
+    wall = LoadTexture("./assets/mossy_stone_bricks.png");
+    floorTexture = LoadTexture("./assets/stone_bricks.png");
+    crackedWall = LoadTexture("./assets/cracked_stone.png");
+    doorUp = LoadTexture("./assets/door_up.png");
+    doorDown = LoadTexture("./assets/door_down.png");
+    swordModel = LoadModel("./assets/sword.obj");
+    shieldModel = LoadModel("./assets/shield.obj");
+
+
+    //potion = LoadTexture("./assets/potion.png"); 
+    
+
 
 }
 
@@ -93,25 +114,30 @@ void DrawChunk(chunk_t chunk) {
                     
                 }
             
-                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0){
+                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0 && chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=100){
                         DrawCubeCustom(getTextureWall(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]), (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                         //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                 
                 }
+                
+
             }
         }
     }
     for(int i = 0; i < chunk.doorCount; i++) {
-        DrawDoor(chunk.doors[i]);
+        DrawDoor(chunk.doors[i],chunk.x,chunk.y);
     }
-    for(int i = 0; i < chunk.powerUpCount; i++) {
-        DrawPotion(chunk.powerUps[i]);
+    for(int i = 0; i < chunk.potionCount; i++) {
+        DrawPotion(chunk.potions[i],chunk.x,chunk.y);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
         DrawKey(chunk.keys[i]);
     }
     for(int i = 0; i < chunk.monsterCount; i++) {
         DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
+    }
+    for(int i = 0; i < chunk.powerUpCount; i++) {
+        DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
     }
     
 }
@@ -573,6 +599,40 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+void DrawSword(powerUp_t sword,int x,int y) {
+    sword.position.y = sword.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    sword.position.x += 0.5f;
+    sword.position.z += 0.5f;
+    swordModel.transform = MatrixRotateXYZ((Vector3){ 90.0f * DEG2RAD, 0, 0});
+    DrawModel(swordModel, sword.position, 2.0f, (Color){60,60,60,255});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+
+void Drawshield(powerUp_t shield,int x,int y) {
+    shield.position.y = shield.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    shield.position.x += 0.5f;
+    shield.position.z += 0.5f;
+    shieldModel.transform = MatrixRotateXYZ((Vector3){ 90.0f * DEG2RAD, 0, 0});
+    DrawModel(shieldModel, shield.position, 2.0f, (Color){60,60,60,255});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+void DrawPowerUp(powerUp_t powerUp,int x, int y){
+    switch (powerUp.type)
+    {
+    case SWORD:
+        DrawSword(powerUp,x,y);
+        break;
+    case SHIELD:
+        Drawshield(powerUp,x,y);
+        break;
+    case HEALTH:
+        //DrawHealth(powerUp,x,y);
+        break;
+    default:
+        break;
+    }
+
+    }
 
 void DrawKey(DoorKey_t key) {
     key.position.y++;
@@ -581,23 +641,33 @@ void DrawKey(DoorKey_t key) {
     DrawModel(keyModel, key.position, 0.10f, GOLD);
 }
 
-void DrawPotion(powerUp_t powerUp) {
+void DrawPotion(potion_t powerUp,int x,int y) {
     powerUp.position.y = powerUp.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
     powerUp.position.x += 0.5f;
     powerUp.position.z += 0.5f;
-    potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
+    potionModel.transform = MatrixRotateXYZ((Vector3){ 90.0f * DEG2RAD, 0, 0});
+    DrawModel(potionModel, powerUp.position, 0.015f, (Color){85,91,97,255});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
 }
 
 
-void DrawDoor(door_t door) {
-    Model currModel = doorModel;
-    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, door.rotation * DEG2RAD });
-    DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
+void DrawDoor(door_t door,int x,int y) {
+
+    if(door.opened){
+        return;
+    }
+    door.position.y = (door.position.y)+0.5;
+    door.position.x += 0.5f + x * CHUNK_SIZE;
+    door.position.z += 0.5f + y * CHUNK_SIZE;
+    DrawCubeCustom(doorUp,(Vector3){door.position.x,(door.position.y)+1,door.position.z},1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorDown,door.position,1.0f,1.0f,1.0f,WHITE);
 }
 
 void DrawMonster(monster_t monster, int x, int y){
-    
+
+    if(monster.isDead){
+        return;
+    }
     monster.position.y = (monster.position.y)+1.5;
     monster.position.x += 0.5f + x * CHUNK_SIZE;
     monster.position.z += 0.5f + y * CHUNK_SIZE;

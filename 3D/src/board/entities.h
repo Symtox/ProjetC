@@ -18,12 +18,20 @@
 }
 
 typedef struct {
+    Vector3 position;
     float health;
     float maxHealth;
     float armor;
     float damage;
 } statistics_t;
 
+typedef enum{
+    SWORD,
+    SHIELD,
+    HEALTH
+
+}
+powerUpType_e;
 
 typedef struct {
     int isJumping;

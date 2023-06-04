@@ -37,6 +37,11 @@ void setDrawBundle(drawBundle_t);
 
 int render3DText(char * , Vector3 , float);
 void DrawKey(DoorKey_t);
-void DrawPotion(powerUp_t);
+void DrawPotion(potion_t,int,int);
+// void DrawPowerUp(powerUp_t);
+// void DrawDoor(door_t);
+// void DrawMonster(monster_t);
+// void DrawPlayer(player_t);
+
 
 #endif
