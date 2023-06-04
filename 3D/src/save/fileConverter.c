@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <sys/types.h>
-
+/*
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     ssize_t bufsize = 0;
     ssize_t pos = 0;
@@ -57,7 +57,7 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
         return -1;
     }
 }
-
+*/
 
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
@@ -323,6 +323,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
             max.y = chunkBuffer[i].y;
         }
     }
+
     setMapSize(max.x - min.x + 1, max.y - min.y + 1);
 
     for(int i = 0; i < chunkCount; i++) {
@@ -352,6 +353,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         pos += sizeofChunkTXT(chunkBuffer[i]);
         index.chunkFilePosition[i][1] = pos;
     }
+
     lseek(fd, 0, SEEK_SET);
     savePlayerContext(fd, player);
     writeIndex(fd, index);

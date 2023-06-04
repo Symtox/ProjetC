@@ -34,7 +34,7 @@ void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
 void Tick(chunkedMap_t * map) {
     handlePlayerMovement(player, *map);
     handlePlayerShortcuts();
-    loadCurrentMap(fd, map, player->camera->position);
+    //loadCurrentMap(fd, map, player->camera->position);
     //checkForBunuses();
     //loadCurrentChunks();
     //handlerMobMouvements();
