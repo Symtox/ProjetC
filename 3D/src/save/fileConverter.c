@@ -9,56 +9,26 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <sys/types.h>
-/*
-ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
-    ssize_t bufsize = 0;
-    ssize_t pos = 0;
-    int c;
+#include "fileConverter.h"
 
-    if (lineptr == NULL || n == NULL || stream == NULL) {
-        return -1;
+ssize_t getLineFromText(char **lineptr, size_t *n, FILE *stream) {
+    char buf[100] = {0};
+    int i = 0;
+    int c = 0;
+
+    while(c != '\n' && c != EOF) {
+        c = fgetc(stream);
+        buf[i] = c;
+        i++;
     }
-
-    // Allouer un tampon initial si nécessaire
-    if (*lineptr == NULL || *n == 0) {
-        *n = 128;
-        *lineptr = malloc(*n);
-        if (*lineptr == NULL) {
-            return -1;
-        }
-    }
-
-    while ((c = fgetc(stream)) != EOF) {
-        // Si le tampon est plein, le redimensionner
-        if (pos >= *n - 1) {
-            bufsize = *n;
-            *n *= 2;
-            char *new_ptr = realloc(*lineptr, *n);
-            if (new_ptr == NULL) {
-                return -1;
-            }
-            *lineptr = new_ptr;
-        }
-
-        (*lineptr)[pos++] = c;
-
-        // Si une nouvelle ligne est détectée, terminer la ligne et renvoyer la longueur
-        if (c == '\n') {
-            break;
-        }
-    }
-
-    // Ajouter le caractère de fin de chaîne
-    (*lineptr)[pos] = '\0';
-
-    if (pos > 0) {
-        return pos;
-    } else {
-        return -1;
-    }
+    buf[i] = '\0';
+    *lineptr = malloc(sizeof(char) * (strlen(buf) + 1));
+    strncpy(*lineptr, buf, i);
+    (*lineptr)[i] = '\0';
+    *n = strlen(buf) + 1;
+    return c == EOF ? -1 : i;
 }
 
-*/
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
@@ -164,7 +134,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->west = NULL;
     chunk->north = NULL;
 
-    while (getline(&line, &len, file) != -1) {
+    while (getLineFromText(&line, &len, file) != -1) {
 
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
@@ -182,18 +152,18 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             statistics_t stats;
             char * monsterLine = NULL;
 
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.health = atoi(substr(monsterLine,5));
             stats.maxHealth = stats.health;
             free(monsterLine);
 
             monsterLine = NULL;
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.damage = atoi(substr(monsterLine,8));
             free(monsterLine);
 
             monsterLine = NULL;
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.armor = atoi(substr(monsterLine,9));
 
             for(int i = 0; i < chunk->monsterCount; i++) {
