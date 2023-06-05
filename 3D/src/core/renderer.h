@@ -38,6 +38,7 @@ int render3DText(const char * , Vector3 , float);
 void DrawKey(DoorKey_t);
 void DrawPotion(potion_t, int ,int);
 void DrawPowerUp(powerUp_t, int, int);
+void DrawHealth(powerUp_t health, int x, int y);
 void DrawDoor(door_t, int, int);
 void DrawMonster(monster_t, int, int);
 

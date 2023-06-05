@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <sys/types.h>
-
+/*
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     ssize_t bufsize = 0;
     ssize_t pos = 0;
@@ -58,7 +58,7 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     }
 }
 
-
+*/
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
