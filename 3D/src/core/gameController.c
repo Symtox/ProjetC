@@ -15,15 +15,17 @@ typedef enum controls {
 }controls_e;
 
 player_t * player;
+chunkedMap_t * map;
 
 int fd = -1;
-void pickUpItem(chunkedMap_t * map);
+void pickUpItem();
 
-void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
+void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
     int flags = O_RDWR | O_CREAT;
     if(!save) {
         flags |= O_TRUNC;
     }
+    map = mapPtr;
     fd = open("bin/saves/caca", flags, 0666);
     if(!save) {
         createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
@@ -36,14 +38,14 @@ void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
     player = playerP;
 }
 
-void Tick(chunkedMap_t * map) {
+void Tick() {
     handlePlayerMovement(player, *map);
     handlePlayerShortcuts();
     loadCurrentMap(fd, map, player->camera->position);
-    pickUpItem(map);
+    pickUpItem();
 }
 
-void pickUpItem(chunkedMap_t * map) {
+void pickUpItem() {
     int chunkX, chunkY;
     int x = player->camera->position.x, z = player->camera->position.z;
     toChunkCoords(&x, &z, &chunkX, &chunkY, *map);
@@ -107,6 +109,9 @@ void handlePlayerShortcuts() {
         controlsToggles[FREE_WALK] = 1;
     }
 
+
+    drawBundle.canOpenDoor = canOpenDoor();
+
     if(IsKeyUp(KEY_F) && controlsToggles[FREE_WALK]) {
         controlsToggles[FREE_WALK] = 0;
     }
@@ -134,10 +139,54 @@ void handlePlayerShortcuts() {
     if(IsKeyUp(KEY_F1) && controlsToggles[DRAW_OVERLAY]) {
         controlsToggles[DRAW_OVERLAY] = 0;
     }
+    if(IsKeyPressed(KEY_O) && drawBundle.canOpenDoor == 1) {
+        openClosestDoor();
+        drawBundle.canOpenDoor = 0;
+        player->keyCount--;
+    }
     setDrawBundle(drawBundle);
 }
 
 
 void savePlayer() {
     savePlayerContext(fd, *player);
+}
+
+int canOpenDoor() {
+    int chunkX, chunkY;
+    int x = player->camera->position.x, z = player->camera->position.z;
+    toChunkCoords(&x, &z, &chunkX, &chunkY, *map);
+    for(int i = 0; i < map->chunks[chunkX][chunkY].doorCount; i++) {
+        if(map->chunks[chunkX][chunkY].doors[i].opened) {
+            continue;
+        }
+        float distanceToDoor = distance(x, z, map->chunks[chunkX][chunkY].doors[i].position.x, map->chunks[chunkX][chunkY].doors[i].position.z);
+        if(distanceToDoor < 2) {
+            return player->keyCount > 0 ? 1 : -1;
+        }
+    }
+    return 0;
+}
+
+void openClosestDoor() {
+    int chunkX, chunkY;
+    int x = player->camera->position.x, z = player->camera->position.z;
+
+    float minDistance = 100000;
+    int minIndex = -1;
+
+    toChunkCoords(&x, &z, &chunkX, &chunkY, *map);
+    for(int i = 0; i < map->chunks[chunkX][chunkY].doorCount; i++) {
+        if(map->chunks[chunkX][chunkY].doors[i].opened) {
+            continue;
+        }
+        float distanceToDoor = distance(x, z, map->chunks[chunkX][chunkY].doors[i].position.x, map->chunks[chunkX][chunkY].doors[i].position.z);
+        if(distanceToDoor < minDistance) {
+            minDistance = distanceToDoor;
+            minIndex = i;
+        }
+    }
+    if(minIndex != -1) {
+        map->chunks[chunkX][chunkY].doors[minIndex].opened = 1;
+    }
 }

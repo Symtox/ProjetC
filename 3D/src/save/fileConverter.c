@@ -16,6 +16,7 @@ ssize_t getLineFromText(char **lineptr, size_t *n, FILE *stream) {
     int i = 0;
     int c = 0;
 
+
     while(c != '\n' && c != EOF) {
         c = fgetc(stream);
         buf[i] = c;

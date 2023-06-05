@@ -15,10 +15,12 @@ typedef struct {
     Vector3 direction;
     player_t * player;
     int tileUnder;
+    int canOpenDoor;
 }drawBundle_t;
 
 void initRenderer(player_t * player);
 
+void DrawDoorHint();
 void DrawMap(chunkedMap_t);
 void DrawChunk(chunk_t);
 void DrawOverlay();

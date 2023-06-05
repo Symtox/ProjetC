@@ -37,7 +37,7 @@ int main(void)
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         BeginDrawing();
-        Tick(&map);
+        Tick();
         Render(map);
         //----------------------------------------------------------------------------------
         EndDrawing();

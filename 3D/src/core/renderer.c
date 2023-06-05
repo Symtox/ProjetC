@@ -375,11 +375,20 @@ void Render(chunkedMap_t map) {
         DrawMap(map);
 
         EndMode3D();
+        DrawDoorHint();
         DrawOverlay();
         DrawDebug();
 
 }
 
+void DrawDoorHint() {
+    if(drawBundle.canOpenDoor == 1) {
+        DrawText("Press E to open door", 600, 800, 40, WHITE);
+    }
+    else if(drawBundle.canOpenDoor == -1) {
+        DrawText("You need a key to open this door", 600, 800, 40, WHITE);
+    }
+}
 
 drawBundle_t getDrawBundle() {
     return drawBundle;
