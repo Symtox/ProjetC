@@ -5,6 +5,7 @@
 #include <math.h>
 #include <ctype.h>
 #include "../utils/sleep.h"
+#include <conio.h>
 
 
 monster_t * getMonster(tabMonsters_t ** tabMonsters, position_t pos, int generatedNumber){
@@ -28,9 +29,8 @@ void printStartCombat(monster_t * monster, player_t * player){
     printf("Vous entrez en combat contre un monstre !\n");
     printStats(player, monster);
 
-    char pass;
-    printf("Appuyez sur une touche pour commencer le combat ...");
-    scanf("%c", &pass);
+    printf("Appuyez sur une touche pour commencer le combat...");
+    _getch();
 }
 
 void printPlayerAttack(monster_t * monster, player_t * player){
@@ -71,6 +71,7 @@ int startCombat(player_t * player, tabMonsters_t ** tabMonsters, position_t pos,
             printf("\nVous avez vaincu le monstre !\n");
             printf("Vous gagnez 1 HP max et 1 ATK\n");
             player->max_hp++;
+            player->hp++;
             player->attack++;
             wait(2000);
             system("CLS");
@@ -93,9 +94,7 @@ int startCombat(player_t * player, tabMonsters_t ** tabMonsters, position_t pos,
             system("CLS");
             printStats(player, monster);
             printf("Que voulez-vous faire ?\n    F : Fuir\n    A : Attaquer\nVotre choix : ");
-            scanf("%c", &choice);
-            if(choice == '@')
-                return MONSTER_DIE;
+            choice = _getch();
         }
     }
 

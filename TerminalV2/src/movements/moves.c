@@ -54,6 +54,7 @@ void moveOnPowerUp(player_t * player, int x, int y, int power){
     }
     else{
         player->max_hp += 3;
+        player->hp += 3;
     }
 
     return;
@@ -87,9 +88,6 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
         pos.x > 0 ? strcpy(mapToGenerate, map->south) : strcpy(mapToGenerate, map->north);
     
     int cpt=0;
-    printf("%d\n", tabMaps->nbMaps);
-    printf("%d\n", map->generatedNumber);
-    
 
     while(cpt<tabMaps->nbMaps){
         if (strcmp(tabMaps->maps[cpt].name, mapToGenerate) == 0){
@@ -99,7 +97,7 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
         cpt++;
     }
 
-    printf("after while\n");
+    tabMaps->maps[map->generatedNumber] = *map;
     
     if(isAlreadyGenerated){
         *map = tabMaps->maps[cpt];

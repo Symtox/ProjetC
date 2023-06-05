@@ -1,48 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <ctype.h>
 #include <windows.h>
 #include "entities/entities.h"
 #include "movements/moves.h"
 #include "main.h"
 #include "utils/fileReader.h"
 
-
-map_t * createPlateau() {
-    map_t * map = malloc(sizeof(map_t));
-    for(int i=0; i<10;i++){
-        if (i == 0){
-            for(int j=0; j<10;j++){
-                map->table[i][j] = '#';
-            }
-        }
-        else if (i == 9){
-            for(int j=0; j<10;j++){
-                map->table[i][j] = '#';
-            }
-        }
-        else{
-            for(int j=0; j<10;j++){
-                if (j == 0){
-                    map->table[i][j] = '#';
-                }
-                else if (j == 9){
-                    map->table[i][j] = '#';
-                }
-                else{
-                    map->table[i][j] = ' ';
-                }
-            }
-        }
-        map->table[2][2] = '!';
-        map->table[3][3] = '3';
-        map->table[7][7] = 'o';
-        map->table[1][1] = '2';
-        map->table[8][8] = '1';
-        map->table[5][5] = 'P';
-        map->table[6][6] = 'A';
-    }
-    return map;
+void credits(){
+    system("cls");
+    printf("Credits de Maze Slayer CLI\n\n");
+    printf("Developpeurs :\n");
+    printf("\t- Clement MABILE\n");
+    printf("\t- Enzo DUPRE\n");
+    printf("\t- Maxime MILLAT\n");
+    printf("\t- Theo MOUISSE\n\n");
+    printf("Derniere date de modification : 05/06/2023\n\n");
+    printf("Appuyez sur une touche pour revenir au menu principal...");
+    _getch();
+    return;
 }
 
 void color(int t,int f)
@@ -140,8 +117,17 @@ void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_
         else if(move == 80){
             movements(map, player, tabMonsters, 1, 0, tabMaps);
         }
-        else if (move == 'q'){
+        else if(move == 'q'){
             break;
+        }
+        else if(move == '*'){
+            player->max_hp = 999;
+            player->hp = 999;
+            player->attack = 999;
+            player->defense = 999;
+        }
+        else if(move == '!'){
+            player->nbKey = 999;
         }
         else {
             continue;
@@ -149,9 +135,38 @@ void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_
         system("CLS");
         printMap(map, player);
     }
+    startMenu();
+}
+
+void startMenu(){
+    char choice;
+    while(toupper(choice) != 'N' && toupper(choice) != 'C' && toupper(choice) != 'Q'){
+        choice = ' ';
+        system("CLS");
+        printf("Bienvenue dans Maze Slayer CLI !\n\n");
+        printf("[N]ouvelle partie\n");
+        printf("[C]redits\n");
+        printf("[Q]uitter\n");
+        choice = _getch();
+    }
+    
+    switch(toupper(choice)){
+        case 'N':
+            break;
+        case 'C':
+            credits();
+            startMenu();
+            break;
+        case 'Q':
+            exit(0);
+            break;
+    }
+
+    return;
 }
 
 int main() {
+    startMenu();
     player_t player = {10, 10, 1, 2, 0, {14, 14}};
     tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
     tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
