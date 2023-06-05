@@ -13,4 +13,6 @@
     #define PLAYER_HEIGHT 1.0f // Hauteur du joueur
     #define PLAYER_WIDTH 0.1f // Largeur du joueur
     #define MOVEMENT_SPEED 0.1f // Vitesse de déplacement
+    #define SCREEN_WIDTH 1600
+    #define SCREEN_HEIGHT 900
 #endif
