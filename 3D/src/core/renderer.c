@@ -15,6 +15,7 @@ Model powerUpAttackModel;
 Model powerUpShieldModel;
 Model powerUpHealthModel;
 
+
 Texture2D heartFullTexture;
 Texture2D heartEmptyTexture;
 Texture2D keycount;
@@ -56,6 +57,7 @@ void initRenderer(player_t * player) {
     doorDownTexture = LoadTexture("./assets/door_down.png");
     powerUpAttackModel = LoadModel("./assets/sword.obj");
     powerUpShieldModel = LoadModel("./assets/shield.obj");
+    powerUpHealthModel = LoadModel("./assets/heart.glTF");
 
 
     //potion = LoadTexture("./assets/potion.png"); 
@@ -618,7 +620,7 @@ void DrawPowerUp(powerUp_t powerUp,int x, int y) {
             DrawShield(powerUp,x,y);
             break;
         case MAX_HP:
-            //DrawHealth(powerUp,x,y);
+            DrawHealth(powerUp,x,y);
             break;
         default:
             break;
@@ -657,6 +659,13 @@ void DrawDoor(door_t door,int x,int y) {
     door.position.z += 0.5f + y * CHUNK_SIZE;
     DrawCubeCustom(doorUpTexture,(Vector3){ door.position.x, door.position.y+1, door.position.z },1.0f,1.0f,1.0f,WHITE);
     DrawCubeCustom(doorDownTexture,door.position, 1.0f, 1.0f, 1.0f, WHITE);
+}
+void DrawHealth(powerUp_t health, int x, int y){
+    health.position.y = health.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    health.position.x += 0.5f;
+    health.position.z += 0.5f;
+    potionModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 0});
+    DrawModel(powerUpHealthModel, health.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
 }
 
 void DrawMonster(monster_t monster, int x, int y){
