@@ -5,9 +5,6 @@
 #define DEBUG_INFO_LINE_COUNT 5
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
-void DrawDoor(door_t door, int, int);
-void DrawMonster(monster_t, int, int);
-
 
 Model keyModel;
 Model potionModel;
@@ -18,19 +15,22 @@ Model powerUpAttackModel;
 Model powerUpShieldModel;
 Model powerUpHealthModel;
 
-Texture2D heartFull;
-Texture2D heartEmpty;
-Texture2D armor;
-Texture2D sword;
+Texture2D heartFullTexture;
+Texture2D heartEmptyTexture;
 Texture2D keycount;
-Texture2D background;
-Texture2D bigheart;
-Texture2D bigarmor;
-Texture2D bigsword;
-Texture2D wingsheart;
-Texture2D wall;
+Texture2D overlayBackgroundTexture;
+Texture2D bigHeartTexture;
+Texture2D bigArmorTexture;
+Texture2D bigSwordTexture;
+Texture2D wingedHeartTexture;
+Texture2D wallTexture;
 Texture2D floorTexture;
-Texture2D crackedWall;
+Texture2D crackedWallTexture;
+Texture2D doorUpTexture;
+Texture2D doorDownTexture;
+Texture2D potionTexture;
+Texture2D swordTexture;
+Texture2D armorTexture;
 
 
 void initRenderer(player_t * player) {
@@ -38,20 +38,29 @@ void initRenderer(player_t * player) {
     monsterModel = LoadModel("./assets/monster2.glTF");
     keyModel = LoadModel("./assets/key.obj");
     doorModel = LoadModel("./assets/door.obj");
-    potionModel = LoadModel("./assets/potion.obj");
-    heartFull = LoadTexture("./assets/heart.png");
-    heartEmpty = LoadTexture("./assets/heart_empty.png");
-    armor = LoadTexture("./assets/armor.png");
-    sword = LoadTexture("./assets/sword.png");
+    potionModel = LoadModel("./assets/potion1.obj");
+    heartFullTexture = LoadTexture("./assets/heart.png");
+    heartEmptyTexture = LoadTexture("./assets/heart_empty.png");
+    armorTexture = LoadTexture("./assets/armor.png");
+    swordTexture = LoadTexture("./assets/sword.png");
     keycount = LoadTexture("./assets/keycount.png");
-    background = LoadTexture("./assets/background.png");
-    bigheart = LoadTexture("./assets/bigheart.png");
-    bigarmor = LoadTexture("./assets/bigarmor.png");
-    bigsword = LoadTexture("./assets/bigsword.png");
-    wingsheart = LoadTexture("./assets/wingsheart.png");
-    wall = LoadTexture("./assets/wall.png");
-    floorTexture = LoadTexture("./assets/floor.png");
-    crackedWall = LoadTexture("./assets/crackedwall.png");
+    overlayBackgroundTexture = LoadTexture("./assets/background.png");
+    bigHeartTexture = LoadTexture("./assets/bigheart.png");
+    bigArmorTexture = LoadTexture("./assets/bigarmor.png");
+    bigSwordTexture = LoadTexture("./assets/bigsword.png");
+    wingedHeartTexture = LoadTexture("./assets/wingsheart.png");
+    wallTexture = LoadTexture("./assets/mossy_stone_bricks.png");
+    floorTexture = LoadTexture("./assets/stone_bricks.png");
+    crackedWallTexture = LoadTexture("./assets/cracked_stone.png");
+    doorUpTexture = LoadTexture("./assets/door_up.png");
+    doorDownTexture = LoadTexture("./assets/door_down.png");
+    powerUpAttackModel = LoadModel("./assets/sword.obj");
+    powerUpShieldModel = LoadModel("./assets/shield.obj");
+
+
+    //potion = LoadTexture("./assets/potion.png"); 
+    
+
 
 }
 
@@ -62,10 +71,11 @@ Texture2D getWallTexture(int type) {
         case 1:
             return floorTexture;
         case 2:
-            return wall;
+            return wallTexture;
         case 3 :
-            return crackedWall;
+            return crackedWallTexture;
     }
+    return floorTexture;
 }
 
 
@@ -100,7 +110,6 @@ void DrawChunk(chunk_t chunk) {
                                    (Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                     //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                 }
-                
             }
         }
     }
@@ -109,6 +118,10 @@ void DrawChunk(chunk_t chunk) {
     }
     for(int i = 0; i < chunk.potionCount; i++) {
         DrawPotion(chunk.potions[i], chunk.x, chunk.y);
+        DrawDoor(chunk.doors[i],chunk.x,chunk.y);
+    }
+    for(int i = 0; i < chunk.potionCount; i++) {
+        DrawPotion(chunk.potions[i],chunk.x,chunk.y);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
         DrawKey(chunk.keys[i]);
@@ -119,7 +132,6 @@ void DrawChunk(chunk_t chunk) {
     for(int i = 0; i < chunk.powerUpCount; i++) {
         DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
     }
-
 }
 
 void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
@@ -303,38 +315,37 @@ void DrawOverlay() {
      if(drawBundle.drawOverlay) {
         int i = 0;
 
-        DrawTexture(background, 0, 0, WHITE);
+        DrawTexture(overlayBackgroundTexture, 0, 0, WHITE);
         for(i = 0; i < 10; i++) {
-            DrawTexture(heartEmpty, 7 + 36 * i, 15, WHITE);
+            DrawTexture(heartEmptyTexture, 7 + 36 * i, 15, WHITE);
         }
         for(i = 0; i < smallheart; i++) {
-           
-            DrawTexture(heartFull, 7 + 36 * i, 15, WHITE);
+            DrawTexture(heartFullTexture, 7 + 36 * i, 15, WHITE);
         }
         
 
         if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
-                DrawTexture(wingsheart, 430, 13, WHITE);
+                DrawTexture(wingedHeartTexture, 430, 13, WHITE);
                 
         }
         else {
-                DrawTexture(bigheart,400, 13, WHITE); 
+                DrawTexture(bigHeartTexture,400, 13, WHITE);
                 DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
             }
           
         for(i = 0; i < smallarmor; i++) {
-            DrawTexture(armor, 5 + 36* i, 48, WHITE);
+            DrawTexture(armorTexture, 5 + 36* i, 48, WHITE);
         }
         for(i = 0; i < smalldamage; i++) {
-            DrawTexture(sword, 2 + 36 * i, 86, WHITE);
+            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
         }
         DrawTexture(keycount, 150, 133, WHITE);
         DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
 
-        DrawTexture(bigarmor,400, 47, WHITE); 
+        DrawTexture(bigArmorTexture,400, 47, WHITE);
         DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
 
-        DrawTexture(bigsword,400, 87, WHITE);
+        DrawTexture(bigSwordTexture,400, 87, WHITE);
         DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
      }
@@ -579,6 +590,41 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+void DrawSword(powerUp_t sword, int x, int y) {
+    sword.position.y = sword.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    sword.position.x += 0.5f + x * CHUNK_SIZE;
+    sword.position.z += 0.5f + y * CHUNK_SIZE - 0.2;
+    powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 30 * DEG2RAD, 0, 0});
+    DrawModel(powerUpAttackModel, sword.position, 1.0f, (Color){60,60,60,255});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+
+void DrawShield(powerUp_t shield,int x,int y) {
+    shield.position.y = shield.position.y + sin((float)GetTime() * 2) * 0.1f + 0.7f;
+    shield.position.x += 0.5f + x * CHUNK_SIZE;
+    shield.position.z += 0.5f + y * CHUNK_SIZE;
+    powerUpShieldModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 0});
+    DrawModel(powerUpShieldModel, shield.position, 0.3f, (Color){100, 100, 100, 200});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+void DrawPowerUp(powerUp_t powerUp,int x, int y) {
+    if(powerUp.pickedUp) {
+        return;
+    }
+    switch (powerUp.type) {
+        case ATTACK:
+            DrawSword(powerUp,x,y);
+            break;
+        case DEFENSE:
+            DrawShield(powerUp,x,y);
+            break;
+        case MAX_HP:
+            //DrawHealth(powerUp,x,y);
+            break;
+        default:
+            break;
+    }
+}
 
 void DrawKey(DoorKey_t key) {
     if(key.pickedUp) {
@@ -601,41 +647,24 @@ void DrawPotion(potion_t potion, int chunkX, int chunkY) {
     DrawModel(potionModel, potion.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
 }
 
-void DrawPowerUp(powerUp_t powerup, int chunkX, int chunkY) {
-    if(powerup.pickedUp) {
+
+void DrawDoor(door_t door,int x,int y) {
+
+    if(door.opened){
         return;
     }
-    powerup.position.y = powerup.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f ;
-    powerup.position.x += 0.5f + chunkX * CHUNK_SIZE;
-    powerup.position.z += 0.5f + chunkY * CHUNK_SIZE;
-    switch (powerup.type) {
-        case MAX_HP:
-            powerUpHealthModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
-            DrawModel(powerUpHealthModel, powerup.position, 0.07f, CLITERAL(Color){ 100, 0, 100, 150 });
-            break;
-        case ATTACK:
-            powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
-            DrawModel(powerUpAttackModel, powerup.position, 0.07f, CLITERAL(Color){ 200, 0, 100, 150 });
-            break;
-        case DEFENSE:
-            powerUpShieldModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 135 * DEG2RAD});
-            DrawModel(powerUpShieldModel, powerup.position, 0.07f, CLITERAL(Color){ 100, 200, 0, 150 });
-            break;
-    }
-}
-
-
-void DrawDoor(door_t door, int x, int y) {
-
-    Model currModel = doorModel;
-    door.position.x += x * CHUNK_SIZE;
-    door.position.z += y * CHUNK_SIZE;
-    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0 });
-    DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
+    door.position.y = (door.position.y)+0.5;
+    door.position.x += 0.5f + x * CHUNK_SIZE;
+    door.position.z += 0.5f + y * CHUNK_SIZE;
+    DrawCubeCustom(doorUpTexture,(Vector3){door.position.x,(door.position.y)+1,door.position.z},1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorDownTexture,door.position,1.0f,1.0f,1.0f,WHITE);
 }
 
 void DrawMonster(monster_t monster, int x, int y){
-    
+
+    if(monster.isDead){
+        return;
+    }
     monster.position.y = (monster.position.y)+1.5;
     monster.position.x += 0.5f + x * CHUNK_SIZE;
     monster.position.z += 0.5f + y * CHUNK_SIZE;

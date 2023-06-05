@@ -15,7 +15,6 @@ typedef struct {
     Vector3 direction;
     player_t * player;
     int tileUnder;
-
 }drawBundle_t;
 
 void initRenderer(player_t * player);
@@ -25,7 +24,6 @@ void DrawChunk(chunk_t);
 void DrawOverlay();
 void DrawDebug();
 void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
-void DrawPowerUp(powerUp_t powerup, int chunkX, int chunkY);
 
 void Render(chunkedMap_t);
 
@@ -39,5 +37,8 @@ void setDrawBundle(drawBundle_t);
 int render3DText(const char * , Vector3 , float);
 void DrawKey(DoorKey_t);
 void DrawPotion(potion_t, int ,int);
+void DrawPowerUp(powerUp_t, int, int);
+void DrawDoor(door_t, int, int);
+void DrawMonster(monster_t, int, int);
 
 #endif

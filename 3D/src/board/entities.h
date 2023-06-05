@@ -3,7 +3,7 @@
 #include "../../includes/raylib.h"
 #include "../utils/const.h"
 #define BASE_PLAYER { \
-    {5, 10, 10, 5}, \
+    {8, 10, 8, 5}, \
     0, \
     0,         \
     {0, 0, 0, 0, FALL_BASE_SPEED, JUMP_BASE_SPEED, 0} \
@@ -23,7 +23,6 @@ typedef struct {
     int armor;
     int damage;
 } statistics_t;
-
 
 typedef struct {
     int isJumping;

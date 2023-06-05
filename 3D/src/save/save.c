@@ -22,10 +22,7 @@ void savePlayerContext(int fd, player_t player) {
 }
 
 void readPlayerContext(int fd, player_t * player) {
-    if(read(fd, &player->keyCount, sizeof(int)) == -1) {
-        logFile("Erreur lors de la lecture du fichier");
-        return;
-    }
+    read(fd, &player->keyCount, sizeof(int));
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
     read(fd, &player->camera->target, sizeof(Vector3));

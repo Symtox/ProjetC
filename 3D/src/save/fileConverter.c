@@ -9,54 +9,55 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <sys/types.h>
+/*
+ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
+    ssize_t bufsize = 0;
+    ssize_t pos = 0;
+    int c;
 
-// ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
-//     ssize_t bufsize = 0;
-//     ssize_t pos = 0;
-//     int c;
+    if (lineptr == NULL || n == NULL || stream == NULL) {
+        return -1;
+    }
 
-//     if (lineptr == NULL || n == NULL || stream == NULL) {
-//         return -1;
-//     }
+    // Allouer un tampon initial si nécessaire
+    if (*lineptr == NULL || *n == 0) {
+        *n = 128;
+        *lineptr = malloc(*n);
+        if (*lineptr == NULL) {
+            return -1;
+        }
+    }
 
-//     // Allouer un tampon initial si nécessaire
-//     if (*lineptr == NULL || *n == 0) {
-//         *n = 128;
-//         *lineptr = malloc(*n);
-//         if (*lineptr == NULL) {
-//             return -1;
-//         }
-//     }
+    while ((c = fgetc(stream)) != EOF) {
+        // Si le tampon est plein, le redimensionner
+        if (pos >= *n - 1) {
+            bufsize = *n;
+            *n *= 2;
+            char *new_ptr = realloc(*lineptr, *n);
+            if (new_ptr == NULL) {
+                return -1;
+            }
+            *lineptr = new_ptr;
+        }
 
-//     while ((c = fgetc(stream)) != EOF) {
-//         // Si le tampon est plein, le redimensionner
-//         if (pos >= *n - 1) {
-//             bufsize = *n;
-//             *n *= 2;
-//             char *new_ptr = realloc(*lineptr, *n);
-//             if (new_ptr == NULL) {
-//                 return -1;
-//             }
-//             *lineptr = new_ptr;
-//         }
+        (*lineptr)[pos++] = c;
 
-//         (*lineptr)[pos++] = c;
+        // Si une nouvelle ligne est détectée, terminer la ligne et renvoyer la longueur
+        if (c == '\n') {
+            break;
+        }
+    }
 
-//         // Si une nouvelle ligne est détectée, terminer la ligne et renvoyer la longueur
-//         if (c == '\n') {
-//             break;
-//         }
-//     }
+    // Ajouter le caractère de fin de chaîne
+    (*lineptr)[pos] = '\0';
 
-//     // Ajouter le caractère de fin de chaîne
-//     (*lineptr)[pos] = '\0';
-
-//     if (pos > 0) {
-//         return pos;
-//     } else {
-//         return -1;
-//     }
-// }
+    if (pos > 0) {
+        return pos;
+    } else {
+        return -1;
+    }
+}
+*/
 
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
@@ -125,6 +126,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     for (int k = DOOR_HEIGHT + 1; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = 1;
                     }
+
                     doors[chunk->doorCount].opened = 0;
                     doors[chunk->doorCount].position = (Vector3) {i, 0, j};
                     chunk->doorCount++;
@@ -310,6 +312,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
             max.y = chunkBuffer[i].y;
         }
     }
+
     setMapSize(max.x - min.x + 1, max.y - min.y + 1);
 
     for(int i = 0; i < chunkCount; i++) {
@@ -339,6 +342,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         pos += sizeofChunkTXT(chunkBuffer[i]);
         index.chunkFilePosition[i][1] = pos;
     }
+
     lseek(fd, 0, SEEK_SET);
     savePlayerContext(fd, player);
     writeIndex(fd, index);
