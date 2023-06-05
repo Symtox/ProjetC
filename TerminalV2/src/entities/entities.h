@@ -1,7 +1,7 @@
 #ifndef MAX_SIZE
 
     #define MAX_SIZE 30
-    #define MAX_ROOMS 4
+    #define MAX_ROOMS 6
 
     typedef struct position_t
     {
@@ -49,6 +49,11 @@
         char * south;
         int generatedNumber;
     }map_t;
+
+    typedef struct tabMaps_t {
+        map_t * maps;
+        int nbMaps;
+    }tabMaps_t;
 
     typedef struct tabMonsters_t
     {

@@ -124,21 +124,21 @@ void printMap(map_t * map, player_t * player){
     }
 }
 
-void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters){
+void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_t * tabMaps){
     int move = 0;
     while(1){
         char move = _getch();
         if(move == 77){
-            movements(map, player, tabMonsters, 0, 1);
+            movements(map, player, tabMonsters, 0, 1, tabMaps);
         }
         else if(move == 75){
-            movements(map, player, tabMonsters, 0, -1);
+            movements(map, player, tabMonsters, 0, -1, tabMaps);
         }
         else if(move == 72){
-            movements(map, player, tabMonsters, -1, 0);
+            movements(map, player, tabMonsters, -1, 0, tabMaps);
         }
         else if(move == 80){
-            movements(map, player, tabMonsters, 1, 0);
+            movements(map, player, tabMonsters, 1, 0, tabMaps);
         }
         else if (move == 'q'){
             break;
@@ -151,16 +151,16 @@ void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters){
     }
 }
 
-// TODO : Faire un tableau de map où on stock les maps quand elles sont générées
-// et avant de générer une map, on regarde si elle existe déjà dans le tableau
-// si elle existe : map = map du tableau
-// sinon on génère la map et on l'ajoute au tableau
 int main() {
     player_t player = {10, 10, 1, 2, 0, {14, 14}};
     tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
+    tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
+    tabMaps->maps = (map_t *)malloc(sizeof(map_t)*MAX_ROOMS);
     map_t map = initMap("niveau1.level", tabMonsters);
+    tabMaps->maps[0] = map;
+    tabMaps->nbMaps = 1;
     system("CLS");
     printMap(&map, &player);
-    play(&map, &player, tabMonsters);
+    play(&map, &player, tabMonsters, tabMaps);
     return 0;
 }
