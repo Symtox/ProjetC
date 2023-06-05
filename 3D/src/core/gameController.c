@@ -35,15 +35,6 @@ void Tick(chunkedMap_t * map) {
     handlePlayerShortcuts();
     loadCurrentMap(fd, map, player->camera->position);
     pickUpItem(map);
-    //loadCurrentMap(fd, map, player->camera->position);
-    //checkForBunuses();
-    //loadCurrentChunks();
-    //handlerMobMouvements();
-    //if((mob = checkForCombat()) != NULL) {
-    //    startAFight(mob);
-    //}
-    //checkForEndOfGame();
-
 }
 
 void pickUpItem(chunkedMap_t * map) {
