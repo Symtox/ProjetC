@@ -88,6 +88,8 @@ typedef struct {
     chunk_t ** chunks;
     int width;
     int height;
+    int maxX;
+    int maxY;
 } chunkedMap_t;
 
 

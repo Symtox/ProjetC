@@ -7,4 +7,5 @@ void Tick(chunkedMap_t *);
 void handlePlayerShortcuts();
 void initGameController(player_t *, chunkedMap_t*, int);
 void pickUpItem(chunkedMap_t *);
+void savePlayer();
 #endif

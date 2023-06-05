@@ -296,6 +296,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     Vector2 min = {0,0};
     Vector2 max = {0,0};
     chunkCount = 0;
+    chunkedMap_t mapContext = {0};
     createSaveFromLevelFilesR(path, filename, 0, 0);
 
     for(int i = 0; i < chunkCount; i++) {
@@ -313,7 +314,6 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         }
     }
 
-    setMapSize(max.x - min.x + 1, max.y - min.y + 1);
 
     for(int i = 0; i < chunkCount; i++) {
         chunkBuffer[i].x -= min.x;
@@ -331,7 +331,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     index.chunkFilePosition = malloc(sizeof(int*) * chunkCount);
 
 
-    off_t pos = sizeofIndex(chunkCount) + sizeofPlayerContext();
+    off_t pos = sizeofIndex(chunkCount) + sizeofPlayerContext() + sizeofMapContext();
     for(int i = 0; i < chunkCount; i++) {
         index.chunkCoords[i] = malloc(sizeof(int) * 2);
         index.chunkCoords[i][0] = chunkBuffer[i].x;
@@ -343,7 +343,16 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         index.chunkFilePosition[i][1] = pos;
     }
 
-    lseek(fd, 0, SEEK_SET);
+
+    mapContext.centerY = 0;
+    mapContext.centerX = 0;
+    mapContext.width = 3;
+    mapContext.height = 3;
+    mapContext.maxX = max.x - min.x + 1;
+    mapContext.maxY = max.y - min.y + 1;
+
+
+    saveMapContext(fd, mapContext);
     savePlayerContext(fd, player);
     writeIndex(fd, index);
 

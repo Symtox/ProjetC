@@ -9,11 +9,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-int mapWidth = 0;
-int mapHeight = 0;
-
 
 void savePlayerContext(int fd, player_t player) {
+    lseek(fd, sizeofMapContext(), SEEK_SET);
     write(fd, &player.keyCount, sizeof(int));
     saveStatistics(fd, player.statistics);
     savePhysics(fd, player.physics);
@@ -36,6 +34,7 @@ off_t sizeofPlayerContext() {
 
 
 void readIndex(int fd, index_t * index) {
+    logFile(TextFormat("Reading index at %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &index->chunkCount, sizeof(int));
     index->chunkCoords = malloc(sizeof(int*) * index->chunkCount);
     index->chunkFilePosition = malloc(sizeof(off_t*) * index->chunkCount);
@@ -49,7 +48,8 @@ void readIndex(int fd, index_t * index) {
 }
 
 void writeIndex(int fd, index_t index) {
-
+    logFile(TextFormat("Writing index with %d chunks", index.chunkCount));
+    logFile(TextFormat("Writing index at %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &index.chunkCount, sizeof(int));
     for(int i = 0; i < index.chunkCount; i++) {
         write(fd, index.chunkFilePosition[i], sizeof(off_t) * 2);
@@ -116,29 +116,31 @@ size_t sizeofPhysics() {
 }
 
 
-chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height) {
+chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int mapWidth, int mapHeight) {
     chunkedMap_t map;
 
     int ltcx = MAX2(x - width / 2, 0);
     int ltcy = MAX2(y - height / 2, 0);
-    ltcy = MIN2(ltcy, mapHeight - height);
-    ltcx = MIN2(ltcx, mapWidth - width);
 
-
-    //TODO REMOVE
-
-
+    logFile(TextFormat("before: ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, mapHeight, mapWidth));
+    ltcy = MIN2(ltcy, 0);
+    ltcx = MIN2(ltcx, 0);
+    logFile(TextFormat("after: ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, mapHeight, mapWidth));
     map.centerX = x;
     map.centerY = y;
 
     map.height = height;
     map.width = width;
 
+    map.maxY = mapHeight;
+    map.maxX = mapWidth;
+
     map.chunks = malloc(sizeof(chunk_t *) * width);
     for (int i = 0; i < height; i++) {
         map.chunks[i] = malloc(sizeof(chunk_t) * height);
     }
-
+    logFile("Loading map from save\n");
+    logFile(TextFormat("ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, map.centerX, map.centerY));
     for (int i = 0; i < map.width; i++) {
         for (int j = 0; j < map.height; j++) {
             if (ltcx + i < 0 || ltcy + j < 0 || ltcx + i > mapWidth || ltcy + j > mapHeight) {
@@ -198,7 +200,7 @@ void loadCurrentMap(int fd, chunkedMap_t * map, Vector3 playerPos) {
         map->centerX = (int)playerPos.x / CHUNK_SIZE;
         map->centerY = (int)playerPos.z / CHUNK_SIZE;
         freeMap(map);
-        *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height);
+        *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
     }
 }
 
@@ -242,10 +244,10 @@ void saveKey(int fd, DoorKey_t key) {
 
 
 void saveStatistics(int fd, statistics_t statistics) {
-    write(fd, &statistics.armor, sizeof(float));
-    write(fd, &statistics.damage, sizeof(float));
-    write(fd, &statistics.health, sizeof(float));
-    write(fd, &statistics.maxHealth, sizeof(float));
+    write(fd, &statistics.armor, sizeof(int));
+    write(fd, &statistics.damage, sizeof(int));
+    write(fd, &statistics.health, sizeof(int));
+    write(fd, &statistics.maxHealth, sizeof(int));
 }
 
 void savePhysics(int fd, playerPhysics_t physics) {
@@ -269,10 +271,34 @@ void readPhysics(int fd, playerPhysics_t * physics) {
 }
 
 void readStatistics(int fd, statistics_t * statistics) {
-    read(fd, &statistics->armor, sizeof(float));
-    read(fd, &statistics->damage, sizeof(float));
-    read(fd, &statistics->health, sizeof(float));
-    read(fd, &statistics->maxHealth, sizeof(float));
+    read(fd, &statistics->armor, sizeof(int));
+    read(fd, &statistics->damage, sizeof(int));
+    read(fd, &statistics->health, sizeof(int));
+    read(fd, &statistics->maxHealth, sizeof(int));
+}
+
+void readMapContext(int fd, chunkedMap_t * context) {
+    read(fd, &context->centerX, sizeof(int));
+    read(fd, &context->centerY, sizeof(int));
+    read(fd, &context->width, sizeof(int));
+    read(fd, &context->height, sizeof(int));
+    read(fd, &context->maxX, sizeof(int));
+    read(fd, &context->maxY, sizeof(int));
+}
+
+void loadMapContext(int fd, chunkedMap_t * context) {
+    lseek(fd, 0, SEEK_SET);
+    readMapContext(fd, context);
+}
+
+void saveMapContext(int fd, chunkedMap_t context) {
+    lseek(fd, 0, SEEK_SET);
+    write(fd, &context.centerX, sizeof(int));
+    write(fd, &context.centerY, sizeof(int));
+    write(fd, &context.width, sizeof(int));
+    write(fd, &context.height, sizeof(int));
+    write(fd, &context.maxX, sizeof(int));
+    write(fd, &context.maxY, sizeof(int));
 }
 
 void writeChunkTXT(int fd, chunk_txt chunk) {
@@ -435,32 +461,39 @@ void readChunk(int fd, chunk_t * chunk) {
 }
 
 void loadPlayerFromSave(int fd, player_t * player) {
-    if(lseek(fd, 0, SEEK_SET) == -1) {
+    if(lseek(fd, sizeofMapContext(), SEEK_SET) == -1) {
         exit(EXIT_FAILURE);
     }
     readPlayerContext(fd, player);
 }
 
+int sizeofMapContext() {
+    return 6 * sizeof(int);
+}
+
+
+
 void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y) {
     index_t index;
-    lseek(fd, sizeofPlayerContext(), SEEK_SET);
+    lseek(fd, sizeofPlayerContext() + sizeofMapContext(), SEEK_SET);
     readIndex(fd, &index);
+    logFile(TextFormat("Searching for chunk %d %d %d ", x, y, index.chunkCount));
+
     for(int i = 0; i < index.chunkCount; i++) {
+        logFile(TextFormat("Chunk %d %d", index.chunkCoords[i][0], index.chunkCoords[i][1]));
         if(index.chunkCoords[i][0] == x && index.chunkCoords[i][1] == y) {
+            logFile(TextFormat("Chunk %d %d found", x, y));
             lseek(fd, index.chunkFilePosition[i][0], SEEK_SET);
             readChunk(fd, chunk);
             return;
         }
     }
+    logFile(TextFormat("Chunk %d %d not found", x, y));
     chunk->x = -1;
     chunk->y = -1;
 }
 
 
-void setMapSize(int width, int height) {
-    mapWidth = width;
-    mapHeight = height;
-}
 
 void freeIndex(index_t index) {
     for(int i = 0; i < index.chunkCount; i++) {
@@ -502,7 +535,7 @@ void freeChunkTXT(chunk_txt chunk) {
 
 void saveChunk(chunk_t chunk, int fd) {
     index_t index;
-    lseek(fd, sizeofPlayerContext(), SEEK_SET);
+    lseek(fd, sizeofPlayerContext() + sizeofMapContext(), SEEK_SET);
     readIndex(fd, &index);
     int chunkIndex = -1;
     for(int i = 0; i < index.chunkCount; i++) {
@@ -515,5 +548,6 @@ void saveChunk(chunk_t chunk, int fd) {
         return;
     }
     lseek(fd, index.chunkFilePosition[chunkIndex][0], SEEK_SET);
+    logFile(TextFormat("Saving chunk %d %d at pos %d", chunk.x, chunk.y, index.chunkFilePosition[chunkIndex][0]));
     writeChunk(fd, chunk);
 }

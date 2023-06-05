@@ -14,7 +14,7 @@ int main(void)
     const int screenWidth = 1700;
     const int screenHeight = 1080;
 
-    int loadMapFromSave = 0;
+    int loadMapFromSave = 1;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
     DisableCursor();                    // Limit cursor to relative movement inside the window
@@ -43,6 +43,7 @@ int main(void)
         EndDrawing();
 
     }
+    savePlayer();
     endLogger();
     // De-Initialization
     //--------------------------------------------------------------------------------------

@@ -20,12 +20,18 @@ int fd = -1;
 void pickUpItem(chunkedMap_t * map);
 
 void initGameController(player_t * playerP, chunkedMap_t * map, int save) {
-    fd = open("bin/saves/caca", O_RDWR | O_CREAT | O_TRUNC, 0666);
+    int flags = O_RDWR | O_CREAT;
+    if(!save) {
+        flags |= O_TRUNC;
+    }
+    fd = open("bin/saves/caca", flags, 0666);
     if(!save) {
         createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
     }
+    loadMapContext(fd, map);
+    logFile(TextFormat("mapContext: %d %d %d %d", map->height, map->width, map->maxX, map->maxY));
     loadPlayerFromSave(fd, playerP);
-    *map = loadMapFromSave(fd, 0, 0, 3, 3);
+    *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
 
     player = playerP;
 }
@@ -129,4 +135,9 @@ void handlePlayerShortcuts() {
         controlsToggles[DRAW_OVERLAY] = 0;
     }
     setDrawBundle(drawBundle);
+}
+
+
+void savePlayer() {
+    savePlayerContext(fd, *player);
 }

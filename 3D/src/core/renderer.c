@@ -118,7 +118,6 @@ void DrawChunk(chunk_t chunk) {
     }
     for(int i = 0; i < chunk.potionCount; i++) {
         DrawPotion(chunk.potions[i], chunk.x, chunk.y);
-        DrawDoor(chunk.doors[i],chunk.x,chunk.y);
     }
     for(int i = 0; i < chunk.potionCount; i++) {
         DrawPotion(chunk.potions[i],chunk.x,chunk.y);
@@ -656,8 +655,8 @@ void DrawDoor(door_t door,int x,int y) {
     door.position.y = (door.position.y)+0.5;
     door.position.x += 0.5f + x * CHUNK_SIZE;
     door.position.z += 0.5f + y * CHUNK_SIZE;
-    DrawCubeCustom(doorUpTexture,(Vector3){door.position.x,(door.position.y)+1,door.position.z},1.0f,1.0f,1.0f,WHITE);
-    DrawCubeCustom(doorDownTexture,door.position,1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorUpTexture,(Vector3){ door.position.x, door.position.y+1, door.position.z },1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorDownTexture,door.position, 1.0f, 1.0f, 1.0f, WHITE);
 }
 
 void DrawMonster(monster_t monster, int x, int y){

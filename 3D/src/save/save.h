@@ -15,10 +15,16 @@ typedef struct {
 
 }index_t;
 
+
 void freeIndex(index_t index);
 void freeChunkTXT(chunk_txt chunk);
 void writeChunk(int fd, chunk_t chunk);
 void saveChunk(chunk_t chunk, int fd);
+
+int sizeofMapContext();
+void saveMapContext(int fd, chunkedMap_t context);
+void readMapContext(int fd, chunkedMap_t * context);
+void loadMapContext(int fd, chunkedMap_t * context);
 
 
 void loadRandomChunk(chunk_t * chunk, int chunkX, int chunkY);
@@ -30,7 +36,6 @@ void readIndex(int fd, index_t * index);
 void writeIndex(int fd, index_t index);
 size_t sizeofIndex(int indexSize);
 
-void setMapSize(int width, int height);
 
 size_t sizeofMonster();
 void saveMonster(int fd, monster_t monster);
@@ -68,7 +73,7 @@ void readPhysics(int fd, playerPhysics_t * physics);
 void loadCurrentMap(int, chunkedMap_t * map, Vector3 playerPos);
 
 void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y);
-chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height);
+chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int, int);
 void loadPlayerFromSave(int fd, player_t * player);
 
 #endif //PROJECT_SAVE_H
