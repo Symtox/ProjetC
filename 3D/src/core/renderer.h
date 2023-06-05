@@ -15,7 +15,6 @@ typedef struct {
     Vector3 direction;
     player_t * player;
     int tileUnder;
-
 }drawBundle_t;
 
 void initRenderer(player_t * player);

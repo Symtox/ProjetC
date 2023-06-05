@@ -28,19 +28,11 @@ Texture2D wingsheart;
 Texture2D wall;
 Texture2D floorTexture;
 Texture2D crackedWall;
-<<<<<<< HEAD
 Texture2D doorUpTexture;
 Texture2D doorDownTexture;
 Texture2D potionTexture;
 Texture2D swordTexture;
 Texture2D armorTexture;
-=======
-Texture2D doorUp;
-Texture2D doorDown;
-Texture2D potion;
-Texture2D swordTexture;
-Texture2D armor;
->>>>>>> 358f022c314612946f68d4dc3210d0b1edc73bbc
 
 
 void initRenderer(player_t * player) {
