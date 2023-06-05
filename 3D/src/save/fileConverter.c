@@ -127,8 +127,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     for (int k = DOOR_HEIGHT + 1; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = 1;
                     }
-                    chunk->chunk[i][0][j]=100;
-                    chunk->chunk[i][1][j]=100;
 
                     doors[chunk->doorCount].opened = 0;
                     doors[chunk->doorCount].rotation = 90;

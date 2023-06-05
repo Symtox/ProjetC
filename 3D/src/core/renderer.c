@@ -37,11 +37,11 @@ Texture2D wingsheart;
 Texture2D wall;
 Texture2D floorTexture;
 Texture2D crackedWall;
-Texture2D doorUp;
-Texture2D doorDown;
-Texture2D potion;
-Texture2D sword;
-Texture2D armor;
+Texture2D doorUpTexture;
+Texture2D doorDownTexture;
+Texture2D potionTexture;
+Texture2D swordTexture;
+Texture2D armorTexture;
 
 
 void initRenderer(player_t * player) {
@@ -63,8 +63,8 @@ void initRenderer(player_t * player) {
     wall = LoadTexture("./assets/mossy_stone_bricks.png");
     floorTexture = LoadTexture("./assets/stone_bricks.png");
     crackedWall = LoadTexture("./assets/cracked_stone.png");
-    doorUp = LoadTexture("./assets/door_up.png");
-    doorDown = LoadTexture("./assets/door_down.png");
+    doorUpTexture = LoadTexture("./assets/door_up.png");
+    doorDownTexture = LoadTexture("./assets/door_down.png");
     swordModel = LoadModel("./assets/sword.obj");
     shieldModel = LoadModel("./assets/shield.obj");
 
@@ -114,7 +114,7 @@ void DrawChunk(chunk_t chunk) {
                     
                 }
             
-                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0 && chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=100){
+                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0){
                         DrawCubeCustom(getTextureWall(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]), (Vector3){x + 0.5, y-0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                         //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                 
@@ -659,8 +659,8 @@ void DrawDoor(door_t door,int x,int y) {
     door.position.y = (door.position.y)+0.5;
     door.position.x += 0.5f + x * CHUNK_SIZE;
     door.position.z += 0.5f + y * CHUNK_SIZE;
-    DrawCubeCustom(doorUp,(Vector3){door.position.x,(door.position.y)+1,door.position.z},1.0f,1.0f,1.0f,WHITE);
-    DrawCubeCustom(doorDown,door.position,1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorUpTexture,(Vector3){door.position.x,(door.position.y)+1,door.position.z},1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorDownTexture,door.position,1.0f,1.0f,1.0f,WHITE);
 }
 
 void DrawMonster(monster_t monster, int x, int y){

@@ -18,7 +18,6 @@
 }
 
 typedef struct {
-    Vector3 position;
     float health;
     float maxHealth;
     float armor;
