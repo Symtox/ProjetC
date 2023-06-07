@@ -5,29 +5,30 @@
 #include "../board/entities.h"
 #include "../board/board.h"
 #include "save.h"
-#include <unistd.h>
-#include <fcntl.h>
 #include "../utils/utils.h"
-#include <sys/types.h>
 #include "fileConverter.h"
-
-ssize_t getLineFromText(char **lineptr, size_t *n, FILE *stream) {
-    char buf[100] = {0};
-    int i = 0;
+#include <wchar.h>
+#include <locale.h>
+ssize_t getLineFromText(char **lineptr, FILE *stream) {
+    wchar_t buf[100] = {0};
+    int length = 0;
     int c = 0;
 
-
     while(c != '\n' && c != EOF) {
-        c = fgetc(stream);
-        buf[i] = c;
-        i++;
+        c = fgetwc(stream);
+        buf[length] = c;
+        (length) += 1;
     }
-    buf[i] = '\0';
-    *lineptr = malloc(sizeof(char) * (strlen(buf) + 1));
-    strncpy(*lineptr, buf, i);
-    (*lineptr)[i] = '\0';
-    *n = strlen(buf) + 1;
-    return c == EOF ? -1 : i;
+    buf[length] = '\0';
+    *lineptr = malloc(sizeof(char) * length);
+
+    for(int i=0; i < length; i++) {
+        (*lineptr)[i] = (char)buf[i];
+    }
+    for(int j = 0; j < length; j++) {
+        logFile(TextFormat("%d", (*lineptr)[j]));
+    }
+    return c == EOF ? -1 : length;
 }
 
 char * substr(char *src, int pos) {
@@ -48,6 +49,7 @@ char * substr(char *src, int pos) {
 void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     FILE *file;
 
+    setlocale(LC_ALL, "");
 
     chunk->monsterCount = 0;
     chunk->doorCount = 0;
@@ -78,8 +80,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
 
     for(int i = CHUNK_SIZE - 1; i >= 0; i--) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
-            char currChar = fgetc(file);
-            printf("%c", currChar);
+            wchar_t currChar = fgetwc(file);
+            logFile(TextFormat("%lc %d", currChar, (int)currChar));
             switch (currChar) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
@@ -87,7 +89,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     }
                     break;
 
-                case '$':
+                case 167:
                     potion[chunk->powerUpCount].pickedUp = 0;
                     potion[chunk->powerUpCount].position = (Vector3) {i, 0, j};
                     chunk->potionCount++;
@@ -123,8 +125,11 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                 chunk->monsterCount++;
             }
         }
-        fgetc(file);
-        fgetc(file);
+        logFile(TextFormat("End line: %d", fgetwc(file)));
+        logFile(TextFormat("End line: %d", fgetwc(file)));
+        fpos_t pos;
+        fgetpos(file, &pos);
+        logFile(TextFormat("Pos: %d", pos.__pos));
     }
 
     char * line = NULL;
@@ -135,7 +140,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->west = NULL;
     chunk->north = NULL;
 
-    while (getLineFromText(&line, &len, file) != -1) {
+    while (getLineFromText(&line, file) != -1) {
 
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
@@ -153,18 +158,18 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             statistics_t stats;
             char * monsterLine = NULL;
 
-            getLineFromText(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, file);
             stats.health = atoi(substr(monsterLine,5));
             stats.maxHealth = stats.health;
             free(monsterLine);
 
             monsterLine = NULL;
-            getLineFromText(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, file);
             stats.damage = atoi(substr(monsterLine,8));
             free(monsterLine);
 
             monsterLine = NULL;
-            getLineFromText(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, file);
             stats.armor = atoi(substr(monsterLine,9));
 
             for(int i = 0; i < chunk->monsterCount; i++) {

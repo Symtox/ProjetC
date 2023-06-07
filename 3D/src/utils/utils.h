@@ -6,7 +6,7 @@
 #define PROJECT_UTILS_H
 int fillWithRandAndWalls(int ***);
 int logFile(const char *);
-float distance(float, float, float, float);
+float distance3D(Vector3, Vector3);
 void initLogger();
 void endLogger();
 #define MAX2(a,b) ((a>b)?(a):(b))

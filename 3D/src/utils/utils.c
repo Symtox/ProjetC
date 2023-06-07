@@ -44,8 +44,8 @@ void initLogger() {
     }
 }
 
-float distance(float x1, float y1, float x2, float y2) {
-    return sqrtf(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+float distance3D(Vector3 v1, Vector3 v2) {
+    return sqrtf(powf(v1.x - v2.x, 2) + powf(v1.y - v2.y, 2) + powf(v1.z - v2.z, 2));
 }
 
 void endLogger() {

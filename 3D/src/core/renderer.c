@@ -3,7 +3,7 @@
 #include "../utils/utils.h"
 #include "../../includes/rlgl.h"
 #define DEBUG_INFO_LINE_COUNT 5
-drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
+drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
 
 
 Model keyModel;
@@ -14,6 +14,8 @@ Model monsterModel;
 Model powerUpAttackModel;
 Model powerUpShieldModel;
 Model powerUpHealthModel;
+
+Texture2D keyETexture;
 
 
 Texture2D heartFullTexture;
@@ -32,7 +34,7 @@ Texture2D doorDownTexture;
 Texture2D potionTexture;
 Texture2D swordTexture;
 Texture2D armorTexture;
-
+Texture2D fightDialogBackground;
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
@@ -58,6 +60,10 @@ void initRenderer(player_t * player) {
     powerUpAttackModel = LoadModel("./assets/sword.obj");
     powerUpShieldModel = LoadModel("./assets/shield.obj");
     powerUpHealthModel = LoadModel("./assets/love_heart.glTF");
+    fightDialogBackground = LoadTexture("./assets/dialog.png");
+
+    keyETexture = LoadTexture("./assets/key_e.png");
+
 
 
     //potion = LoadTexture("./assets/potion.png"); 
@@ -376,8 +382,10 @@ void Render(chunkedMap_t map) {
 
         EndMode3D();
         DrawDoorHint();
+        DrawFightHint();
         DrawOverlay();
         DrawDebug();
+        DrawFightDialog();
 
 }
 
@@ -390,14 +398,47 @@ void DrawDoorHint() {
     }
 }
 
+void DrawFightHint() {
+    if(drawBundle.canOpenFight == 1) {
+        DrawText("Press E to attack", 600, 800, 40, WHITE);
+    }
+}
 drawBundle_t getDrawBundle() {
     return drawBundle;
 }
+
+
+void DrawFightDialog() {
+    if(drawBundle.player->inFight) {
+        float dialogMarginX = WINDOW_WIDTH/2 - fightDialogBackground.width/2;
+        float dialogMarginY = (WINDOW_HEIGHT - fightDialogBackground.height) * 9/10;
+
+        DrawTexture(fightDialogBackground, dialogMarginX, dialogMarginY, WHITE);
+        DrawText(drawBundle.dialog.text, dialogMarginX + 50, dialogMarginY + 50, 20, WHITE);
+
+        DrawTexture(getKeyTexture(drawBundle.dialog.keys[1]), dialogMarginX + 20, dialogMarginY + fightDialogBackground.height * 8/10, WHITE);
+        DrawText(drawBundle.dialog.choices[0], dialogMarginX + 50, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
+
+        if(drawBundle.dialog.choiceCount == 2) {
+            DrawText(drawBundle.dialog.choices[1], dialogMarginX + 400, dialogMarginY + fightDialogBackground.height * 8/10, 20, WHITE);
+        }
+    }
+}
+
+
 
 void setDrawBundle(drawBundle_t bundle) {
     drawBundle = bundle;
 }
 
+Texture2D getKeyTexture(KeyboardKey key) {
+    switch (key) {
+        case KEY_E:
+            return keyETexture;
+        default:
+            return keyETexture;
+    }
+}
 
 
 
@@ -653,8 +694,8 @@ void DrawPotion(potion_t potion, int chunkX, int chunkY) {
     potion.position.y = potion.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
     potion.position.x += 0.5f + chunkX * CHUNK_SIZE;
     potion.position.z += 0.5f + chunkY * CHUNK_SIZE;
-    potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, potion.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
+    potionModel.transform = MatrixRotateXYZ((Vector3){ 90 * DEG2RAD, 0, 0});
+    DrawModel(potionModel, potion.position, 0.015f, (Color){255,255,255,100});
 }
 
 
