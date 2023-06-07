@@ -7,6 +7,7 @@
 #include "movements/moves.h"
 #include "main.h"
 #include "utils/fileReader.h"
+#include <locale.h>
 
 void credits(){
     system("cls");
@@ -48,7 +49,7 @@ void printItemColor(char item){
             break;
         case '$':
             color(12, 0);
-            printf("%c", item);
+            printf("%lc", L'§');
             break;
         case 'o':
             color(8, 0);
@@ -96,15 +97,63 @@ void printMap(map_t * map, player_t * player){
                 color(15,0);
                 printf(": %d", player->nbKey);
             }
+
+            if(map->monsterClassCount > 0)
+            {
+                if (i == 8 && j == MAX_SIZE-1) {
+                    printf("\tClasse : %c", map->monsterClass[0].name);
+                }
+                else if (i == 9 && j == MAX_SIZE-1) {
+                    printf("\tHP : %d", map->monsterClass[0].max_hp);
+                }
+                else if (i == 10 && j == MAX_SIZE-1) {
+                    printf("\tATK : %d", map->monsterClass[0].attack);
+                }
+                else if (i == 11 && j == MAX_SIZE-1) {
+                    printf("\tDEF : %d", map->monsterClass[1].defense);
+                }
+            }
+
+            if(map->monsterClassCount > 1)
+            {
+                if (i == 13 && j == MAX_SIZE-1) {
+                    printf("\tClasse : %c", map->monsterClass[1].name);
+                }
+                else if (i == 14 && j == MAX_SIZE-1) {
+                    printf("\tHP : %d", map->monsterClass[1].max_hp);
+                }
+                else if (i == 15 && j == MAX_SIZE-1) {
+                    printf("\tATK : %d", map->monsterClass[1].attack);
+                }
+                else if (i == 16 && j == MAX_SIZE-1) {
+                    printf("\tDEF : %d", map->monsterClass[1].defense);
+                }
+            }
+
+            if(map->monsterClassCount > 2)
+            {
+                if (i == 18 && j == MAX_SIZE-1) {
+                    printf("\tClasse : %c", map->monsterClass[2].name);
+                }
+                else if (i == 19 && j == MAX_SIZE-1) {
+                    printf("\tHP : %d", map->monsterClass[2].max_hp);
+                }
+                else if (i == 20 && j == MAX_SIZE-1) {
+                    printf("\tATK : %d", map->monsterClass[2].attack);
+                }
+                else if (i == 21 && j == MAX_SIZE-1) {
+                    printf("\tDEF : %d", map->monsterClass[2].defense);
+                }
+            }
         }
         printf("\n");
     }
 }
 
 void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_t * tabMaps){
-    int move = 0;
+    char move;
     while(1){
-        char move = _getch();
+        move = _getch();
         if(move == 77){
             movements(map, player, tabMonsters, 0, 1, tabMaps);
         }
@@ -135,10 +184,36 @@ void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_
         system("CLS");
         printMap(map, player);
     }
-    startMenu();
+    return;
+}
+
+void startNewGame(){
+    player_t player = {10, 10, 1, 2, 0, {14, 14}};
+    tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
+    tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
+    tabMaps->maps = (map_t *)malloc(sizeof(map_t)*MAX_ROOMS);
+    map_t map = initMap("niveau1.level", tabMonsters, 1);
+    tabMaps->maps[0] = map;
+    tabMaps->nbMaps = 1;
+    system("CLS");
+    printMap(&map, &player);
+    play(&map, &player, tabMonsters, tabMaps);
+
+    for(int i=0;i<tabMaps->nbMaps;i++){
+        free(tabMonsters[i]->monsters);
+    }
+
+    for(int i=0;i<tabMaps->nbMaps;i++){
+        free(tabMaps->maps[i].monsterClass);
+        free(tabMaps->maps[i].table);
+    }
+    free(tabMaps->maps);
+    free(tabMaps);
+    return;
 }
 
 void startMenu(){
+    setlocale(LC_ALL, "");
     char choice;
     while(toupper(choice) != 'N' && toupper(choice) != 'C' && toupper(choice) != 'Q'){
         choice = ' ';
@@ -148,18 +223,19 @@ void startMenu(){
         printf("[C]redits\n");
         printf("[Q]uitter\n");
         choice = _getch();
-    }
     
-    switch(toupper(choice)){
-        case 'N':
-            break;
-        case 'C':
-            credits();
-            startMenu();
-            break;
-        case 'Q':
-            exit(0);
-            break;
+        switch(toupper(choice)){
+            case 'N':
+                startNewGame();
+                break;
+            case 'C':
+                credits();
+                break;
+            case 'Q':
+                exit(0);
+                break;
+        }
+        choice = ' ';
     }
 
     return;
@@ -167,15 +243,5 @@ void startMenu(){
 
 int main() {
     startMenu();
-    player_t player = {10, 10, 1, 2, 0, {14, 14}};
-    tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
-    tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
-    tabMaps->maps = (map_t *)malloc(sizeof(map_t)*MAX_ROOMS);
-    map_t map = initMap("niveau1.level", tabMonsters);
-    tabMaps->maps[0] = map;
-    tabMaps->nbMaps = 1;
-    system("CLS");
-    printMap(&map, &player);
-    play(&map, &player, tabMonsters, tabMaps);
     return 0;
 }

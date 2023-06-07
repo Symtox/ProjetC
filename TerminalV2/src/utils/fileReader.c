@@ -22,7 +22,7 @@ int isMonsterClassFound(char * monsters, char monster, int nbClassFound) {
 map_t readTXT(char * path){
     FILE *file;
     map_t map = {0};
-    char caractere;
+    wint_t caractere;
     int i = 0;
     int j = 0;
     char monstersClassFound[26] = {0};
@@ -39,7 +39,8 @@ map_t readTXT(char * path){
     }
 
     for(i=0; i < MAX_SIZE; i++) {
-        for (j = 0; (caractere = fgetc(file)) != EOF && j < MAX_SIZE; j++) {
+        for (j = 0;j < MAX_SIZE; j++) {
+            caractere = fgetwc(file);
             if(caractere >= 'A' && caractere <= 'Z' ) {
                 if(!isMonsterClassFound(monstersClassFound, caractere, map.monsterClassCount)) {
                     monstersClassFound[map.monsterClassCount] = caractere;
@@ -47,13 +48,20 @@ map_t readTXT(char * path){
                 }
                 map.monsterCount++;
             }
-            map.table[i][j] = caractere;
-        }
-    }
 
+            if(caractere == 194){
+                map.table[i][j] = '$';
+                fgetwc(file);
+            }
+            else{
+                map.table[i][j] = caractere;
+            }
+        }
+        fgetwc(file);
+    }
     // Fermer le fichier
     fclose(file);
-    
+
     return map;
 }
 
@@ -72,8 +80,9 @@ char * substr(char *src, int pos) {
     return dest;
 }
 
-map_t initMap(char * fileName, tabMonsters_t ** tabMonsters) {
+map_t initMap(char * fileName, tabMonsters_t ** tabMonsters, int isFirstInit) {
     FILE *file;
+    if(isFirstInit) nbRoomGenerated = 0;
 
     char * path =(char*) malloc((strlen(fileName) + 1 + strlen("./bin/levels/"))*sizeof(char)); // +1 for the null-terminator
     strcpy(path, "./bin/levels/");
@@ -81,7 +90,6 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters) {
     
     map_t map = readTXT(path);
     map.name = fileName;
-
 
     int cptRoom = -1;
     for(int i=0;i<nbRoomGenerated;i++){
@@ -91,18 +99,18 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters) {
         }
     }
 
-
+    
+    printf("after cptRoom\n");
+    fflush(stdout);
 
     if(cptRoom == -1){
         cptRoom = nbRoomGenerated;
         tabMonsters[cptRoom] = (tabMonsters_t *)malloc(sizeof(tabMonsters_t));
         tabMonsters[cptRoom]->levelName = fileName;
-        printf("test");
         map.generatedNumber = nbRoomGenerated;
         nbRoomGenerated++;
     }
 
-    printf("BG 1\n");
     tabMonsters[cptRoom]->nbMonsters = map.monsterCount;
     tabMonsters[cptRoom]->monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
     map.monsterClass = (monsterClass_t *)malloc(sizeof(monsterClass_t)*map.monsterClassCount);
@@ -131,7 +139,6 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters) {
         }
         else if(line[0] >= 'A' && line[0] <= 'Z') {
             char * monsterLine = NULL;
-            monster_t monstre = {0};
 
             map.monsterClass[cptMonsterClass].name = line[0];
 

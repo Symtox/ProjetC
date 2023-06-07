@@ -79,7 +79,6 @@ void actionAfterFight(player_t * player, int x, int y, int fightResult){
 
 void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, position_t pos, tabMaps_t * tabMaps){
     int isAlreadyGenerated = 0;
-    int mapNumber = 0;
     char * mapToGenerate = (char *)malloc(sizeof(char)*50);
 
     if(pos.y == MAX_SIZE-1 || pos.y == 0) 
@@ -103,7 +102,7 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
         *map = tabMaps->maps[cpt];
     }
     else {
-        *map = initMap(mapToGenerate, tabMonsters);
+        *map = initMap(mapToGenerate, tabMonsters, 0);
         tabMaps->maps[tabMaps->nbMaps] = *map;
         tabMaps->nbMaps++;
     }
