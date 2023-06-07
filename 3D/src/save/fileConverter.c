@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,8 +8,27 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "../utils/utils.h"
+#include <sys/types.h>
+#include "fileConverter.h"
+
+ssize_t getLineFromText(char **lineptr, size_t *n, FILE *stream) {
+    char buf[100] = {0};
+    int i = 0;
+    int c = 0;
 
 
+    while(c != '\n' && c != EOF) {
+        c = fgetc(stream);
+        buf[i] = c;
+        i++;
+    }
+    buf[i] = '\0';
+    *lineptr = malloc(sizeof(char) * (strlen(buf) + 1));
+    strncpy(*lineptr, buf, i);
+    (*lineptr)[i] = '\0';
+    *n = strlen(buf) + 1;
+    return c == EOF ? -1 : i;
+}
 
 char * substr(char *src, int pos) {
     if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
@@ -63,7 +83,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             switch (currChar) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
-                        chunk->chunk[i][k][j] = 1;
+                        chunk->chunk[i][k][j] = rand()% 3 +1;
                     }
                     break;
 
@@ -77,8 +97,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     for (int k = DOOR_HEIGHT + 1; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = 1;
                     }
+
                     doors[chunk->doorCount].opened = 0;
-                    doors[chunk->doorCount].rotation = 90;
                     doors[chunk->doorCount].position = (Vector3) {i, 0, j};
                     chunk->doorCount++;
                     break;
@@ -115,7 +135,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->west = NULL;
     chunk->north = NULL;
 
-    while (getline(&line, &len, file) != -1) {
+    while (getLineFromText(&line, &len, file) != -1) {
 
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
@@ -133,18 +153,18 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             statistics_t stats;
             char * monsterLine = NULL;
 
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.health = atoi(substr(monsterLine,5));
             stats.maxHealth = stats.health;
             free(monsterLine);
 
             monsterLine = NULL;
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.damage = atoi(substr(monsterLine,8));
             free(monsterLine);
 
             monsterLine = NULL;
-            getline(&monsterLine, &len, file);
+            getLineFromText(&monsterLine, &len, file);
             stats.armor = atoi(substr(monsterLine,9));
 
             for(int i = 0; i < chunk->monsterCount; i++) {
@@ -221,27 +241,20 @@ int isChunkInBuffer(int x, int y) {
 
 void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
     int currentChunkNo = chunkCount;
-    char * fullPath = concatPath(path, filename);
-    if(isChunkInBuffer(x, y)) {
+    if(isChunkInBuffer(x, y) || filename == NULL) {
         return;
     }
+    char * fullPath = concatPath(path, filename);
     loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath);
+
     chunkBuffer[currentChunkNo].x = x;
     chunkBuffer[currentChunkNo].y = y;
-
     chunkCount++;
-    if(chunkBuffer[currentChunkNo].east != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
-    }
-    if(chunkBuffer[currentChunkNo].south != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
-    }
-    if(chunkBuffer[currentChunkNo].west != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
-    }
-    if(chunkBuffer[currentChunkNo].north != NULL) {
-        createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
-    }
+
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
     free(fullPath);
 }
 
@@ -252,7 +265,9 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     Camera camera = BASE_CAMERA;
     player.camera = &camera;
     Vector2 min = {0,0};
+    Vector2 max = {0,0};
     chunkCount = 0;
+    chunkedMap_t mapContext = {0};
     createSaveFromLevelFilesR(path, filename, 0, 0);
 
     for(int i = 0; i < chunkCount; i++) {
@@ -262,7 +277,15 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         if(chunkBuffer[i].y < min.y) {
             min.y = chunkBuffer[i].y;
         }
+        if(chunkBuffer[i].x > max.x) {
+            max.x = chunkBuffer[i].x;
+        }
+        if(chunkBuffer[i].y > max.y) {
+            max.y = chunkBuffer[i].y;
+        }
     }
+
+
     for(int i = 0; i < chunkCount; i++) {
         chunkBuffer[i].x -= min.x;
         chunkBuffer[i].y -= min.y;
@@ -279,7 +302,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     index.chunkFilePosition = malloc(sizeof(int*) * chunkCount);
 
 
-    off_t pos = sizeofIndex(chunkCount) + sizeofPlayerContext();
+    off_t pos = sizeofIndex(chunkCount) + sizeofPlayerContext() + sizeofMapContext();
     for(int i = 0; i < chunkCount; i++) {
         index.chunkCoords[i] = malloc(sizeof(int) * 2);
         index.chunkCoords[i][0] = chunkBuffer[i].x;
@@ -290,12 +313,23 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         pos += sizeofChunkTXT(chunkBuffer[i]);
         index.chunkFilePosition[i][1] = pos;
     }
-    lseek(fd, 0, SEEK_SET);
+
+
+    mapContext.centerY = 0;
+    mapContext.centerX = 0;
+    mapContext.width = 3;
+    mapContext.height = 3;
+    mapContext.maxX = max.x - min.x + 1;
+    mapContext.maxY = max.y - min.y + 1;
+
+
+    saveMapContext(fd, mapContext);
     savePlayerContext(fd, player);
     writeIndex(fd, index);
 
     for(int i = 0; i < chunkCount; i++) {
-        writeChunk(fd, chunkBuffer[i]);
+        writeChunkTXT(fd, chunkBuffer[i]);
+        freeChunkTXT(chunkBuffer[i]);
     }
-    logFile("Done writing");
+    freeIndex(index);
 }

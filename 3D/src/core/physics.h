@@ -10,6 +10,8 @@
 
 
 
+    int isTileFree(int x, int y, int z, chunkedMap_t map);
+    void toChunkCoords(int * x, int * y, int * chunkX, int * chunkY, chunkedMap_t map);
     int handlePlayerMovement(player_t *, chunkedMap_t);
     void handleJump(playerPhysics_t *);
 

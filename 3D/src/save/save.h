@@ -16,9 +16,18 @@ typedef struct {
 }index_t;
 
 
+void freeIndex(index_t index);
+void freeChunkTXT(chunk_txt chunk);
+void writeChunk(int fd, chunk_t chunk);
+void saveChunk(chunk_t chunk, int fd);
+
+int sizeofMapContext();
+void saveMapContext(int fd, chunkedMap_t context);
+void readMapContext(int fd, chunkedMap_t * context);
+void loadMapContext(int fd, chunkedMap_t * context);
+
+
 void loadRandomChunk(chunk_t * chunk, int chunkX, int chunkY);
-char * getCharFromLine(char* line, int index, int size);
-void loadChunk(char* filename, chunk_t * chunk, int chunkX, int chunkY);
 void savePlayerContext(int fd, player_t player);
 void readPlayerContext(int fd, player_t * player);
 off_t sizeofPlayerContext(); //TODO
@@ -49,7 +58,7 @@ void savePowerUp(int fd, powerUp_t powerUp);
 void readPowerUp(int fd, powerUp_t * powerUp);
 
 size_t sizeofChunkTXT(chunk_txt chunk);
-void writeChunk(int fd, chunk_txt chunk);
+void writeChunkTXT(int fd, chunk_txt chunk);
 void readChunk(int fd, chunk_t * chunk);
 
 size_t sizeofStatistics();
@@ -62,10 +71,9 @@ void readPhysics(int fd, playerPhysics_t * physics);
 
 
 void loadCurrentMap(int, chunkedMap_t * map, Vector3 playerPos);
-chunkedMap_t loadMap(char * filename, int x, int y, int width, int height, int fromSave);
 
 void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y);
-chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height);
+chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int, int);
 void loadPlayerFromSave(int fd, player_t * player);
 
 #endif //PROJECT_SAVE_H

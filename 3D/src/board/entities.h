@@ -3,14 +3,14 @@
 #include "../../includes/raylib.h"
 #include "../utils/const.h"
 #define BASE_PLAYER { \
-    {5, 10, 10, 5}, \
+    {8, 10, 8, 5}, \
     0, \
     0,         \
     {0, 0, 0, 0, FALL_BASE_SPEED, JUMP_BASE_SPEED, 0} \
 }
 
 #define BASE_CAMERA { \
-    {2.0f, 2.0f, 2.0f}, \
+    {15.0f, 10.0f, 15.0f}, \
     {0.0f, 0.0f, 0.0f}, \
     {0.0f, 1.0f, 0.0f}, \
     0.0f, \
@@ -18,12 +18,11 @@
 }
 
 typedef struct {
-    float health;
-    float maxHealth;
-    float armor;
-    float damage;
+    int health;
+    int maxHealth;
+    int armor;
+    int damage;
 } statistics_t;
-
 
 typedef struct {
     int isJumping;

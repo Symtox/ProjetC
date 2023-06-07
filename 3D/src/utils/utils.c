@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <math.h>
 #define MAX2(a,b) ((a>b)?(a):(b))
 #define MAX4(a,b,c,d) MAX2(MAX2(a,b), MAX2(c,d))
 
@@ -42,6 +42,10 @@ void initLogger() {
     if(fp == NULL) {
         printf("null");
     }
+}
+
+float distance(float x1, float y1, float x2, float y2) {
+    return sqrtf(powf(x2 - x1, 2) + powf(y2 - y1, 2));
 }
 
 void endLogger() {

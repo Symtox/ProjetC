@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "board.h"
 #include "../core/renderer.h"
-#include "tiles.h"
 
 int hasLeftChunk(chunkedMap_t map, Vector3 playerPos) {
     return (int)playerPos.x / CHUNK_SIZE != map.centerX || (int)playerPos.z / CHUNK_SIZE != map.centerY;
@@ -40,21 +39,6 @@ void freeChunk(chunk_t * chunk) {
     }
     if(chunk->keyCount > 0) {
         free(chunk->keys);
-    }
-}
-
-
-
-int getHeightFromTileType(tileTypes_e type) {
-    switch (type) {
-        case GROUND:
-            return 1;
-        case WALL:
-            return 4;
-        case POWER_UP:
-            return 2;
-        default:
-            return 0;
     }
 }
 

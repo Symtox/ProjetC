@@ -1,39 +1,86 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
-#include "../board/tiles.h"
 #include "../utils/utils.h"
-#include <stdlib.h>
+#include "../../includes/rlgl.h"
 #define DEBUG_INFO_LINE_COUNT 5
-drawBundle_t drawBundle = {0, 0, 0, {0, 0, 0}, {0, 0, 0}, 0, 0};
-
-void DrawDoor(door_t door);
+drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0};
 
 
 Model keyModel;
 Model potionModel;
 Model cubeModel;
 Model doorModel;
+Model monsterModel;
+Model powerUpAttackModel;
+Model powerUpShieldModel;
+Model powerUpHealthModel;
 
-Texture2D heartFull;
-Texture2D heartEmpty;
-Texture2D armor;
-Texture2D sword;
+
+Texture2D heartFullTexture;
+Texture2D heartEmptyTexture;
 Texture2D keycount;
-Texture2D background;
+Texture2D overlayBackgroundTexture;
+Texture2D bigHeartTexture;
+Texture2D bigArmorTexture;
+Texture2D bigSwordTexture;
+Texture2D wingedHeartTexture;
+Texture2D wallTexture;
+Texture2D floorTexture;
+Texture2D crackedWallTexture;
+Texture2D doorUpTexture;
+Texture2D doorDownTexture;
+Texture2D potionTexture;
+Texture2D swordTexture;
+Texture2D armorTexture;
+
 
 void initRenderer(player_t * player) {
     drawBundle.player = player;
+    monsterModel = LoadModel("./assets/monster2.glTF");
     keyModel = LoadModel("./assets/key.obj");
     doorModel = LoadModel("./assets/door.obj");
-    potionModel = LoadModel("./assets/potion.obj");
-    heartFull = LoadTexture("./assets/heart.png");
-    heartEmpty = LoadTexture("./assets/heart_empty.png");
-    armor = LoadTexture("./assets/armor.png");
-    sword = LoadTexture("./assets/sword.png");
+    potionModel = LoadModel("./assets/potion1.obj");
+    heartFullTexture = LoadTexture("./assets/heart.png");
+    heartEmptyTexture = LoadTexture("./assets/heart_empty.png");
+    armorTexture = LoadTexture("./assets/armor.png");
+    swordTexture = LoadTexture("./assets/sword.png");
     keycount = LoadTexture("./assets/keycount.png");
-    background = LoadTexture("./assets/background.png");
+    overlayBackgroundTexture = LoadTexture("./assets/background.png");
+    bigHeartTexture = LoadTexture("./assets/bigheart.png");
+    bigArmorTexture = LoadTexture("./assets/bigarmor.png");
+    bigSwordTexture = LoadTexture("./assets/bigsword.png");
+    wingedHeartTexture = LoadTexture("./assets/wingsheart.png");
+    wallTexture = LoadTexture("./assets/mossy_stone_bricks.png");
+    floorTexture = LoadTexture("./assets/stone_bricks.png");
+    crackedWallTexture = LoadTexture("./assets/cracked_stone.png");
+    doorUpTexture = LoadTexture("./assets/door_up.png");
+    doorDownTexture = LoadTexture("./assets/door_down.png");
+    powerUpAttackModel = LoadModel("./assets/sword.obj");
+    powerUpShieldModel = LoadModel("./assets/shield.obj");
+    powerUpHealthModel = LoadModel("./assets/love_heart.glTF");
+
+
+    //potion = LoadTexture("./assets/potion.png"); 
+    
+
 
 }
+
+
+
+Texture2D getWallTexture(int type) {
+    switch (type) {
+        case 1:
+            return floorTexture;
+        case 2:
+            return wallTexture;
+        case 3 :
+            return crackedWallTexture;
+    }
+    return floorTexture;
+}
+
+
 
 void DrawMap(chunkedMap_t map) {
     for (int i = 0; i < map.width; i++) {
@@ -48,55 +95,259 @@ void DrawMap(chunkedMap_t map) {
 //TODO Add DrawCeilling & DrawGround
 void DrawChunk(chunk_t chunk) {
     //GROUND
-    DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, -0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
     for(int x = chunk.x * CHUNK_SIZE; x < (chunk.x + 1) * CHUNK_SIZE; x++) {
-        for(int y = 1; y < MAX_Y; y++) {
+        for(int y = 0; y < MAX_Y; y++) {
             for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
-                switch (chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]) {
-                    case WALL:
-                        DrawCube((Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, CLITERAL(Color) {30, 50 , 100 , 255});
-                        //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
-                        break;
+                if(y == 0){
+                    DrawCubeCustom(floorTexture, (Vector3){x + 0.5, -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    continue;
+                }
+                if(y==5 && drawBundle.drawCeiling){
+                    DrawCubeCustom(floorTexture, (Vector3){x + 0.5, 4.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    
+                }
+            
+                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0) {
+                    DrawCubeCustom(getWallTexture(chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]),
+                                   (Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
+                    //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
                 }
             }
         }
     }
     for(int i = 0; i < chunk.doorCount; i++) {
-        DrawDoor(chunk.doors[i]);
+        DrawDoor(chunk.doors[i], chunk.x, chunk.y);
     }
-    for(int i = 0; i < chunk.powerUpCount; i++) {
-        DrawPotion(chunk.powerUps[i]);
+    for(int i = 0; i < chunk.potionCount; i++) {
+        DrawPotion(chunk.potions[i], chunk.x, chunk.y);
+    }
+    for(int i = 0; i < chunk.potionCount; i++) {
+        DrawPotion(chunk.potions[i],chunk.x,chunk.y);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
         DrawKey(chunk.keys[i]);
     }
-    if(drawBundle.drawCeiling) {
-        //DrawCubeWires((Vector3){ x + 0.5, WALL_HEIGHT +1 -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON );
-        DrawCubeV((Vector3) {chunk.x * CHUNK_SIZE + CHUNK_SIZE/2, WALL_HEIGHT + 0.5 , chunk.y * CHUNK_SIZE + CHUNK_SIZE/2}, (Vector3) {CHUNK_SIZE, 1, CHUNK_SIZE}, CLITERAL(Color) {255, 255, 255, 255});
+    for(int i = 0; i < chunk.monsterCount; i++) {
+        DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
+    }
+    for(int i = 0; i < chunk.powerUpCount; i++) {
+        DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
     }
 }
 
+void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
+
+    rlSetTexture(texture.id);
+
+    rlBegin(RL_QUADS);
+    rlColor4ub(color.r, color.g, color.b, color.a);
+
+    // NOTE: Enable texture 1 for Front, Back
+    rlEnableTexture(texture.id);
+
+    // Front Face
+    // Normal Pointing Towards Viewer
+    rlNormal3f(0.0f, 0.0f, 1.0f);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+    // Back Face
+    // Normal Pointing Away From Viewer
+    rlNormal3f(0.0f, 0.0f, -1.0f);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+    // NOTE: Enable texture 2 for Top, Bottom, Left and Right
+    rlEnableTexture(texture.id);
+
+    // Top Face
+    // Normal Pointing Up
+    rlNormal3f(0.0f, 1.0f, 0.0f);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+    // Bottom Face
+    // Normal Pointing Down
+    rlNormal3f(0.0f, -1.0f, 0.0f);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+    // Right face
+    // Normal Pointing Right
+    rlNormal3f(1.0f, 0.0f, 0.0f);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z - length / 2);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z - length / 2);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x + width / 2, y + height / 2, z + length / 2);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x + width / 2, y - height / 2, z + length / 2);
+
+    // Left Face
+    // Normal Pointing Left
+    rlNormal3f(-1.0f, 0.0f, 0.0f);
+
+    // Bottom Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 0.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z - length / 2);
+
+    // Bottom Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 0.0f);
+    rlVertex3f(x - width / 2, y - height / 2, z + length / 2);
+
+    // Top Right Of The Texture and Quad
+    rlTexCoord2f(1.0f, 1.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z + length / 2);
+
+    // Top Left Of The Texture and Quad
+    rlTexCoord2f(0.0f, 1.0f);
+    rlVertex3f(x - width / 2, y + height / 2, z - length / 2);
+    rlEnd();
+
+    rlDisableTexture();
+}
+
+
+// gerer le max health et faire un design
+// quand triche faire un design armor et epee different
 void DrawOverlay() {
+    int bigHeart = 0;
+    int smallheart = drawBundle.player->statistics.health;
+    int bigArmor = 0;
+    int smallarmor = drawBundle.player->statistics.armor;
+    int bigDamage = 0;
+    int smalldamage = drawBundle.player->statistics.damage;
+
+
+    if(smallheart % 10 == 0){
+        smallheart = 10;
+        bigHeart = (drawBundle.player->statistics.health / 10)-1;
+    }
+    else {
+        smallheart = smallheart % 10;
+        bigHeart = drawBundle.player->statistics.health / 10;
+    }
+    if(smallarmor % 10 == 0){
+        smallarmor = 10;
+        bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
+    }
+    else {
+        smallarmor = smallarmor % 10;
+        bigArmor = drawBundle.player->statistics.armor / 10;
+    }
+    if(smalldamage % 10 == 0){
+        smalldamage = 10;
+        bigDamage = (drawBundle.player->statistics.damage/ 10)-1;
+    }
+    else {
+        smalldamage = smalldamage % 10;
+        bigDamage = drawBundle.player->statistics.damage / 10;
+    }
+
+
      if(drawBundle.drawOverlay) {
         int i = 0;
 
-        DrawTexture(background, 0, 0, WHITE);
-        for(i = 0; i < drawBundle.player->statistics.health; i++) {
-            DrawTexture(heartFull, 7 + 36 * i, 15, WHITE);
+        DrawTexture(overlayBackgroundTexture, 0, 0, WHITE);
+        for(i = 0; i < 10; i++) {
+            DrawTexture(heartEmptyTexture, 7 + 36 * i, 15, WHITE);
         }
-        for(i = drawBundle.player->statistics.health; i < drawBundle.player->statistics.maxHealth; i++) {
-            DrawTexture(heartEmpty, 12 + 35 * i, 15, WHITE);
+        for(i = 0; i < smallheart; i++) {
+            DrawTexture(heartFullTexture, 7 + 36 * i, 15, WHITE);
+        }
+        
+
+        if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
+                DrawTexture(wingedHeartTexture, 430, 13, WHITE);
+                
+        }
+        else {
+                DrawTexture(bigHeartTexture,400, 13, WHITE);
+                DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
+            }
           
+        for(i = 0; i < smallarmor; i++) {
+            DrawTexture(armorTexture, 5 + 36* i, 48, WHITE);
         }
-        for(i = 0; i < drawBundle.player->statistics.armor; i++) {
-            DrawTexture(armor, 5 + 36* i, 48, WHITE);
-        }
-        for(i = 0; i < drawBundle.player->statistics.damage; i++) {
-            DrawTexture(sword, 2 + 37 * i, 43 * 2, WHITE);
+        for(i = 0; i < smalldamage; i++) {
+            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
         }
         DrawTexture(keycount, 150, 133, WHITE);
         DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
-         DrawFPS(900, 10);
+
+        DrawTexture(bigArmorTexture,400, 47, WHITE);
+        DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
+
+        DrawTexture(bigSwordTexture,400, 87, WHITE);
+        DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
      }
 }
@@ -123,14 +374,21 @@ void Render(chunkedMap_t map) {
 
         DrawMap(map);
 
-
         EndMode3D();
-
+        DrawDoorHint();
         DrawOverlay();
         DrawDebug();
 
 }
 
+void DrawDoorHint() {
+    if(drawBundle.canOpenDoor == 1) {
+        DrawText("Press E to open door", 600, 800, 40, WHITE);
+    }
+    else if(drawBundle.canOpenDoor == -1) {
+        DrawText("You need a key to open this door", 600, 800, 40, WHITE);
+    }
+}
 
 drawBundle_t getDrawBundle() {
     return drawBundle;
@@ -142,10 +400,6 @@ void setDrawBundle(drawBundle_t bundle) {
 
 
 
-#include "../../includes/rlgl.h"
-
-#include <stddef.h>     // Required for: NULL
-#include <math.h>       // Required for: sinf()
 
 #define RAYLIB_NEW_RLGL
 
@@ -156,14 +410,14 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 // Measure a text works but the text is not drin 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
 static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
-int render3DText(char * text, Vector3 position)
+int render3DText(const char * text, Vector3 position,float fontSize)
 {
     Vector3 textDimension;
     // Initialization
     //--------------------------------------------------------------------------------------
     Font font = GetFontDefault();
 
-    textDimension = MeasureText3D(GetFontDefault(), text, 8.0f, 1.0f, 0.0f);
+    textDimension = MeasureText3D(GetFontDefault(), text, fontSize, 1.0f, 0.0f);
 
     rlPushMatrix();
 
@@ -173,7 +427,7 @@ int render3DText(char * text, Vector3 position)
     rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     rlRotatef(angleBetweenVectors, 0.0f, 0.0f, -1.0f);
 
-    DrawText3D(GetFontDefault(), text, (Vector3){-textDimension.x/2, 0, 0}, 5.0f, 2.0f, 0.0f, RED);
+    DrawText3D(GetFontDefault(), text, (Vector3){-textDimension.x/2, 0, 0}, fontSize, 2.0f, 0.0f, RED);
     rlPopMatrix();
 
     UnloadFont(font);
@@ -346,27 +600,105 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+void DrawSword(powerUp_t sword, int x, int y) {
+    sword.position.y = sword.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    sword.position.x += 0.5f + x * CHUNK_SIZE;
+    sword.position.z += 0.5f + y * CHUNK_SIZE - 0.2;
+    powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 30 * DEG2RAD, 0, 0});
+    DrawModel(powerUpAttackModel, sword.position, 1.0f, (Color){60,60,60,255});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+
+void DrawShield(powerUp_t shield,int x,int y) {
+    shield.position.y = shield.position.y + sin((float)GetTime() * 2) * 0.1f + 0.7f;
+    shield.position.x += 0.5f + x * CHUNK_SIZE;
+    shield.position.z += 0.5f + y * CHUNK_SIZE;
+    powerUpShieldModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 0});
+    DrawModel(powerUpShieldModel, shield.position, 0.3f, (Color){100, 100, 100, 200});
+   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
+}
+void DrawPowerUp(powerUp_t powerUp,int x, int y) {
+    if(powerUp.pickedUp) {
+        return;
+    }
+    switch (powerUp.type) {
+        case ATTACK:
+            DrawSword(powerUp,x,y);
+            break;
+        case DEFENSE:
+            DrawShield(powerUp,x,y);
+            break;
+        case MAX_HP:
+            DrawHealth(powerUp,x,y);
+            break;
+        default:
+            break;
+    }
+}
 
 void DrawKey(DoorKey_t key) {
+    if(key.pickedUp) {
+        return;
+    }
     key.position.y++;
     logFile(TextFormat("Key position: %f, %f, %f\n", key.position.x, key.position.y, key.position.z));
-   // keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
+    keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
     DrawModel(keyModel, key.position, 0.10f, GOLD);
 }
 
-void DrawPotion(powerUp_t powerUp) {
-    powerUp.position.y = powerUp.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
-    powerUp.position.x += 0.5f;
-    powerUp.position.z += 0.5f;
+void DrawPotion(potion_t potion, int chunkX, int chunkY) {
+    if(potion.pickedUp) {
+        return;
+    }
+    potion.position.y = potion.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    potion.position.x += 0.5f + chunkX * CHUNK_SIZE;
+    potion.position.z += 0.5f + chunkY * CHUNK_SIZE;
     potionModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, 0});
-    DrawModel(potionModel, powerUp.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
+    DrawModel(potionModel, potion.position, 0.015f, CLITERAL(Color){ 200, 100, 100, 150 });
 }
 
 
-void DrawDoor(door_t door) {
-    Model currModel = doorModel;
-    currModel.transform = MatrixRotateXYZ((Vector3){ -90.0f * DEG2RAD, 0, door.rotation * DEG2RAD });
-    DrawModel(currModel, door.position, 0.03f, CLITERAL(Color){ 100, 100, 100, 255 });
+void DrawDoor(door_t door,int x,int y) {
+
+    if(door.opened){
+        return;
+    }
+    door.position.y = (door.position.y)+0.5;
+    door.position.x += 0.5f + x * CHUNK_SIZE;
+    door.position.z += 0.5f + y * CHUNK_SIZE;
+    DrawCubeCustom(doorUpTexture,(Vector3){ door.position.x, door.position.y+1, door.position.z },1.0f,1.0f,1.0f,WHITE);
+    DrawCubeCustom(doorDownTexture,door.position, 1.0f, 1.0f, 1.0f, WHITE);
+}
+
+void DrawHealth(powerUp_t health, int x, int y){
+    health.position.y = health.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
+    health.position.x += 0.5f + x * CHUNK_SIZE;
+    health.position.z += 0.5f + y * CHUNK_SIZE;
+    powerUpHealthModel.transform = MatrixRotateXYZ((Vector3){ 0, fmodf((float)GetTime() * 50,360) * DEG2RAD, 0});
+    DrawModel(powerUpHealthModel, health.position, 0.5f, CLITERAL(Color){ 200, 100, 100, 150 });
+}
+
+void DrawMonster(monster_t monster, int x, int y){
+
+    if(monster.isDead){
+        return;
+    }
+    monster.position.y = (monster.position.y)+1.5;
+    monster.position.x += 0.5f + x * CHUNK_SIZE;
+    monster.position.z += 0.5f + y * CHUNK_SIZE;
+
+    DrawModel(monsterModel, monster.position, 0.25f,WHITE);
+   
+    render3DText(
+        TextFormat("Health : %d \nArmor : %d\nDamage : %d",(int)monster.statistics.health,(int)monster.statistics.armor,(int)monster.statistics.damage),
+        (Vector3){monster.position.x,(monster.position.y)+2,monster.position.z},
+        2.0
+    );
+
+
+    
+
+
 }
 
 

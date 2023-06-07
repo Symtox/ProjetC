@@ -20,7 +20,7 @@
     #define PLAYER_SENSITIVITY_GAMEPAD 2 // Sensibilité de la souris
 #define MAX_Y 29
     #define MOVEMENT_SPEED 0.15f // Vitesse de déplacement
-    #define FREE_WALK_MOVEMENT_SPEED 1.0f
+    #define FREE_WALK_MOVEMENT_SPEED 0.5f
 #define WALL_HEIGHT 5
 #define MAX_CHUNK_COUNT 100
 #endif
