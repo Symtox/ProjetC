@@ -30,6 +30,12 @@ monster_t * monsterInFight = NULL;
 int fd = -1;
 void pickUpItem();
 
+/*
+ * Initialise la sauvegarde si besoin, sinon charge la sauvegarde
+ * @param playerP: pointeur vers le joueur
+ * @param mapPtr: pointeur vers la map
+ * @param save: 1 si on veut jouer depuis une sauvegarde existante, 0 sinon
+ */
 void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
     int flags = save ? O_RDWR | O_CREAT: O_RDWR | O_CREAT | O_TRUNC;
     map = mapPtr;
@@ -45,6 +51,11 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
     player = playerP;
 }
 
+/*
+ * Gère un tick de jeu
+ * Si joueur en combat bloque les actions
+ * Sinon Appelle les fonctions de gestion du joueur et de la map
+ */
 void Tick() {
     if(player->inFight) {
         fight();
@@ -56,15 +67,18 @@ void Tick() {
     }
 }
 
+/**
+ * Gere la récupération d'item
+ */
 void pickUpItem() {
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
-    toChunkCoordsF(&x, &z, &chunkX, &chunkY, *map);
+    toChunkCoordsF(&x, &z, &chunkX, &chunkY, *map); // Conversion des coordonnées du joueur en coordonnées de chunk
 
     if(chunkX == -1 || chunkY == -1) {
         return;
     }
-
+    //On parcourt les items du chunk et on regarde si le joueur est à proximité
     for(int i = 0; i < map->chunks[chunkX][chunkY].keyCount; i++) {
         if(map->chunks[chunkX][chunkY].keys[i].pickedUp) {
             continue;
@@ -97,7 +111,6 @@ void pickUpItem() {
             switch (map->chunks[chunkX][chunkY].powerUps[i].type) {
                 case ATTACK:
                     player->statistics.damage += POWER_UP_ATTACK;
-                    logFile("Attack power up picked up\n");
                     break;
                 case DEFENSE:
                     player->statistics.armor += POWER_UP_DEFENSE;
@@ -111,9 +124,12 @@ void pickUpItem() {
 }
 
 
-
+/**
+ * Gère les actions du joueur (excepté le mouvement).
+ * LEs toggles sont utilisés pour éviter que l'action ne se répète à chaque tick
+ */
 void handlePlayerShortcuts() {
-    drawBundle_t drawBundle = getDrawBundle();
+    drawBundle_t drawBundle = getDrawBundle(); // On recupere les informations de dessin afin de les mettre à jour
     if(player->inFight) {
         return;
     }
@@ -160,6 +176,7 @@ void handlePlayerShortcuts() {
         player->keyCount--;
     }
 
+    // Entrée en combat
     if(IsKeyPressed(KEY_E) && drawBundle.canOpenFight == 1) {
         drawBundle.canOpenFight = 0;
         player->inFight = 1;
@@ -169,11 +186,17 @@ void handlePlayerShortcuts() {
     setDrawBundle(drawBundle);
 }
 
-
-void savePlayer() {
+//Sauvegarde de toutes les infos de la partie
+void save() {
     savePlayerContext(fd, *player);
+    saveMapContext(fd, *map);
+
 }
 
+/**
+ * vérifie si le joueur est à proximité d'un porte + si il a une clé
+ * @return 0 = pas de porte, 1 = peut ouvrir, -1 = pas de clé
+ */
 int canOpenDoor() {
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
@@ -193,6 +216,9 @@ int canOpenDoor() {
     return 0;
 }
 
+/**
+ * Ouvre la porte la plus proche et consomme une clef
+ */
 void openClosestDoor() {
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
@@ -217,7 +243,9 @@ void openClosestDoor() {
         map->chunks[chunkX][chunkY].doors[minIndex].opened = 1;
     }
 }
-
+/*
+ * Verifie si un monstre est  à proximité du joueur
+ */
 int canOpenFight() {
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
@@ -232,7 +260,6 @@ int canOpenFight() {
         }
         float distanceToEnemy = distance3D((Vector3){x, player->camera->position.y, z}, map->chunks[chunkX][chunkY].monsters[i].position);
         if(distanceToEnemy < ACTION_DETECTION_DISTANCE) {
-            logFile("Can open fight\n");
             return 1;
         }
 
@@ -241,6 +268,9 @@ int canOpenFight() {
     return 0;
 }
 
+/*
+ * Ouvre le combat avec le monstre le plus proche
+ */
 monster_t * openClosestFight() {
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
@@ -267,9 +297,16 @@ monster_t * openClosestFight() {
     return NULL;
 }
 
+
+/**
+ * Gestion du combat
+ * TODO ajouter les textures des touches
+ * TODO map les touches de manettes
+ */
 void fight() {
     int damageDone;
     int damageTaken;
+
     fightState_e futureState;
     drawBundle_t drawBundle = getDrawBundle();
 
@@ -279,9 +316,9 @@ void fight() {
     damageDone = MAX2(1, player->statistics.damage - monsterInFight->statistics.armor);
     damageTaken = MAX2(1, monsterInFight->statistics.damage - player->statistics.armor);
 
-    logFile(TextFormat("In fight %d\n", (int)fightState));
+    //Selon l'état du combat on défini les actions possibles
     switch(fightState) {
-
+        //Si le combat n'a pas commencé / le tour du monstre est terminé
         case FIGHT_CHOICE:
             drawBundle.dialog.choiceCount = 2;
             drawBundle.dialog.choices[0] = "Attack";
@@ -301,6 +338,7 @@ void fight() {
                 monsterInFight = NULL;
             }
             break;
+        //Si le joueur a choisi d'attaquer
         case FIGHT_RESULT:
 
             drawBundle.dialog.choiceCount = 1;
@@ -328,6 +366,7 @@ void fight() {
             }
 
             break;
+        // Attaque du monstre
         case MONSTER_ATTACK:
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
@@ -343,5 +382,5 @@ void fight() {
 
             break;
     }
-    setDrawBundle(drawBundle);
+    setDrawBundle(drawBundle); //UPdate des options d'affichage
 }

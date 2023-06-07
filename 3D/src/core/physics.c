@@ -7,28 +7,40 @@
 
 
 
-
+/**
+ * @brief gestion du mouvement du joueur
+ * On somme les vecteurs correspondant aux différentes forces et on vérifie ensuite les colisions
+ * @param player
+ * @param map
+ * @return
+ */
 int handlePlayerMovement(player_t * player, chunkedMap_t map) {
     drawBundle_t bundle = getDrawBundle();
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
-    Vector3 playerRotation = getPlayerOrientation();
+    Vector3 playerRotation = getPlayerOrientation(); // Camera rotation
 
+    // Gestion du saut
     playerMovement = Vector3Add(playerMovement, getJumpMovementFromInputs(&player->physics));
+    //Gestion du noclip
     playerMovement = Vector3Add(playerMovement, getNoclipMovement(&player->physics));
+    //Gestion du mouvement
     playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs(player->physics.noclip));
-
+    //Gestion de la gravité
     playerMovement = Vector3Add(playerMovement, getFallMovement(player->camera->position, &player->physics, map));
+    //Annulation du movement selon x et z si une collision est détectée
     correctMovementWithCollisions(&playerMovement, playerRotation, *player->camera, player->physics, map);
 
     bundle.movement = playerMovement;
     bundle.direction = playerRotation;
-    setDrawBundle(bundle);
+    setDrawBundle(bundle); // Mise à jour pour l'affichage de débug
 
+    // Mise à jour de la position de la caméra
     updateCameraCustom(player->camera, playerMovement, playerRotation);
 
     return 0;
 }
 
+//Gestion des mouvement verticaux pour le noclip
 Vector3 getNoclipMovement(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
     if((IsKeyDown(KEY_SPACE) || (IsGamepadAvailable(0) && IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2))) && playerPhysics->noclip) {
@@ -64,6 +76,10 @@ Vector3 getMovementVectorFromInputs(bool noclip) {
     }
 }
 
+/**
+ * Retourne l'orientation calculé à partir de la souris ou du gamepad
+ * @return
+ */
 Vector3 getPlayerOrientation() {
     if(IsGamepadAvailable(0)) {
         return (Vector3){ GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * PLAYER_SENSITIVITY_GAMEPAD, GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * PLAYER_SENSITIVITY_GAMEPAD, 0.0f};
@@ -71,6 +87,12 @@ Vector3 getPlayerOrientation() {
     return (Vector3){GetMouseDelta().x * PLAYER_SENSITIVITY_MOUSE, GetMouseDelta().y * PLAYER_SENSITIVITY_MOUSE, 0.0f};
 }
 
+/**
+ * @brief Gestion du saut
+ * @param playerPhysics
+ * @param playerPhysics
+ * @return
+ */
 Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = (Vector3) {
             0.0f,                            // Movement: sideways
@@ -264,15 +286,6 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
 }
 
 void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
-
-    // Required values
-    // movement.x - Move forward/backward
-    // movement.y - Move right/left
-    // movement.z - Move up/down
-    // rotation.x - yaw
-    // rotation.y - pitch
-    // rotation.z - roll
-    // zoom - Move towards target
 
     bool lockView = true;
     bool rotateAroundTarget = false;
