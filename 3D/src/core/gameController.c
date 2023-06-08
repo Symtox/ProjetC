@@ -26,11 +26,12 @@ player_t * player;
 chunkedMap_t * map;
 fightState_e fightState = NO_FIGHT;
 monster_t * monsterInFight = NULL;
+int isLoaded = 0;
 
 int fd = -1;
 void pickUpItem();
 
-/*
+/**
  * Initialise la sauvegarde si besoin, sinon charge la sauvegarde
  * @param playerP: pointeur vers le joueur
  * @param mapPtr: pointeur vers la map
@@ -49,9 +50,10 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
     *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
 
     player = playerP;
+    isLoaded = 1;
 }
 
-/*
+/**
  * Gère un tick de jeu
  * Si joueur en combat bloque les actions
  * Sinon Appelle les fonctions de gestion du joueur et de la map
@@ -110,13 +112,13 @@ void pickUpItem() {
             map->chunks[chunkX][chunkY].powerUps[i].pickedUp = 1;
             switch (map->chunks[chunkX][chunkY].powerUps[i].type) {
                 case ATTACK:
-                    player->statistics.damage += POWER_UP_ATTACK;
+                    player->statistics.damage += 1;
                     break;
                 case DEFENSE:
-                    player->statistics.armor += POWER_UP_DEFENSE;
+                    player->statistics.armor += 1;
                     break;
                 case MAX_HP:
-                    player->statistics.maxHealth += POWER_UP_MAX_HP;
+                    player->statistics.maxHealth += 1;
                     break;
             }
         }
@@ -243,7 +245,8 @@ void openClosestDoor() {
         map->chunks[chunkX][chunkY].doors[minIndex].opened = 1;
     }
 }
-/*
+
+/**
  * Verifie si un monstre est  à proximité du joueur
  */
 int canOpenFight() {
@@ -268,7 +271,7 @@ int canOpenFight() {
     return 0;
 }
 
-/*
+/**
  * Ouvre le combat avec le monstre le plus proche
  */
 monster_t * openClosestFight() {
@@ -383,4 +386,19 @@ void fight() {
             break;
     }
     setDrawBundle(drawBundle); //UPdate des options d'affichage
+}
+
+
+/**
+ * Si le jeu est chargé, on sauevgarde et on free les ressources
+ * TODO: free index
+ */
+void saveAndQuit() {
+    if(!isLoaded) {
+        return;
+    }
+    savePlayerContext(fd, *player);
+    saveMap(map, fd);
+    freeMap(map);
+
 }

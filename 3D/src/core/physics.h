@@ -6,8 +6,6 @@
 
 #ifndef PROJECT_PHYSICS_H
     #define PROJECT_PHYSICS_H
-#define INIT_PLAYER_PHYSICS (playerPhysics_t) {0, 0, 0, 0, FALL_BASE_SPEED, JUMP_BASE_SPEED}
-
 
     void toChunkCoordsF(float * x, float * z, int * chunkX, int * chunkY, chunkedMap_t map);
     int isTileFree(int x, int y, int z, chunkedMap_t map);

@@ -53,12 +53,17 @@ Vector3 getNoclipMovement(playerPhysics_t * playerPhysics) {
 
 }
 
+/**
+ * @return vitesse en fonction du mode de déplacement
+ */
 float getMovementSpeed(bool noclip) {
     return noclip ? FREE_WALK_MOVEMENT_SPEED : MOVEMENT_SPEED;
 }
 
 
-
+/**
+ * Calcule le vecteur de mouvement du joueur a partir des inputs
+ */
 Vector3 getMovementVectorFromInputs(bool noclip) {
     Vector3 playerMovement = {0};
     if(IsGamepadAvailable(0)) {
@@ -124,6 +129,10 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
     return playerMovement;
 }
 
+/**
+ * Gestion de la touche de saut
+ * @param playerPhysics
+ */
 void handleJump(playerPhysics_t * playerPhysics) {
     if(IsKeyPressed(KEY_SPACE) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
         if(!playerPhysics->isJumping && !playerPhysics->isFalling) {
@@ -133,6 +142,13 @@ void handleJump(playerPhysics_t * playerPhysics) {
 
 }
 
+/**
+ * @brief Gestion de la chute
+ * @param playerPosition
+ * @param playerPhysics
+ * @param map
+ * @return
+ */
 Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics, chunkedMap_t map) {
     Vector3 playerMovement = (Vector3) {
             0.0f,                            // Movement: sideways
@@ -141,23 +157,22 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
     };
 
 
-    float distance = getPlayerDistanceFromGround(playerPosition, map);
+    float distance = getPlayerDistanceFromGround(playerPosition, map); // calcule de la hauteur de chute
 
 
-    if(playerPhysics->isJumping || distance == 0 || playerPhysics->noclip) {
+    if(playerPhysics->isJumping || distance == 0 || playerPhysics->noclip) { // Si on saute ou qu'on est au sol, on ne tombe pas
         return playerMovement;
     }
 
     float fallingSpeed = getFallSpeed(*playerPhysics);
-    logFile(TextFormat("Falling: Distance: %f, x: %f, y: %f, z: %f\n", distance, playerPosition.x, playerPosition.y, playerPosition.z));
 
-    logFile(TextFormat("Falling: Falling speed: %f %d\n", fallingSpeed, playerPhysics->fallTime));
     playerPhysics->isFalling = 1;
+    // Cas général
     if(distance > fallingSpeed) {
         playerPhysics->fallTime += 1;
         playerPhysics->fallingSpeed = fallingSpeed;
         playerMovement.y -= fallingSpeed;
-    } else {
+    } else { // Si la vitesse est plus grande que la distance du sol on atterit
         playerPhysics->isFalling = 0;
         playerPhysics->fallTime = 0;
         playerPhysics->fallingSpeed = FALL_BASE_SPEED;
@@ -166,14 +181,34 @@ Vector3 getFallMovement(Vector3 playerPosition, playerPhysics_t * playerPhysics,
     return playerMovement;
 }
 
+/**
+ * Calcule de la vitesse de chute
+ * @param player
+ * @return
+ */
 float getFallSpeed(playerPhysics_t player) {
-    return MIN2(-1 + pow(3, (float)player.fallTime / 50), MAX_FALL_SPEED);
+    return MIN2(-1 + pow(3, (float)player.fallTime / 50), MAX_FALL_SPEED); // On augmente la vitesse de chute jusqu'à un maximum (speed = 3^(time/50)
 }
 
+/**
+ * Calcule de la vitesse de saut
+ * @param player
+ * @return
+ */
 float getJumpSpeed(playerPhysics_t player) {
     return player.jumpingSpeed - (player.jumpTime * player.jumpingSpeed / 100) ;
 }
 
+
+/**
+ * Calcule de la distance entre le joueur et le sol
+ * Un joueur peut théoriquemenbt se trouver sur 4 cases en même temps
+ * On cherche donc les coordonnées des 4 cases et on prend la plus petite distance
+ * ON finit par soustraire la taille du joueur (hauteur de la caméra) pour avoir la distance entre le sol et les pied du joueur
+ * @param playerPosition
+ * @param map
+ * @return
+ */
 float getPlayerDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
     int caseAX = (int)playerPosition.x;
     int caseAZ = (int)playerPosition.z;
@@ -226,10 +261,18 @@ float getPlayerDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
         minDistance = getTileDistanceFromGround(playerPosition.x, playerPosition.y, playerPosition.z, map);
     }
 
-    logFile(TextFormat("Falling: Max height: %f\n", minDistance));
     return minDistance - PLAYER_HEIGHT;
 }
 
+/**
+ * Annulation du mouvement selon x et z si il y a collision
+ * Le joueur peut là aussi etre sur 4 cases en même temps, on cherche donc les 4 cases + les 4 cases plus hautes car la taille du joueur est de 2 (environ)
+ * @param movement
+ * @param playerRotation
+ * @param camera
+ * @param playerPhysics
+ * @param map
+ */
 void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, playerPhysics_t playerPhysics, chunkedMap_t map) {
 
     int caseAX;
@@ -243,6 +286,7 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
     caseAX = (int)cameraAfterMove.position.x;
     caseAZ = (int)cameraAfterMove.position.z;
 
+    // On cherche les 4 cases autour du joueur
     if((int)cameraAfterMove.position.x != (int)(cameraAfterMove.position.x + PLAYER_WIDTH)) {
         multipleX = 1;
         caseBX = (int)(cameraAfterMove.position.x + PLAYER_WIDTH);
@@ -252,8 +296,6 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
         caseBX = (int)(cameraAfterMove.position.x - PLAYER_WIDTH);
     }
 
-
-
     if((int)(cameraAfterMove.position.z) != (int)(cameraAfterMove.position.z + PLAYER_WIDTH)) {
         multipleZ = 1;
         caseBZ = (int)(cameraAfterMove.position.z + PLAYER_WIDTH);
@@ -262,6 +304,8 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
         multipleZ = 1;
         caseBZ = (int)(cameraAfterMove.position.z - PLAYER_WIDTH);
     }
+
+    // On vérifie si les 4 cases sont libres + les 4 cases plus hautes
     int isMoveOk = 1;
     for(int i=0; i < PLAYER_HEIGHT; i++) {
         if(multipleX && multipleZ) {
@@ -280,11 +324,21 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
         return;
     }
 
-    //correctedMovement.x = Vector3Subtract(cameraAfterMove.position, camera.position).x;
+    //Annulation du mouvement en x et z (si on percutte un mur on veut pouvoir tomber
+    //TODO calcul + précis de la distance à laquelle on peut se déplacer + gestion des angles + collision avec le plafond
+
+
     movement->x = 0;
     movement->z = 0;
 }
 
+
+/**
+ * Met à jour la caméra en fonction du mouvement et de la rotation du joueur
+ * @param camera
+ * @param movement
+ * @param rotation
+ */
 void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
 
     bool lockView = true;
@@ -295,23 +349,29 @@ void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
     // Camera rotation
     CameraPitch(camera, -rotation.y*DEG2RAD, lockView, rotateAroundTarget, rotateUp);
     CameraYaw(camera, -rotation.x*DEG2RAD, rotateAroundTarget);
-    //CameraRoll(camera, rotation.z*DEG2RAD);
 
     // Camera movement
     CameraMoveForward(camera, movement.x, moveInWorldPlane);
     CameraMoveRight(camera, movement.z, moveInWorldPlane);
     CameraMoveUp(camera, movement.y);
 
-    // Zoom target distance
 }
 
+/**
+ * Calcul la distance entre une case et le sol
+ * @param x
+ * @param y
+ * @param z
+ * @param map
+ * @return
+ */
 float getTileDistanceFromGround(int x, float y, int z, chunkedMap_t map) {
     int chunkIndexX, chunkIndexY;
-    if(x < 0 || z < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || z >= CHUNK_SIZE * MAP_CHUNK_HEIGHT || y < 0 || y >= MAX_Y) {
+    if(x < 0 || z < 0 || x >= CHUNK_SIZE * map.maxY || z >= CHUNK_SIZE * map.maxX || y < 0 || y >= MAX_Y) {
         return 10;
     }
     toChunkCoords(&x, &z, &chunkIndexX, &chunkIndexY, map);
-    if(chunkIndexX == -1 || chunkIndexY == -1) {
+    if(chunkIndexX == -1 || chunkIndexY == -1) { // Si le joueur est en dehors de la map
         return 10;
     }
 
@@ -326,12 +386,20 @@ float getTileDistanceFromGround(int x, float y, int z, chunkedMap_t map) {
     return y;
 }
 
+/**
+ * Verifie qu'une case est libre
+ * @param x
+ * @param y
+ * @param z
+ * @param map
+ * @return
+ */
 int isTileFree(int x, int y, int z, chunkedMap_t map) {
     int chunkIndexX, chunkIndexY;
     bool isDoorFree = true;
     bool isMonsterFree = true;
 
-    if(x < 0 || z < 0 || x >= CHUNK_SIZE * map.maxX || z >= CHUNK_SIZE * map.maxY || y < 0 || y >= MAX_Y) {
+    if(x < 0 || z < 0 || x >= CHUNK_SIZE * map.maxX || z >= CHUNK_SIZE * map.maxY || y < 0 || y >= MAX_Y) { // Case en dehors de la carte (vide)
         return 1;
     }
     toChunkCoords(&x, &z, &chunkIndexX, &chunkIndexY, map);
@@ -339,6 +407,7 @@ int isTileFree(int x, int y, int z, chunkedMap_t map) {
         return 1;
     }
 
+    //Verification des portes
     for(int i = 0; i < map.chunks[chunkIndexX][chunkIndexY].doorCount; i++) {
         if(map.chunks[chunkIndexX][chunkIndexY].doors[i].position.x == x
             && (
@@ -351,6 +420,7 @@ int isTileFree(int x, int y, int z, chunkedMap_t map) {
         }
     }
 
+    //Verification des monstres
     for(int i = 0; i < map.chunks[chunkIndexX][chunkIndexY].monsterCount; i++) {
         if(map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.x == x
             && (
@@ -364,11 +434,20 @@ int isTileFree(int x, int y, int z, chunkedMap_t map) {
         }
     }
 
+    // Si il n'y a pas de bloc, pas de monstre et pas de porte
     return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0
         && isDoorFree
         && isMonsterFree;
 }
 
+/**
+ * Converti les coordonnées de la map globale (utilisé pour l'affichage) en coordonnées de chunk
+ * @param x
+ * @param z
+ * @param chunkX
+ * @param chunkY
+ * @param map
+ */
 void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t map) {
     int playerChunkX = (int)(*x / CHUNK_SIZE);
     int playerChunkY = (int)(*z / CHUNK_SIZE);
@@ -388,7 +467,14 @@ void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t ma
     }
 }
 
-
+/**
+ * Pareil qu'au dessus mais pour les float
+ * @param x
+ * @param z
+ * @param chunkX
+ * @param chunkY
+ * @param map
+ */
 void toChunkCoordsF(float * x, float * z, int * chunkX, int * chunkY, chunkedMap_t map) {
     int playerChunkX = (int)((int)*x / CHUNK_SIZE);
     int playerChunkY = (int)((int)*z / CHUNK_SIZE);

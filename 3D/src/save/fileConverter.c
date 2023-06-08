@@ -9,24 +9,12 @@
 #include "fileConverter.h"
 #include <wchar.h>
 #include <locale.h>
-ssize_t getLineFromText(char **lineptr, FILE *stream) {
-    wchar_t buf[100] = {0};
-    int length = 0;
-    int c = 1;
-
-    while(c != '\n' && c != EOF) {
-        c = fgetc(stream);
-        buf[length] = c;
-        length += 1;
-    }
-    buf[length] = '\0';
-    *lineptr = malloc(sizeof(char) * length);
-    for(int i=0; i < length; i++) {
-        (*lineptr)[i] = (char)buf[i];
-    }
-    return c == EOF ? -1 : length;
-}
-
+/**
+ * Substring depuis index pos
+ * @param src
+ * @param pos
+ * @return
+ */
 char * substr(char *src, int pos) {
     if(pos >= strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
@@ -42,6 +30,11 @@ char * substr(char *src, int pos) {
     return dest;
 }
 
+/**
+ * Lis un chunk depuis un fichier
+ * @param chunk
+ * @param path
+ */
 void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     FILE *file;
 
@@ -53,6 +46,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->powerUpCount = 0;
     chunk->potionCount = 0;
 
+    //Allocation du chunk
     chunk->chunk = malloc(sizeof(int**) * CHUNK_SIZE);
     for(int i=0; i < CHUNK_SIZE; i++) {
         chunk->chunk[i] = malloc(sizeof(int*) * MAX_Y);
@@ -61,37 +55,40 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         }
     }
 
+    //Buffers
     potion_t potion[60] = {0};
     monster_t monsters[60] = {0};
     door_t doors[60] = {0};
     DoorKey_t keys[60] = {0};
     powerUp_t powerUps[60] = {0};
 
-
+    //Ouverture du fichier
     file = fopen(path, "r");
     if (file == NULL) {
         logFile("Error opening file");
         return;
     }
 
+    //Lecture du board
     for(int i = CHUNK_SIZE - 1; i >= 0; i--) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             char currChar = fgetc(file);
             switch (currChar) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
-                        chunk->chunk[i][k][j] = rand()% 3 +1;
+                        chunk->chunk[i][k][j] = rand()% 3 +1; // Random la texture du mur
                     }
                     break;
 
-                case -62:
-                    fseek(file, 1, SEEK_CUR);
+                case -62: // §
+                    fseek(file, 1, SEEK_CUR); // On avance d'un char
                     potion[chunk->powerUpCount].pickedUp = 0;
                     potion[chunk->powerUpCount].position = (Vector3) {i, 0, j};
                     chunk->potionCount++;
                     break;
 
                 case 'o':
+                    //Ajout de blocs au dessus de la porte
                     for (int k = DOOR_HEIGHT + 1; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = 1;
                     }
@@ -122,14 +119,11 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             }
         }
         fgetc(file);
-        fpos_t pos;
-        fgetpos(file, &pos);
     }
 
     fgetwc(file);
 
     char line[30] = {0};
-    size_t len = 0;
 
     chunk->east = NULL;
     chunk->south = NULL;
@@ -137,7 +131,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->north = NULL;
 
     while (fgets(line, 30, file) != NULL) {
-        logFile(TextFormat("line: %s", line));
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
         }
@@ -171,7 +164,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
             }
         }
     }
-
+    //On alloue des tableau de taille optimal pour le chunk a partir des buffers TODO: memcpy
     if(chunk->doorCount > 0) {
         chunk->doors = malloc(sizeof(door_t) * chunk->doorCount);
         for(int i=0; i < chunk->doorCount; i++) {
@@ -203,16 +196,15 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         }
     }
 
-    for(int i = 0; i < CHUNK_SIZE; i++) {
-        for(int j = 0; j < CHUNK_SIZE; j++) {
-            printf("%d ", chunk->chunk[i][0][j]);
-        }
-        printf("\n");
-    }
     fclose(file);
 }
 
-
+/**
+ * Concatenation de path et du nom de fichier
+ * @param path
+ * @param filename
+ * @return
+ */
 char * concatPath(char * path, char * filename) {
     char * result = malloc(strlen(path) + strlen(filename) + 1);
     strncpy(result, path, strlen(path));
@@ -221,9 +213,11 @@ char * concatPath(char * path, char * filename) {
     return result;
 }
 
+//Global pour + de simplicité
 chunk_txt chunkBuffer[MAX_CHUNK_COUNT] = {0};
 int chunkCount = 0;
 
+//Verifie si un couple de coordonné est déjà en mémoire
 int isChunkInBuffer(int x, int y) {
     for(int i = 0; i < chunkCount; i++) {
         if(chunkBuffer[i].x == x && chunkBuffer[i].y == y) {
@@ -233,45 +227,54 @@ int isChunkInBuffer(int x, int y) {
     return 0;
 }
 
-
+/**
+ * Charge TOUT les chunk accessible depuis un certain chunk, donc en théorie la map entière (Voir createSaveFromLevelFiles)
+ */
 void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
-    int currentChunkNo = chunkCount;
-    if(isChunkInBuffer(x, y) || filename == NULL) {
+    int currentChunkNo = chunkCount; // On stock le numéro de chunk courant (Obligatoire car la valeur globale peut changer a cause des appel réccursif)
+    if(isChunkInBuffer(x, y) || filename == NULL) { // Si aucun chunk ou chunk déjà load
         logFile(TextFormat("chunk already loaded: %s", filename));
         return;
     }
     char * fullPath = concatPath(path, filename);
-    logFile(TextFormat("Loading chunk: %s", fullPath));
-    loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath);
+    loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath); // Chargement du chunk
 
+    //On ajoute le chunk au tableau global
     chunkBuffer[currentChunkNo].x = x;
     chunkBuffer[currentChunkNo].y = y;
     chunkCount++;
 
+    //Appels réccursif pour charger les chunk adjacent
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
-    logFile(TextFormat("chunk est loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
-    logFile(TextFormat("chunk south loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
-    logFile(TextFormat("chunk west loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
-    logFile(TextFormat("chunk north loaded: %s", fullPath));
 
-    free(fullPath);
+    free(fullPath); // Warning par mon IDE mais le free semble correct
 }
 
-
+/**
+ * Charge TOUTE une map
+ * @param path
+ * @param filename
+ * @param fd
+ */
 void createSaveFromLevelFiles(char * path, char * filename, int fd) {
-    index_t index;
-    player_t player = BASE_PLAYER;
+    index_t index; // Structure de sauvegarde
+    player_t player = BASE_PLAYER; // Joueur avec stat de base
     Camera camera = BASE_CAMERA;
     player.camera = &camera;
-    Vector2 min = {0,0};
-    Vector2 max = {0,0};
+
+    Vector2 min = {0,0}; //Coordonnées minimal d'un chunk (Afin de normaliser les chunk)
+    Vector2 max = {0,0}; //Coordonnées maximal d'un chunk (Taille de la map)
+
     chunkCount = 0;
     chunkedMap_t mapContext = {0};
+
+    //Chargement de la map
     createSaveFromLevelFilesR(path, filename, 0, 0);
 
+    //Calcul des coord min et max
     for(int i = 0; i < chunkCount; i++) {
         if(chunkBuffer[i].x < min.x) {
             min.x = chunkBuffer[i].x;
@@ -287,7 +290,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         }
     }
 
-
+    //Normalisation des coordonnées de chunk (Aucun chunk ne peut avoir de coordonnées négative)
     for(int i = 0; i < chunkCount; i++) {
         chunkBuffer[i].x -= min.x;
         chunkBuffer[i].y -= min.y;
@@ -298,14 +301,17 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         exit(EXIT_FAILURE);
     }
 
+    //INitialisation de la structure de stockage
     index.chunkCount = chunkCount;
     index.chunkCoords = malloc(sizeof(Vector2) * chunkCount);
-
     index.chunkFilePosition = malloc(sizeof(int*) * chunkCount);
 
-
+    //pos est la position actuel ou on écrit de le fichier de sauvegarde
+    //Ici on commence a écrire les chunk seulement apres avoir écrit les info de la map, du joueur et de l'index
     off_t pos = sizeofIndex(chunkCount) + sizeofPlayerContext() + sizeofMapContext();
+    //ON sauvegarde dans l'index pour chaque chunk, la position ou il commence et ou il fini dans le fichier de sauvegarde
     for(int i = 0; i < chunkCount; i++) {
+
         index.chunkCoords[i] = malloc(sizeof(int) * 2);
         index.chunkCoords[i][0] = chunkBuffer[i].x;
         index.chunkCoords[i][1] = chunkBuffer[i].y;
@@ -316,7 +322,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         index.chunkFilePosition[i][1] = pos;
     }
 
-
+    //Info de la carte
     mapContext.centerY = 0;
     mapContext.centerX = 0;
     mapContext.width = 2;
@@ -324,7 +330,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     mapContext.maxX = max.x - min.x + 1;
     mapContext.maxY = max.y - min.y + 1;
 
-
+    //Sauvegarde de la map, du joueur et de l'index
     saveMapContext(fd, mapContext);
     savePlayerContext(fd, player);
     writeIndex(fd, index);

@@ -3,6 +3,7 @@
 #include "../../includes/raylib.h"
 #include "../board/board.h"
 #include "physics.h"
+
 void Tick();
 void handlePlayerShortcuts();
 void initGameController(player_t *, chunkedMap_t*, int);
@@ -14,4 +15,5 @@ int combatDetection();
 int canOpenFight();
 monster_t * openClosestFight();
 void fight();
+void saveAndQuit();
 #endif

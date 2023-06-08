@@ -5,6 +5,7 @@
 #include "board/board.h"
 #include "core/renderer.h"
 #include "core/gameController.h"
+#include "menu/mainMenu.h"
 
 
 int main(void)
@@ -15,8 +16,8 @@ int main(void)
     int loadMapFromSave = 0;
 
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
-    DisableCursor();                    // Limit cursor to relative movement inside the window
     initLogger();
+
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -29,20 +30,32 @@ int main(void)
 
     initRenderer(&player);
     initGameController(&player, &map, loadMapFromSave);
+    initMenu();
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!WindowShouldClose() && !getQuitGameAction())        // Detect window close button or ESC key
     {
-        BeginDrawing();
-        Tick();
-        Render(map);
-        //----------------------------------------------------------------------------------
+ 		BeginDrawing();
+
+
+        if(!getPlayGameAction()) {
+            ClearBackground(RAYWHITE);
+			renderMainMenu();
+			handleMenu();
+        }
+        else {
+            Render(map);
+            Tick();
+            DisableCursor();
+        }
         EndDrawing();
 
     }
-    //savePlayer();
+    saveAndQuit();
     endLogger();
+    destroyMenu();
+    destroyRenderer();
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
@@ -50,6 +63,3 @@ int main(void)
 
     return 0;
 }
-
-
-

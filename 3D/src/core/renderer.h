@@ -1,6 +1,3 @@
-//
-// Created by 20015007@hq.corp.leroymerlin.com on 15/05/23.
-//
 
 #include "../../includes/raylib.h"
 #include "../board/board.h"
@@ -8,24 +5,30 @@
 #define PROJECT_RENDERER_H
 #include "../board/entities.h"
 
+/**
+ * Dialog de combat
+ */
 typedef struct {
-    char text[200];
-    int choiceCount;
-    const char * choices[2];
-    KeyboardKey keys[2];
+    char text[200]; //Main text
+    int choiceCount; // Nombre d'actions possibles
+    const char * choices[2]; // Texte lié au choix
+    KeyboardKey keys[2]; // Touche lié au choix TODO
 }dialog_t;
 
+
+/**
+ * Options d'affichage
+ */
 typedef struct {
-    int drawCeiling;
-    int drawDebug;
-    int drawOverlay;
-    Vector3 movement;
-    Vector3 direction;
-    player_t * player;
-    int tileUnder;
-    int canOpenDoor;
-    int canOpenFight;
-    dialog_t dialog;
+    int drawCeiling; //Plafond (c)
+    int drawDebug; //Debug (f3)
+    int drawOverlay; //Overlay (f1)
+    Vector3 movement; // debug info (movement)
+    Vector3 direction; // debug info (direction)
+    player_t * player; // toutes les info du joueur en temps réel
+    int canOpenDoor; // Pour les indices d'ouverture de porte
+    int canOpenFight; // Pour les indice de début de combat
+    dialog_t dialog; // Dialog lié au combat
 }drawBundle_t;
 
 Texture2D getKeyTexture(KeyboardKey key);
@@ -55,5 +58,6 @@ void DrawPowerUp(powerUp_t, int, int);
 void DrawHealth(powerUp_t health, int x, int y);
 void DrawDoor(door_t, int, int);
 void DrawMonster(monster_t, int, int);
+void destroyRenderer();
 
 #endif
