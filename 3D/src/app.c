@@ -14,7 +14,7 @@ int main(void)
 
     int loadMapFromSave = 0;
 
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "raylib [core] example - 3d camera first person");
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
     DisableCursor();                    // Limit cursor to relative movement inside the window
     initLogger();
 
@@ -41,7 +41,7 @@ int main(void)
         EndDrawing();
 
     }
-    savePlayer();
+    //savePlayer();
     endLogger();
     // De-Initialization
     //--------------------------------------------------------------------------------------

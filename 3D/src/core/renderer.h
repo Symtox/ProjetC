@@ -49,7 +49,7 @@ drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
 
 int render3DText(const char * , Vector3 , float);
-void DrawKey(DoorKey_t);
+void DrawKey(DoorKey_t, int, int);
 void DrawPotion(potion_t, int ,int);
 void DrawPowerUp(powerUp_t, int, int);
 void DrawHealth(powerUp_t health, int x, int y);
