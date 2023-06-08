@@ -123,7 +123,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
 
     //fgetwc(file);
 
-    char line[30] = {0};
+    char * line = (char *) malloc( sizeof(char) * 100 );
 
     chunk->east = NULL;
     chunk->south = NULL;

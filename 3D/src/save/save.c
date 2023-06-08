@@ -48,7 +48,9 @@ off_t sizeofPlayerContext() {
 
 
 void readIndex(int fd, index_t * index) {
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     read(fd, &index->chunkCount, sizeof(int));
+    logFile(TextFormat("CHUNK COUNT : %d", index->chunkCount));
     index->chunkCoords = malloc(sizeof(int*) * index->chunkCount);
     index->chunkFilePosition = malloc(sizeof(off_t*) * index->chunkCount);
 
@@ -61,6 +63,7 @@ void readIndex(int fd, index_t * index) {
 }
 
 void writeIndex(int fd, index_t index) {
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     write(fd, &index.chunkCount, sizeof(int));
     for(int i = 0; i < index.chunkCount; i++) {
         write(fd, index.chunkFilePosition[i], sizeof(off_t) * 2);
