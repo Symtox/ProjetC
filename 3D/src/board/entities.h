@@ -20,8 +20,8 @@
 
 // Statistiques de base d'un monstre/joueur
 typedef struct {
-    int health;
-    int maxHealth;
+    float health;
+    float maxHealth;
     int armor;
     int damage;
 } statistics_t;

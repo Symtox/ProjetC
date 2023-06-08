@@ -6,6 +6,7 @@
 #include "core/renderer.h"
 #include "core/gameController.h"
 #include "menu/mainMenu.h"
+#include <time.h>
 
 
 int main(void)
@@ -17,7 +18,6 @@ int main(void)
 
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
     initLogger();
-
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -33,11 +33,9 @@ int main(void)
     initMenu();
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-
     while (!WindowShouldClose() && !getQuitGameAction())        // Detect window close button or ESC key
     {
  		BeginDrawing();
-
 
         if(!getPlayGameAction()) {
             ClearBackground(RAYWHITE);

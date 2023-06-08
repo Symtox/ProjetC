@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 
 /**
  * LEs méthodes suivante permettent de:
@@ -31,14 +32,7 @@ void readPlayerContext(int fd, player_t * player) {
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
     read(fd, &player->camera->target, sizeof(Vector3));    
-    logFile(TextFormat("READ : %d",read(fd, &player->camera->position, sizeof(Vector3))));
-    
-    logFile(TextFormat("TEST : %d", player->keyCount));
-    logFile(TextFormat("TEST : %d", player->statistics.armor));
-    logFile(TextFormat("TEST : %d", player->statistics.damage));
-    logFile(TextFormat("TEST : %f", player->camera->position.x));
-    logFile(TextFormat("TEST : %f", player->camera->position.y));    
-    logFile(TextFormat("TEST : %f", player->camera->position.z));
+    read(fd, &player->camera->position, sizeof(Vector3));
 }
 
 
@@ -50,7 +44,6 @@ off_t sizeofPlayerContext() {
 void readIndex(int fd, index_t * index) {
     lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     read(fd, &index->chunkCount, sizeof(int));
-    logFile(TextFormat("CHUNK COUNT : %d", index->chunkCount));
     index->chunkCoords = malloc(sizeof(int*) * index->chunkCount);
     index->chunkFilePosition = malloc(sizeof(off_t*) * index->chunkCount);
 
@@ -212,7 +205,7 @@ void savePowerUp(int fd, powerUp_t powerUp) {
     write(fd, &powerUp.position.y, sizeof(float));
     write(fd, &powerUp.position.z, sizeof(float));
     write(fd, &powerUp.pickedUp, sizeof(int));
-    write(fd, &powerUp.type, sizeof(int));
+    write(fd, &powerUp.type, sizeof(powerUpType_e));
 }
 
 void saveDoor(int fd, door_t door) {
@@ -231,10 +224,15 @@ void saveKey(int fd, DoorKey_t key) {
 
 
 void saveStatistics(int fd, statistics_t statistics) {
+    logFile(TextFormat("Writing before armor %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &statistics.armor, sizeof(int));
+    logFile(TextFormat("Writing before damage %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &statistics.damage, sizeof(int));
+    logFile(TextFormat("Writing before health %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &statistics.health, sizeof(int));
+    logFile(TextFormat("Writing before maxhealth %d %d", lseek(fd, 0, SEEK_CUR), statistics.health));
     write(fd, &statistics.maxHealth, sizeof(int));
+    logFile(TextFormat("Writing after stat %d", lseek(fd, 0, SEEK_CUR)));
 }
 
 void savePhysics(int fd, playerPhysics_t physics) {
@@ -258,10 +256,15 @@ void readPhysics(int fd, playerPhysics_t * physics) {
 }
 
 void readStatistics(int fd, statistics_t * statistics) {
+    logFile(TextFormat("Saving before armor %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &statistics->armor, sizeof(int));
+    logFile(TextFormat("Saving before damage %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &statistics->damage, sizeof(int));
+    logFile(TextFormat("Saving before heath %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &statistics->health, sizeof(int));
+    logFile(TextFormat("Saving before maxHealth %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &statistics->maxHealth, sizeof(int));
+    logFile(TextFormat("Saving after stat %d, health: %d", lseek(fd, 0, SEEK_CUR), statistics->maxHealth));
 }
 
 void readMapContext(int fd, chunkedMap_t * context) {
@@ -289,8 +292,10 @@ void saveMapContext(int fd, chunkedMap_t context) {
 }
 
 void writeChunkTXT(int fd, chunk_txt chunk) {
+    
+    logFile(TextFormat("SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &chunk.x, sizeof(int));
-    write(fd, &chunk.y, sizeof(int));
+    write(fd, &chunk.y, sizeof(int));    
 
     for(int i = 0; i < CHUNK_SIZE; i++) {
         for(int j = 0; j < MAX_Y; j++) {
@@ -298,30 +303,39 @@ void writeChunkTXT(int fd, chunk_txt chunk) {
         }
     }
 
+    
+    logFile(TextFormat("WRITE MONSTER SEEK : %d", lseek(fd, 0, SEEK_CUR)));
+    logFile(TextFormat("WRITE MONSTER COUNT : %d", chunk.monsterCount));
     write(fd, &chunk.monsterCount, sizeof(int));
     for(int i = 0; i < chunk.monsterCount; i++) {
+        logFile(TextFormat("SEEK BY MONSTER : %d", lseek(fd, 0, SEEK_CUR)));
         saveMonster(fd, chunk.monsters[i]);
     }
 
+    
+    logFile(TextFormat("WRITE POPO SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &chunk.potionCount, sizeof(int));
     for(int i = 0; i < chunk.potionCount; i++) {
         savePotion(fd, chunk.potions[i]);
     }
 
+    logFile(TextFormat("WRITE POWER SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &chunk.powerUpCount, sizeof(int));
     for(int i = 0; i < chunk.powerUpCount; i++) {
         savePowerUp(fd, chunk.powerUps[i]);
     }
 
+    logFile(TextFormat("WRITE DOOR SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &chunk.doorCount, sizeof(int));
     for(int i = 0; i < chunk.doorCount; i++) {
         saveDoor(fd, chunk.doors[i]);
     }
 
+    logFile(TextFormat("WRITE KEY SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     write(fd, &chunk.keyCount, sizeof(int));
     for(int i = 0; i < chunk.keyCount; i++) {
         saveKey(fd, chunk.keys[i]);
-    }
+    }    
 }
 
 void writeChunk(int fd, chunk_t chunk) {
@@ -364,7 +378,7 @@ void readMonster(int fd, monster_t * monster) {
     read(fd, &monster->position.x, sizeof(float));
     read(fd, &monster->position.y, sizeof(float));
     read(fd, &monster->position.z, sizeof(float));
-    read(fd, &monster->isDead, sizeof(float));
+    read(fd, &monster->isDead, sizeof(int));
     readStatistics(fd, &monster->statistics);
 }
 
@@ -380,7 +394,7 @@ void readPowerUp(int fd, powerUp_t * powerUp) {
     read(fd, &powerUp->position.y, sizeof(float));
     read(fd, &powerUp->position.z, sizeof(float));
     read(fd, &powerUp->pickedUp, sizeof(int));
-    read(fd, &powerUp->type, sizeof(int));
+    read(fd, &powerUp->type, sizeof(powerUpType_e));
 }
 
 void readDoor(int fd, door_t * door) {
@@ -398,6 +412,8 @@ void readKey(int fd, DoorKey_t * key) {
 }
 
 void readChunk(int fd, chunk_t * chunk) {
+
+    logFile(TextFormat("SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->x, sizeof(int));
     read(fd, &chunk->y, sizeof(int));
 
@@ -410,35 +426,47 @@ void readChunk(int fd, chunk_t * chunk) {
         }
     }
 
+    logFile(TextFormat("MONSTER SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->monsterCount, sizeof(int));
     chunk->monsters = malloc(sizeof(monster_t) * chunk->monsterCount);
     for(int i = 0; i < chunk->monsterCount; i++) {
+        logFile(TextFormat("READ BY MONSTER : %d", lseek(fd, 0, SEEK_CUR)));
         readMonster(fd, &chunk->monsters[i]);
     }
 
+    logFile(TextFormat("POPO SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->potionCount, sizeof(int));
     chunk->potions = malloc(sizeof(potion_t) * chunk->potionCount);
     for(int i = 0; i < chunk->potionCount; i++) {
         readPotion(fd, &chunk->potions[i]);
     }
 
+    logFile(TextFormat("UP SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->powerUpCount, sizeof(int));
     chunk->powerUps = malloc(sizeof(powerUp_t) * chunk->powerUpCount);
     for(int i = 0; i < chunk->powerUpCount; i++) {
         readPowerUp(fd, &chunk->powerUps[i]);
-    }
-
+    }  
+    
+    logFile(TextFormat("DOOR SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->doorCount, sizeof(int));
     chunk->doors = malloc(sizeof(door_t) * chunk->doorCount);
     for(int i = 0; i < chunk->doorCount; i++) {
         readDoor(fd, &chunk->doors[i]);
     }
 
+    logFile(TextFormat("KEY SEEK : %d", lseek(fd, 0, SEEK_CUR)));
     read(fd, &chunk->keyCount, sizeof(int));
     chunk->keys = malloc(sizeof(DoorKey_t) * chunk->keyCount);
     for(int i = 0; i < chunk->keyCount; i++) {
         readKey(fd, &chunk->keys[i]);
     }
+
+    logFile(TextFormat("KEY : %d", chunk->keyCount));
+    logFile(TextFormat("DOOR : %d", chunk->doorCount));
+    logFile(TextFormat("MONSTERS : %d", chunk->monsterCount));
+    logFile(TextFormat("POWER : %d", chunk->powerUpCount));
+    logFile(TextFormat("POTION : %d", chunk->potionCount));
 
 }
 

@@ -45,7 +45,7 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
         createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
     }
     loadMapContext(fd, map);
-    logFile(TextFormat("mapContext: %d %d %d %d", map->height, map->width, map->maxX, map->maxY));
+    //logFile(TextFormat("mapContext: %d %d %d %d", map->height, map->width, map->maxX, map->maxY));
     loadPlayerFromSave(fd, playerP);
     *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
 
@@ -353,7 +353,7 @@ void fight() {
                 monsterInFight->isDead = 1;
                 futureState = NO_FIGHT;
             } else {
-                sprintf(drawBundle.dialog.text, "You attacked the monster!\n Damage done: %d\n Monster health: %d", damageDone, monsterInFight->statistics.health);
+                sprintf(drawBundle.dialog.text, "You attacked the monster!\n Damage done: %d\n Monster health: %d", damageDone, (int)monsterInFight->statistics.health);
                 futureState = MONSTER_ATTACK;
             }
 
@@ -373,7 +373,7 @@ void fight() {
         case MONSTER_ATTACK:
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
-            sprintf(drawBundle.dialog.text, "The monster attacked you!\nDamage taken: %d\nYour health: %d", damageTaken, player->statistics.health);
+            sprintf(drawBundle.dialog.text, "The monster attacked you!\nDamage taken: %d\nYour health: %d", damageTaken, (int)player->statistics.health);
             drawBundle.dialog.keys[0] = KEY_SPACE;
             if(IsKeyPressed(KEY_SPACE)) {
                 fightState = FIGHT_CHOICE;
