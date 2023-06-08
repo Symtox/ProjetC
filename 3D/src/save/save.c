@@ -30,8 +30,15 @@ void readPlayerContext(int fd, player_t * player) {
     read(fd, &player->keyCount, sizeof(int));
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
-    read(fd, &player->camera->target, sizeof(Vector3));
-    read(fd, &player->camera->position, sizeof(Vector3));
+    read(fd, &player->camera->target, sizeof(Vector3));    
+    logFile(TextFormat("READ : %d",read(fd, &player->camera->position, sizeof(Vector3))));
+    
+    logFile(TextFormat("TEST : %d", player->keyCount));
+    logFile(TextFormat("TEST : %d", player->statistics.armor));
+    logFile(TextFormat("TEST : %d", player->statistics.damage));
+    logFile(TextFormat("TEST : %f", player->camera->position.x));
+    logFile(TextFormat("TEST : %f", player->camera->position.y));    
+    logFile(TextFormat("TEST : %f", player->camera->position.z));
 }
 
 

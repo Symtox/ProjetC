@@ -121,7 +121,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         fgetc(file);
     }
 
-    fgetwc(file);
+    //fgetwc(file);
 
     char line[30] = {0};
 
@@ -131,6 +131,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->north = NULL;
 
     while (fgets(line, 30, file) != NULL) {
+        logFile(TextFormat("LINE : %s", line));
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
         }
@@ -261,8 +262,19 @@ void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
  */
 void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     index_t index; // Structure de sauvegarde
-    player_t player = BASE_PLAYER; // Joueur avec stat de base
-    Camera camera = BASE_CAMERA;
+    //layer_t player = BASE_PLAYER; // Joueur avec stat de base
+    player_t player = {0}; // Joueur avec stat de base
+    player.statistics.health = 10;
+    player.statistics.maxHealth = 10;
+    player.statistics.damage = 2;
+    player.statistics.armor = 1;
+    player.physics.fallingSpeed = FALL_BASE_SPEED;
+    player.physics.jumpingSpeed = JUMP_BASE_SPEED;
+    //Camera camera = BASE_CAMERA;
+    Camera camera = {0};
+    camera.position = (Vector3){15.0f, 10.0f, 15.0f};
+    camera.fovy = 90.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
     player.camera = &camera;
 
     Vector2 min = {0,0}; //Coordonnées minimal d'un chunk (Afin de normaliser les chunk)
