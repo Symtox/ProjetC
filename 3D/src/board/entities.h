@@ -39,6 +39,7 @@ typedef struct {
     Camera * camera;
     int keyCount;
     playerPhysics_t physics;
+    bool inFight;
 }player_t;
 
 typedef struct {

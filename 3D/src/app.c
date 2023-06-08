@@ -11,12 +11,10 @@ int main(void)
 {
     chunkedMap_t map;
     player_t player = {0};
-    const int screenWidth = 1700;
-    const int screenHeight = 1080;
 
     int loadMapFromSave = 0;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "raylib [core] example - 3d camera first person");
     DisableCursor();                    // Limit cursor to relative movement inside the window
     initLogger();
 

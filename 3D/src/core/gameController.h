@@ -10,4 +10,8 @@ void pickUpItem();
 int canOpenDoor();
 void openClosestDoor();
 void savePlayer();
+int combatDetection();
+int canOpenFight();
+monster_t * openClosestFight();
+void fight();
 #endif

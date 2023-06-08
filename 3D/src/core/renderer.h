@@ -7,6 +7,14 @@
 #ifndef PROJECT_RENDERER_H
 #define PROJECT_RENDERER_H
 #include "../board/entities.h"
+
+typedef struct {
+    char text[200];
+    int choiceCount;
+    const char * choices[2];
+    KeyboardKey keys[2];
+}dialog_t;
+
 typedef struct {
     int drawCeiling;
     int drawDebug;
@@ -16,17 +24,21 @@ typedef struct {
     player_t * player;
     int tileUnder;
     int canOpenDoor;
+    int canOpenFight;
+    dialog_t dialog;
 }drawBundle_t;
 
-void initRenderer(player_t * player);
+Texture2D getKeyTexture(KeyboardKey key);
 
+void initRenderer(player_t * player);
+void DrawFightDialog();
 void DrawDoorHint();
 void DrawMap(chunkedMap_t);
 void DrawChunk(chunk_t);
 void DrawOverlay();
 void DrawDebug();
 void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
-
+void DrawFightHint();
 void Render(chunkedMap_t);
 
 void toggleDrawCeiling();

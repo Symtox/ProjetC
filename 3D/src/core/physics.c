@@ -7,29 +7,40 @@
 
 
 
-
+/**
+ * @brief gestion du mouvement du joueur
+ * On somme les vecteurs correspondant aux différentes forces et on vérifie ensuite les colisions
+ * @param player
+ * @param map
+ * @return
+ */
 int handlePlayerMovement(player_t * player, chunkedMap_t map) {
     drawBundle_t bundle = getDrawBundle();
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
-    Vector3 playerRotation = getPlayerOrientation();
+    Vector3 playerRotation = getPlayerOrientation(); // Camera rotation
 
-
-
-
-    playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs(player->physics.noclip));
-    playerMovement = Vector3Add(playerMovement, getFallMovement(player->camera->position, &player->physics, map));
+    // Gestion du saut
     playerMovement = Vector3Add(playerMovement, getJumpMovementFromInputs(&player->physics));
+    //Gestion du noclip
     playerMovement = Vector3Add(playerMovement, getNoclipMovement(&player->physics));
-
+    //Gestion du mouvement
+    playerMovement = Vector3Add(playerMovement, getMovementVectorFromInputs(player->physics.noclip));
+    //Gestion de la gravité
+    playerMovement = Vector3Add(playerMovement, getFallMovement(player->camera->position, &player->physics, map));
+    //Annulation du movement selon x et z si une collision est détectée
     correctMovementWithCollisions(&playerMovement, playerRotation, *player->camera, player->physics, map);
+
     bundle.movement = playerMovement;
     bundle.direction = playerRotation;
-    setDrawBundle(bundle);
+    setDrawBundle(bundle); // Mise à jour pour l'affichage de débug
+
+    // Mise à jour de la position de la caméra
     updateCameraCustom(player->camera, playerMovement, playerRotation);
 
     return 0;
 }
 
+//Gestion des mouvement verticaux pour le noclip
 Vector3 getNoclipMovement(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = {0.0f, 0.0f, 0.0f};
     if((IsKeyDown(KEY_SPACE) || (IsGamepadAvailable(0) && IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2))) && playerPhysics->noclip) {
@@ -65,6 +76,10 @@ Vector3 getMovementVectorFromInputs(bool noclip) {
     }
 }
 
+/**
+ * Retourne l'orientation calculé à partir de la souris ou du gamepad
+ * @return
+ */
 Vector3 getPlayerOrientation() {
     if(IsGamepadAvailable(0)) {
         return (Vector3){ GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * PLAYER_SENSITIVITY_GAMEPAD, GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * PLAYER_SENSITIVITY_GAMEPAD, 0.0f};
@@ -72,6 +87,12 @@ Vector3 getPlayerOrientation() {
     return (Vector3){GetMouseDelta().x * PLAYER_SENSITIVITY_MOUSE, GetMouseDelta().y * PLAYER_SENSITIVITY_MOUSE, 0.0f};
 }
 
+/**
+ * @brief Gestion du saut
+ * @param playerPhysics
+ * @param playerPhysics
+ * @return
+ */
 Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
     Vector3 playerMovement = (Vector3) {
             0.0f,                            // Movement: sideways
@@ -266,15 +287,6 @@ void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, C
 
 void updateCameraCustom(Camera * camera, Vector3 movement, Vector3 rotation) {
 
-    // Required values
-    // movement.x - Move forward/backward
-    // movement.y - Move right/left
-    // movement.z - Move up/down
-    // rotation.x - yaw
-    // rotation.y - pitch
-    // rotation.z - roll
-    // zoom - Move towards target
-
     bool lockView = true;
     bool rotateAroundTarget = false;
     bool rotateUp = false;
@@ -317,13 +329,16 @@ float getTileDistanceFromGround(int x, float y, int z, chunkedMap_t map) {
 int isTileFree(int x, int y, int z, chunkedMap_t map) {
     int chunkIndexX, chunkIndexY;
     bool isDoorFree = true;
-    if(x < 0 || z < 0 || x >= CHUNK_SIZE * MAP_CHUNK_WIDTH || z >= CHUNK_SIZE * MAP_CHUNK_HEIGHT || y < 0 || y >= MAX_Y) {
+    bool isMonsterFree = true;
+
+    if(x < 0 || z < 0 || x >= CHUNK_SIZE * map.maxX || z >= CHUNK_SIZE * map.maxY || y < 0 || y >= MAX_Y) {
         return 1;
     }
     toChunkCoords(&x, &z, &chunkIndexX, &chunkIndexY, map);
     if(chunkIndexX == -1 || chunkIndexY == -1) {
         return 1;
     }
+
     for(int i = 0; i < map.chunks[chunkIndexX][chunkIndexY].doorCount; i++) {
         if(map.chunks[chunkIndexX][chunkIndexY].doors[i].position.x == x
             && (
@@ -335,7 +350,23 @@ int isTileFree(int x, int y, int z, chunkedMap_t map) {
                 isDoorFree = false;
         }
     }
-    return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0 && isDoorFree;
+
+    for(int i = 0; i < map.chunks[chunkIndexX][chunkIndexY].monsterCount; i++) {
+        if(map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.x == x
+            && (
+                    map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.y+3 == y
+                    || map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.y + 1 == y
+                   || map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.y + 2 == y
+              )
+            && map.chunks[chunkIndexX][chunkIndexY].monsters[i].position.z == z) {
+
+                isMonsterFree = map.chunks[chunkIndexX][chunkIndexY].monsters[i].isDead;
+        }
+    }
+
+    return map.chunks[chunkIndexX][chunkIndexY].chunk[x][y][z] == 0
+        && isDoorFree
+        && isMonsterFree;
 }
 
 void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t map) {
@@ -345,6 +376,26 @@ void toChunkCoords(int * x, int * z, int * chunkX, int * chunkY, chunkedMap_t ma
     *chunkY = -1;
     *x = (int)(*x - playerChunkX * CHUNK_SIZE);
     *z = (int)(*z - playerChunkY * CHUNK_SIZE);
+
+
+    for(int i=0; i < map.width; i++) {
+        for (int j = 0; j < map.height; j++) {
+            if(map.chunks[i][j].x != -1 && map.chunks[i][j].y != -1 && map.chunks[i][j].x == playerChunkX && map.chunks[i][j].y == playerChunkY) {
+                *chunkX = i;
+                *chunkY = j;
+            }
+        }
+    }
+}
+
+
+void toChunkCoordsF(float * x, float * z, int * chunkX, int * chunkY, chunkedMap_t map) {
+    int playerChunkX = (int)((int)*x / CHUNK_SIZE);
+    int playerChunkY = (int)((int)*z / CHUNK_SIZE);
+    *chunkX = -1;
+    *chunkY = -1;
+    *x = *x - playerChunkX * CHUNK_SIZE;
+    *z = *z - playerChunkY * CHUNK_SIZE;
 
 
     for(int i=0; i < map.width; i++) {
