@@ -12,27 +12,23 @@
 ssize_t getLineFromText(char **lineptr, FILE *stream) {
     wchar_t buf[100] = {0};
     int length = 0;
-    int c = 0;
+    int c = 1;
 
     while(c != '\n' && c != EOF) {
-        c = fgetwc(stream);
+        c = fgetc(stream);
         buf[length] = c;
-        (length) += 1;
+        length += 1;
     }
     buf[length] = '\0';
     *lineptr = malloc(sizeof(char) * length);
-
     for(int i=0; i < length; i++) {
         (*lineptr)[i] = (char)buf[i];
-    }
-    for(int j = 0; j < length; j++) {
-        logFile(TextFormat("%d", (*lineptr)[j]));
     }
     return c == EOF ? -1 : length;
 }
 
 char * substr(char *src, int pos) {
-    if(pos > strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
+    if(pos >= strlen(src) || pos < 0 || src == NULL || src[pos] == '\0' || src[pos] == '\n' || src[pos] == '\r') {
         return NULL;
     }
     char *dest = malloc(sizeof(char) * (strlen(src) - pos + 1));
@@ -50,7 +46,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     FILE *file;
 
     setlocale(LC_ALL, "");
-
+    logFile(TextFormat("Loading chunk from %s", path));
     chunk->monsterCount = 0;
     chunk->doorCount = 0;
     chunk->keyCount = 0;
@@ -80,8 +76,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
 
     for(int i = CHUNK_SIZE - 1; i >= 0; i--) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
-            wchar_t currChar = fgetwc(file);
-            logFile(TextFormat("%lc %d", currChar, (int)currChar));
+            char currChar = fgetc(file);
             switch (currChar) {
                 case '#':
                     for (int k = 0; k < WALL_HEIGHT; k++) {
@@ -89,7 +84,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     }
                     break;
 
-                case 167:
+                case -62:
+                    fseek(file, 1, SEEK_CUR);
                     potion[chunk->powerUpCount].pickedUp = 0;
                     potion[chunk->powerUpCount].position = (Vector3) {i, 0, j};
                     chunk->potionCount++;
@@ -125,14 +121,14 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                 chunk->monsterCount++;
             }
         }
-        logFile(TextFormat("End line: %d", fgetwc(file)));
-        logFile(TextFormat("End line: %d", fgetwc(file)));
+        fgetc(file);
         fpos_t pos;
         fgetpos(file, &pos);
-        logFile(TextFormat("Pos: %d", pos.__pos));
     }
 
-    char * line = NULL;
+    fgetwc(file);
+
+    char line[30] = {0};
     size_t len = 0;
 
     chunk->east = NULL;
@@ -140,8 +136,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->west = NULL;
     chunk->north = NULL;
 
-    while (getLineFromText(&line, file) != -1) {
-
+    while (fgets(line, 30, file) != NULL) {
+        logFile(TextFormat("line: %s", line));
         if (strstr(line,"Est")!= NULL) {
             chunk->east = substr(line, 6);
         }
@@ -156,20 +152,16 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         }
         else if(line[0] >= 'A' && line[0] <= 'Z') {
             statistics_t stats;
-            char * monsterLine = NULL;
+            char monsterLine[30] = {0};
 
-            getLineFromText(&monsterLine, file);
+            fgets(monsterLine, 30, file);
             stats.health = atoi(substr(monsterLine,5));
             stats.maxHealth = stats.health;
-            free(monsterLine);
 
-            monsterLine = NULL;
-            getLineFromText(&monsterLine, file);
+            fgets(monsterLine, 30, file);
             stats.damage = atoi(substr(monsterLine,8));
-            free(monsterLine);
 
-            monsterLine = NULL;
-            getLineFromText(&monsterLine, file);
+            fgets(monsterLine, 30, file);
             stats.armor = atoi(substr(monsterLine,9));
 
             for(int i = 0; i < chunk->monsterCount; i++) {
@@ -177,8 +169,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     monsters[i].statistics = stats;
                 }
             }
-            free(line);
-            line = NULL;
         }
     }
 
@@ -247,9 +237,11 @@ int isChunkInBuffer(int x, int y) {
 void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
     int currentChunkNo = chunkCount;
     if(isChunkInBuffer(x, y) || filename == NULL) {
+        logFile(TextFormat("chunk already loaded: %s", filename));
         return;
     }
     char * fullPath = concatPath(path, filename);
+    logFile(TextFormat("Loading chunk: %s", fullPath));
     loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath);
 
     chunkBuffer[currentChunkNo].x = x;
@@ -257,9 +249,14 @@ void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
     chunkCount++;
 
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
+    logFile(TextFormat("chunk est loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
+    logFile(TextFormat("chunk south loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
+    logFile(TextFormat("chunk west loaded: %s", fullPath));
     createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
+    logFile(TextFormat("chunk north loaded: %s", fullPath));
+
     free(fullPath);
 }
 
@@ -322,8 +319,8 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
 
     mapContext.centerY = 0;
     mapContext.centerX = 0;
-    mapContext.width = 3;
-    mapContext.height = 3;
+    mapContext.width = 2;
+    mapContext.height = 2;
     mapContext.maxX = max.x - min.x + 1;
     mapContext.maxY = max.y - min.y + 1;
 

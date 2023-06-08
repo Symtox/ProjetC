@@ -131,7 +131,7 @@ void DrawChunk(chunk_t chunk) {
         DrawPotion(chunk.potions[i],chunk.x,chunk.y);
     }
     for(int i = 0; i < chunk.keyCount; i++) {
-        DrawKey(chunk.keys[i]);
+        DrawKey(chunk.keys[i], chunk.x, chunk.y);
     }
     for(int i = 0; i < chunk.monsterCount; i++) {
         DrawMonster(chunk.monsters[i], chunk.x, chunk.y);
@@ -677,12 +677,14 @@ void DrawPowerUp(powerUp_t powerUp,int x, int y) {
     }
 }
 
-void DrawKey(DoorKey_t key) {
+void DrawKey(DoorKey_t key, int x, int y) {
     if(key.pickedUp) {
         return;
     }
     key.position.y++;
-    logFile(TextFormat("Key position: %f, %f, %f\n", key.position.x, key.position.y, key.position.z));
+    key.position.z += y * CHUNK_SIZE;
+    key.position.x += x * CHUNK_SIZE;
+
     keyModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, fmodf((float)GetTime() * 50, 360) * DEG2RAD, 50.0f * DEG2RAD });
     DrawModel(keyModel, key.position, 0.10f, GOLD);
 }
