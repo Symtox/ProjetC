@@ -6,7 +6,7 @@
 #      ABCABCABCBABCBACBA    #
 #      A                C    #
 #      C                B    #
-#      B         $      A    #
+#      B                A    #
 #      B                B    #
 #      A                A    #
 #      A                A    #
@@ -23,15 +23,15 @@
 #                     33     #
 #                      231   #
 #                            #
-#                            #
+#                            ?
+#                            ?
 #                            #
 #                            #
 ##############################
-
-Est : 
+Est :
 Sud :
 Ouest :
-Nord : niveau8.level
+Nord : niveau1.level
 
 A
 Pv : 5
