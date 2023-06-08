@@ -4,7 +4,7 @@
 void initMenu();
 void destroyMenu();
 
-void renderMainMenu();
+void renderMenu();
 void handleMenu();
 
 bool getQuitGameAction();

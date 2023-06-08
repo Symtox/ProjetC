@@ -41,13 +41,12 @@ int main(void)
 
         if(!getPlayGameAction()) {
             ClearBackground(RAYWHITE);
-			renderMainMenu();
+			renderMenu();
 			handleMenu();
         }
         else {
             Render(map);
             Tick();
-            DisableCursor();
         }
         EndDrawing();
 
