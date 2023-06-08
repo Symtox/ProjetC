@@ -34,16 +34,16 @@ Ouest :
 Nord : niveau5.level
 
 A
-Pv : 5
-Force : 1
-Armure : 1
+Pv : 6
+Force : 2
+Armure : 2
 
 B
-Pv : 8
-Force : 2
-Armure : 3
+Pv : 9
+Force : 3
+Armure : 4
 
 C
-Pv : 12
+Pv : 14
 Force : 5
-Armure : 5
+Armure : 6

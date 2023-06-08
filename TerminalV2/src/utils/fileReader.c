@@ -7,6 +7,7 @@
 #include <locale.h>
 #include "../entities/entities.h"
 
+// Variable globale qui compte le nombre de maps différentes générées
 int nbRoomGenerated = 0;
 
 int isMonsterClassFound(char * monsters, char monster, int nbClassFound) {
@@ -19,7 +20,7 @@ int isMonsterClassFound(char * monsters, char monster, int nbClassFound) {
 }
 
 
-map_t readTXT(char * path){
+map_t readMap(char * path){
     FILE *file;
     map_t map = {0};
     wint_t caractere;
@@ -49,6 +50,7 @@ map_t readTXT(char * path){
                 map.monsterCount++;
             }
 
+            // Gestion du caractère spécial §
             if(caractere == 194){
                 map.table[i][j] = '$';
                 fgetwc(file);
@@ -84,35 +86,20 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters, int isFirstInit) {
     FILE *file;
     if(isFirstInit) nbRoomGenerated = 0;
 
-    char * path =(char*) malloc((strlen(fileName) + 1 + strlen("./bin/levels/"))*sizeof(char)); // +1 for the null-terminator
+    char * path =(char*) malloc((strlen(fileName) + 1 + strlen("./bin/levels/"))*sizeof(char)); // +1 pour le caractère de fin de chaine
     strcpy(path, "./bin/levels/");
     strcat(path, fileName);
     
-    map_t map = readTXT(path);
+    map_t map = readMap(path);
     map.name = fileName;
 
-    int cptRoom = -1;
-    for(int i=0;i<nbRoomGenerated;i++){
-        if(tabMonsters[i]->levelName == fileName){
-            cptRoom = i;
-            break;
-        }
-    }
+    // Allocation de la mémoire pour le tableau de monstres
+    tabMonsters[nbRoomGenerated] = (tabMonsters_t *)malloc(sizeof(tabMonsters_t));
+    tabMonsters[nbRoomGenerated]->levelName = fileName;
+    map.generatedNumber = nbRoomGenerated;
 
-    
-    printf("after cptRoom\n");
-    fflush(stdout);
-
-    if(cptRoom == -1){
-        cptRoom = nbRoomGenerated;
-        tabMonsters[cptRoom] = (tabMonsters_t *)malloc(sizeof(tabMonsters_t));
-        tabMonsters[cptRoom]->levelName = fileName;
-        map.generatedNumber = nbRoomGenerated;
-        nbRoomGenerated++;
-    }
-
-    tabMonsters[cptRoom]->nbMonsters = map.monsterCount;
-    tabMonsters[cptRoom]->monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
+    tabMonsters[nbRoomGenerated]->nbMonsters = map.monsterCount;
+    tabMonsters[nbRoomGenerated]->monsters = (monster_t*)malloc(sizeof(monster_t) * map.monsterCount);
     map.monsterClass = (monsterClass_t *)malloc(sizeof(monsterClass_t)*map.monsterClassCount);
 
     file = fopen(path, "r");
@@ -123,6 +110,7 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters, int isFirstInit) {
     char * line = NULL;
     size_t len = 0;
     int cptMonsterClass = 0;
+    // Lecture du fichier des niveaux adjacents et des classes de monstre
     while (getline(&line, &len, file) != -1) {
 
         if (strstr(line,"Est")!= NULL) {
@@ -164,24 +152,27 @@ map_t initMap(char * fileName, tabMonsters_t ** tabMonsters, int isFirstInit) {
     fclose(file);
 
     int monsterIndex = 0;
+    // Génération des monstres et de leurs caractéristiques en fonction de leur classe
     for(int i=0;i<MAX_SIZE;i++){
         for(int j=0;j<MAX_SIZE;j++){
             if(map.table[i][j] >= 'A' && map.table[i][j] <= 'Z') {
                 for(int cpt=0;cpt<map.monsterClassCount;cpt++){
                     if(map.monsterClass[cpt].name == map.table[i][j]){
-                        tabMonsters[cptRoom]->monsters[monsterIndex].name    = 'A'+monsterIndex;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].max_hp  = map.monsterClass[cpt].max_hp;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].hp      = map.monsterClass[cpt].max_hp;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].attack  = map.monsterClass[cpt].attack;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].defense = map.monsterClass[cpt].defense;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].pos.x   = i;
-                        tabMonsters[cptRoom]->monsters[monsterIndex].pos.y   = j;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].name    = 'A'+monsterIndex;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].max_hp  = map.monsterClass[cpt].max_hp;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].hp      = map.monsterClass[cpt].max_hp;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].attack  = map.monsterClass[cpt].attack;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].defense = map.monsterClass[cpt].defense;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].pos.x   = i;
+                        tabMonsters[nbRoomGenerated]->monsters[monsterIndex].pos.y   = j;
                         monsterIndex++;
                     }
                 }
             }
         }
     }
+
+    nbRoomGenerated++;
     
     return map;
 }

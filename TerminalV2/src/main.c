@@ -10,7 +10,7 @@
 #include <locale.h>
 
 void credits(){
-    system("cls");
+    system("CLS");
     printf("Credits de Maze Slayer CLI\n\n");
     printf("Developpeurs :\n");
     printf("\t- Clement MABILE\n");
@@ -73,6 +73,7 @@ void printMap(map_t * map, player_t * player){
             else
                 printItemColor(map->table[i][j]);
             
+            /*Affichage des stats du joueur*/
             if (i == 1 && j == MAX_SIZE-1) {
                 color(12,0);
                 printf(" HP ");
@@ -98,6 +99,7 @@ void printMap(map_t * map, player_t * player){
                 printf(": %d", player->nbKey);
             }
 
+            /*Affichage des classes de monstre*/
             if(map->monsterClassCount > 0)
             {
                 if (i == 8 && j == MAX_SIZE-1) {
@@ -152,17 +154,22 @@ void printMap(map_t * map, player_t * player){
 
 void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_t * tabMaps){
     char move;
+    // Boucle de jeu
     while(1){
         move = _getch();
+        // ->
         if(move == 77){
             movements(map, player, tabMonsters, 0, 1, tabMaps);
         }
+        // <-
         else if(move == 75){
             movements(map, player, tabMonsters, 0, -1, tabMaps);
         }
+        // ^
         else if(move == 72){
             movements(map, player, tabMonsters, -1, 0, tabMaps);
         }
+        // v
         else if(move == 80){
             movements(map, player, tabMonsters, 1, 0, tabMaps);
         }
@@ -187,18 +194,7 @@ void play(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, tabMaps_
     return;
 }
 
-void startNewGame(){
-    player_t player = {10, 10, 1, 2, 0, {14, 14}};
-    tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
-    tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
-    tabMaps->maps = (map_t *)malloc(sizeof(map_t)*MAX_ROOMS);
-    map_t map = initMap("niveau1.level", tabMonsters, 1);
-    tabMaps->maps[0] = map;
-    tabMaps->nbMaps = 1;
-    system("CLS");
-    printMap(&map, &player);
-    play(&map, &player, tabMonsters, tabMaps);
-
+void endGame(tabMaps_t * tabMaps, tabMonsters_t ** tabMonsters){
     for(int i=0;i<tabMaps->nbMaps;i++){
         free(tabMonsters[i]->monsters);
     }
@@ -207,8 +203,30 @@ void startNewGame(){
         free(tabMaps->maps[i].monsterClass);
         free(tabMaps->maps[i].table);
     }
+
     free(tabMaps->maps);
     free(tabMaps);
+
+    return;
+}
+
+void startNewGame(){
+    /*Initialisation du jeu (joueur, map, monstres)*/
+    player_t player = {10, 10, 1, 2, 0, {14, 14}};
+    tabMonsters_t ** tabMonsters = (tabMonsters_t **)malloc(sizeof(tabMonsters_t *) * MAX_ROOMS);
+    tabMaps_t * tabMaps = (tabMaps_t *)malloc(sizeof(tabMaps_t)*MAX_ROOMS);
+    tabMaps->maps = (map_t *)malloc(sizeof(map_t)*MAX_ROOMS);
+    map_t map = initMap("niveau1.level", tabMonsters, 1);
+    tabMaps->maps[0] = map;
+    tabMaps->nbMaps = 1;
+
+    /*Début du jeu*/
+    system("CLS");
+    printMap(&map, &player);
+    play(&map, &player, tabMonsters, tabMaps);
+
+    endGame(tabMaps, tabMonsters);
+
     return;
 }
 

@@ -10,6 +10,9 @@ void moveOnPotion(player_t * player, int x, int y);
 /*Déplacement du joueur sur un powerup*/
 void moveOnPowerUp(player_t * player, int x, int y, int power);
 
+/*Gestion des actions après un combat*/
+void actionAfterFight(player_t * player, int x, int y, int fightResult);
+
 /*Gestion du changement de salle*/
 void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, position_t pos, tabMaps_t * tabMaps);
 

@@ -4,20 +4,8 @@
 #include <string.h>
 #include "moves.h"
 #include "../utils/fileReader.h"
-
-map_t copyMap(map_t * map){
-    map_t newMap;
-    newMap.name = map->name;
-    newMap.monsterCount = map->monsterCount;
-    newMap.monsterClassCount = map->monsterClassCount;
-    newMap.monsterClass = map->monsterClass;
-    newMap.east = map->east;
-    newMap.west = map->west;
-    newMap.north = map->north;
-    newMap.south = map->south;
-    newMap.generatedNumber = map->generatedNumber;
-    return newMap;
-}
+#include "../main.h"
+#include "../utils/sleep.h"
 
 void moveOnKey(player_t * player, int x, int y){
     player->nbKey += 1;
@@ -68,9 +56,14 @@ void actionAfterFight(player_t * player, int x, int y, int fightResult){
     }
     else if (fightResult == PLAYER_DIE){
         printf("+-------------------------+\n");
-        printf("|        GAME OVER        |\n");
+        printf("|        ");
+        color(12,0);
+        printf("GAME OVER");
+        color(15,0);
+        printf("        |\n");
         printf("+-------------------------+\n");
-        exit(0);
+
+        wait(5000);
     }
     else{
         printf("Vous avez fui\n");
@@ -81,13 +74,14 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
     int isAlreadyGenerated = 0;
     char * mapToGenerate = (char *)malloc(sizeof(char)*50);
 
+    // Selon la position du joueur on va charger la map correspondante
     if(pos.y == MAX_SIZE-1 || pos.y == 0) 
         pos.y > 0 ? strcpy(mapToGenerate, map->east) : strcpy(mapToGenerate, map->west);
     else 
         pos.x > 0 ? strcpy(mapToGenerate, map->south) : strcpy(mapToGenerate, map->north);
     
     int cpt=0;
-
+    // On regarde si la map a déjà été générée
     while(cpt<tabMaps->nbMaps){
         if (strcmp(tabMaps->maps[cpt].name, mapToGenerate) == 0){
             isAlreadyGenerated = 1;
@@ -96,8 +90,10 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
         cpt++;
     }
 
+    // On enregistre la map actuel dans notre taleau des maps déjà générées
     tabMaps->maps[map->generatedNumber] = *map;
     
+    // Si on a déjà généré la map on la récupère sinon on la génère
     if(isAlreadyGenerated){
         *map = tabMaps->maps[cpt];
     }
@@ -107,6 +103,7 @@ void changeRoom(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, po
         tabMaps->nbMaps++;
     }
     
+    // On change la position du joueur en fonction de la porte par laquelle il est passé
     if(pos.y == MAX_SIZE-1){
         player->pos.y=1;
     }
@@ -157,16 +154,26 @@ void movements(map_t * map, player_t * player, tabMonsters_t ** tabMonsters, int
         case 'A':
             fightResult = startCombat(player, tabMonsters, newPos, map->generatedNumber);
             actionAfterFight(player, newPos.x, newPos.y, fightResult);
+            if(fightResult == PLAYER_DIE){
+                endGame(tabMaps, tabMonsters);
+                startMenu();
+            }
             break;
         case 'B':
             fightResult = startCombat(player, tabMonsters, newPos, map->generatedNumber);
             actionAfterFight(player, newPos.x, newPos.y, fightResult);
+            if(fightResult == PLAYER_DIE){
+                endGame(tabMaps, tabMonsters);
+                startMenu();
+            }
             break;
         case 'C':
             fightResult = startCombat(player, tabMonsters, newPos, map->generatedNumber);
             actionAfterFight(player, newPos.x, newPos.y, fightResult);
-            break;
-        case '>' || '<' || '^' || 'v':
+            if(fightResult == PLAYER_DIE){
+                endGame(tabMaps, tabMonsters);
+                startMenu();
+            }
             break;
         default:
             break;
