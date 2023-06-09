@@ -17,7 +17,7 @@
     #define WALL_HEIGHT 5
     #define MAX_CHUNK_COUNT 100
     #define ACTION_DETECTION_DISTANCE 3.0f
-    #define PICKUP_DETECTION_DISTANCE 2.0f
+    #define PICKUP_DETECTION_DISTANCE 2.5f
     #define WINDOW_WIDTH 1600
     #define WINDOW_HEIGHT 1000
 #endif

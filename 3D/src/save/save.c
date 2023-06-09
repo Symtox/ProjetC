@@ -125,9 +125,8 @@ chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int ma
 
     int ltcx = MAX2(x - width / 2, 0);
     int ltcy = MAX2(y - height / 2, 0);
-
-    ltcy = MIN2(ltcy, 0);
-    ltcx = MIN2(ltcx, 0);
+    ltcy = MIN2(ltcy, mapHeight - height);
+    ltcx = MIN2(ltcx, mapWidth - width);
 
     map.centerX = x;
     map.centerY = y;
@@ -354,7 +353,7 @@ void readMonster(int fd, monster_t * monster) {
     read(fd, &monster->position.x, sizeof(float));
     read(fd, &monster->position.y, sizeof(float));
     read(fd, &monster->position.z, sizeof(float));
-    read(fd, &monster->isDead, sizeof(float));
+    read(fd, &monster->isDead, sizeof(int));
     readStatistics(fd, &monster->statistics);
 }
 

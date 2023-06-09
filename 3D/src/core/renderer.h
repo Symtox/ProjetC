@@ -34,6 +34,7 @@ typedef struct {
 Texture2D getKeyTexture(KeyboardKey key);
 
 void initRenderer(player_t * player);
+void DrawEndScreen();
 void DrawFightDialog();
 void DrawDoorHint();
 void DrawMap(chunkedMap_t);

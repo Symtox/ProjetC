@@ -35,7 +35,7 @@ char * substr(char *src, int pos) {
  * @param chunk
  * @param path
  */
-void loadChunkFromTXT(chunk_txt * chunk, char* path) {
+void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, int y) {
     FILE *file;
 
     setlocale(LC_ALL, "");
@@ -45,6 +45,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
     chunk->keyCount = 0;
     chunk->powerUpCount = 0;
     chunk->potionCount = 0;
+    chunk->x = x;
+    chunk->y = y;
 
     //Allocation du chunk
     chunk->chunk = malloc(sizeof(int**) * CHUNK_SIZE);
@@ -97,6 +99,10 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
                     doors[chunk->doorCount].position = (Vector3) {i, 0, j};
                     chunk->doorCount++;
                     break;
+                case '+':
+                    player->camera->position = (Vector3) {i, 0, j};
+                    player->chunkX = x;
+                    player->chunkY = y;
                 case '!':
                     keys[chunk->keyCount].pickedUp = 0;
                     keys[chunk->keyCount].position = (Vector3){i, 0.0f, j};
@@ -121,7 +127,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path) {
         fgetc(file);
     }
 
-    fgetwc(file);
+    //fgetwc(file);
 
     char line[30] = {0};
 
@@ -230,25 +236,23 @@ int isChunkInBuffer(int x, int y) {
 /**
  * Charge TOUT les chunk accessible depuis un certain chunk, donc en théorie la map entière (Voir createSaveFromLevelFiles)
  */
-void createSaveFromLevelFilesR(char * path, char * filename, int x, int y) {
+void createSaveFromLevelFilesR(char * path, char * filename, player_t * player, int x, int y) {
     int currentChunkNo = chunkCount; // On stock le numéro de chunk courant (Obligatoire car la valeur globale peut changer a cause des appel réccursif)
     if(isChunkInBuffer(x, y) || filename == NULL) { // Si aucun chunk ou chunk déjà load
         logFile(TextFormat("chunk already loaded: %s", filename));
         return;
     }
     char * fullPath = concatPath(path, filename);
-    loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath); // Chargement du chunk
+    loadChunkFromTXT(&chunkBuffer[currentChunkNo], fullPath, player, x, y); // Chargement du chunk
 
     //On ajoute le chunk au tableau global
-    chunkBuffer[currentChunkNo].x = x;
-    chunkBuffer[currentChunkNo].y = y;
     chunkCount++;
 
     //Appels réccursif pour charger les chunk adjacent
-    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, x, y+1);
-    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, x-1, y);
-    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, x, y-1);
-    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, x+1, y);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].east, player, x, y+1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].south, player, x-1, y);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].west, player, x, y-1);
+    createSaveFromLevelFilesR(path, chunkBuffer[currentChunkNo].north, player, x+1, y);
 
     free(fullPath); // Warning par mon IDE mais le free semble correct
 }
@@ -272,7 +276,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     chunkedMap_t mapContext = {0};
 
     //Chargement de la map
-    createSaveFromLevelFilesR(path, filename, 0, 0);
+    createSaveFromLevelFilesR(path, filename, &player, 0, 0);
 
     //Calcul des coord min et max
     for(int i = 0; i < chunkCount; i++) {
@@ -295,6 +299,10 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
         chunkBuffer[i].x -= min.x;
         chunkBuffer[i].y -= min.y;
     }
+    player.chunkX -= min.x;
+    player.chunkY -= min.y;
+    player.camera->position.x += player.chunkX * CHUNK_SIZE;
+    player.camera->position.z += player.chunkY * CHUNK_SIZE;
 
     if(fd == -1) {
         perror("open");

@@ -4,14 +4,14 @@
 #include "../utils/const.h"
 // Macro permettant de définir les valeurs par défaut d'un joueur
 #define BASE_PLAYER { \
-    {8, 10, 8, 5}, \
+    {3, 10, 3, 3}, \
     0, \
     0,         \
     {0, 0, 0, 0, FALL_BASE_SPEED, JUMP_BASE_SPEED, 0} \
 }
 
 #define BASE_CAMERA { \
-    {15.0f, 10.0f, 15.0f}, \
+    {-1.0f, 10.0f, -1.0f}, \
     {0.0f, 0.0f, 0.0f}, \
     {0.0f, 1.0f, 0.0f}, \
     0.0f, \
@@ -43,6 +43,7 @@ typedef struct {
     int keyCount;
     playerPhysics_t physics;
     bool inFight;
+    int chunkX, chunkY;
 }player_t;
 
 typedef struct {

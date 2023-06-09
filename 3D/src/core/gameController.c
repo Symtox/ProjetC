@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 int controlsToggles[4] = {0, 0, 0, 0};
 
 typedef enum controls {
@@ -37,15 +39,32 @@ void pickUpItem();
  * @param mapPtr: pointeur vers la map
  * @param save: 1 si on veut jouer depuis une sauvegarde existante, 0 sinon
  */
-void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
-    int flags = save ? O_RDWR | O_CREAT: O_RDWR | O_CREAT | O_TRUNC;
-    map = mapPtr;
-    fd = open("bin/saves/caca", flags, 0666);
-    if(!save) {
-        createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
+void initGameController(player_t * playerP, chunkedMap_t * mapPtr, char * savePath) {
+    if(isLoaded) {
+        return;
     }
+    DisableCursor();
+    srand(time(NULL));
+    printf("savePath: %s\n", savePath);
+    if(savePath == NULL) {
+        char * fullPath = malloc(sizeof(char) * 100);
+        char * saveName = malloc(sizeof(char) * 100);
+        sprintf(saveName, "save%d.bin", rand() % 1000);
+        strcpy(fullPath, "./bin/saves/");
+        strcat(fullPath, saveName);
+        fd = open(fullPath, O_RDWR | O_CREAT | O_TRUNC, 0666);
+        createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
+        free(fullPath);
+        free(saveName);
+        free(savePath);
+    } else {
+        char * fullPath = malloc(sizeof(char) * 100);
+        strcpy(fullPath, "./bin/saves/");
+        strcat(fullPath, savePath);
+        fd = open(fullPath, O_RDWR, 0666);
+    }
+    map = mapPtr;
     loadMapContext(fd, map);
-    logFile(TextFormat("mapContext: %d %d %d %d", map->height, map->width, map->maxX, map->maxY));
     loadPlayerFromSave(fd, playerP);
     *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
 
@@ -59,7 +78,14 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
  * Sinon Appelle les fonctions de gestion du joueur et de la map
  */
 void Tick() {
-    if(player->inFight) {
+    if(player->statistics.health <= 0) {
+        drawBundle_t bundle = getDrawBundle();
+        bundle.canOpenFight = 0;
+        bundle.canOpenDoor = 0;
+        bundle.player->inFight = 0;
+        setDrawBundle(bundle);
+        return;
+    } else if(player->inFight) {
         fight();
     } else {
         handlePlayerMovement(player, *map);
@@ -134,6 +160,13 @@ void handlePlayerShortcuts() {
     drawBundle_t drawBundle = getDrawBundle(); // On recupere les informations de dessin afin de les mettre à jour
     if(player->inFight) {
         return;
+    }
+
+    if(IsKeyPressed(KEY_P)) {
+        player->statistics.health = 1000;
+        player->statistics.maxHealth = 1000;
+        player->statistics.damage = 1000;
+        player->statistics.armor = 1000;
     }
 
     if(IsKeyDown(KEY_F) && !controlsToggles[FREE_WALK]) {

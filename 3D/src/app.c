@@ -13,8 +13,6 @@ int main(void)
     chunkedMap_t map;
     player_t player = {0};
 
-    int loadMapFromSave = 0;
-
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
     initLogger();
 
@@ -28,8 +26,6 @@ int main(void)
 
     player.camera = &camera;
 
-    initRenderer(&player);
-    initGameController(&player, &map, loadMapFromSave);
     initMenu();
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -45,6 +41,8 @@ int main(void)
 			handleMenu();
         }
         else {
+            initGameController(&player, &map, getSaveName());
+            initRenderer(&player);
             Render(map);
             Tick();
         }

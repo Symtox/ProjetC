@@ -9,7 +9,8 @@ void handleMenu();
 
 bool getQuitGameAction();
 bool getPlayGameAction();
-
+char * getSaveName();
+void getAllSaves();
 
 typedef enum {
 	MAIN_MENU_VIEW,

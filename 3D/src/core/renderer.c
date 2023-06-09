@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
 #include "../../includes/rlgl.h"
+#include "../utils/utils.h"
 #define DEBUG_INFO_LINE_COUNT 5
 
 drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
@@ -34,40 +35,45 @@ Texture2D doorDownTexture;
 Texture2D swordTexture;
 Texture2D armorTexture;
 Texture2D fightDialogBackground;
+Texture2D endScreenTexture;
 
 /**
  * Charge les models
  * @param player
  */
 void initRenderer(player_t * player) {
+    if(isRendererLoaded) {
+        return;
+    }
     drawBundle.player = player;
     isRendererLoaded = 1;
-    powerUpAttackModel = LoadModel("./assets/sword.obj");
-    powerUpShieldModel = LoadModel("./assets/shield.obj");
-    powerUpHealthModel = LoadModel("./assets/love_heart.glTF");
-    monsterModel = LoadModel("./assets/monster2.glTF");
-    keyModel = LoadModel("./assets/key.obj");
-    doorModel = LoadModel("./assets/door.obj");
-    potionModel = LoadModel("./assets/potion1.obj");
+    powerUpAttackModel = LoadModel("./assets/Models/sword.obj");
+    powerUpShieldModel = LoadModel("./assets/Models/shield.obj");
+    powerUpHealthModel = LoadModel("./assets/Models/love_heart.glTF");
+    monsterModel = LoadModel("./assets/Models/monster2.glTF");
+    keyModel = LoadModel("./assets/Models/key.obj");
+    doorModel = LoadModel("./assets/Models/door.obj");
+    potionModel = LoadModel("./assets/Models/potion1.obj");
 
-    heartFullTexture = LoadTexture("./assets/heart.png");
-    heartEmptyTexture = LoadTexture("./assets/heart_empty.png");
-    armorTexture = LoadTexture("./assets/armor.png");
-    swordTexture = LoadTexture("./assets/sword.png");
-    keycountTexture = LoadTexture("./assets/keycount.png");
-    overlayBackgroundTexture = LoadTexture("./assets/background.png");
-    bigHeartTexture = LoadTexture("./assets/bigheart.png");
-    bigArmorTexture = LoadTexture("./assets/bigarmor.png");
-    bigSwordTexture = LoadTexture("./assets/bigsword.png");
-    wingedHeartTexture = LoadTexture("./assets/wingsheart.png");
-    wallTexture = LoadTexture("./assets/mossy_stone_bricks.png");
-    floorTexture = LoadTexture("./assets/stone_bricks.png");
-    crackedWallTexture = LoadTexture("./assets/cracked_stone.png");
-    doorUpTexture = LoadTexture("./assets/door_up.png");
-    doorDownTexture = LoadTexture("./assets/door_down.png");
-    fightDialogBackground = LoadTexture("./assets/dialog.png");
-    keyETexture = LoadTexture("./assets/key_e.png");
+    heartFullTexture = LoadTexture("./assets/Textures/heart.png");
+    heartEmptyTexture = LoadTexture("./assets/Textures/heart_empty.png");
+    armorTexture = LoadTexture("./assets/Textures/armor.png");
+    swordTexture = LoadTexture("./assets/Textures/sword.png");
+    keycountTexture = LoadTexture("./assets/Textures/keycount.png");
+    overlayBackgroundTexture = LoadTexture("./assets/Textures/background.png");
+    bigHeartTexture = LoadTexture("./assets/Textures/bigheart.png");
+    bigArmorTexture = LoadTexture("./assets/Textures/bigarmor.png");
+    bigSwordTexture = LoadTexture("./assets/Textures/bigsword.png");
+    wingedHeartTexture = LoadTexture("./assets/Textures/wingsheart.png");
+    wallTexture = LoadTexture("./assets/Textures/mossy_stone_bricks.png");
+    floorTexture = LoadTexture("./assets/Textures/stone_bricks.png");
+    crackedWallTexture = LoadTexture("./assets/Textures/cracked_stone.png");
+    doorUpTexture = LoadTexture("./assets/Textures/door_up.png");
+    doorDownTexture = LoadTexture("./assets/Textures/door_down.png");
+    fightDialogBackground = LoadTexture("./assets/Textures/dialog.png");
+    keyETexture = LoadTexture("./assets/Textures/key_e.png");
 
+    endScreenTexture = LoadTexture("./assets/Textures/endScreen.png");
 }
 
 
@@ -406,6 +412,7 @@ void Render(chunkedMap_t map) {
         DrawMap(map); // Afichage de la map
 
         EndMode3D();
+        DrawEndScreen(); //Affichage de l'écran de fin
         DrawDoorHint(); //Affichage des textes
         DrawFightHint();
         DrawOverlay(); //Overlay
@@ -425,6 +432,15 @@ void DrawDoorHint() {
         DrawText("You need a key to open this door", 600, 800, 40, WHITE);
     }
 }
+
+void DrawEndScreen() {
+    if(drawBundle.player->statistics.health <= 0) {
+        logFile("CACACACA");
+        DrawRectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, CLITERAL(Color){50, 50, 50, 200});
+        DrawTexturePro(endScreenTexture, (Rectangle){0, 0, endScreenTexture.width, endScreenTexture.height}, (Rectangle){0, 0, WINDOW_WIDTH, WINDOW_HEIGHT}, (Vector2){0, 0}, 0, GRAY);
+    }
+}
+
 /**
  * Affichage des dialog pour commencer un combat
  */
