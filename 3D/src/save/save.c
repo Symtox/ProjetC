@@ -3,7 +3,6 @@
 #include "../utils/utils.h"
 #include "../board/board.h"
 #include "save.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

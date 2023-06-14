@@ -12,7 +12,7 @@ typedef struct {
     char text[200]; //Main text
     int choiceCount; // Nombre d'actions possibles
     const char * choices[2]; // Texte lié au choix
-    KeyboardKey keys[2]; // Touche lié au choix TODO
+    char keys[2]; // Touche lié au choix TODO
 }dialog_t;
 
 
@@ -23,6 +23,7 @@ typedef struct {
     int drawCeiling; //Plafond (c)
     int drawDebug; //Debug (f3)
     int drawOverlay; //Overlay (f1)
+    int paused; //Pause menu
     Vector3 movement; // debug info (movement)
     Vector3 direction; // debug info (direction)
     player_t * player; // toutes les info du joueur en temps réel
@@ -60,5 +61,8 @@ void DrawHealth(powerUp_t health, int x, int y);
 void DrawDoor(door_t, int, int);
 void DrawMonster(monster_t, int, int);
 void destroyRenderer();
+void DrawPauseMenu();
+Rectangle getPauseMenuResumeButtonBounds();
+Rectangle getPauseMenuQuitButtonBounds();
 
 #endif

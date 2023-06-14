@@ -28,8 +28,7 @@ int handlePlayerMovement(player_t * player, chunkedMap_t map) {
     //Gestion de la gravité
     playerMovement = Vector3Add(playerMovement, getFallMovement(player->camera->position, &player->physics, map));
     //Annulation du movement selon x et z si une collision est détectée
-    correctMovementWithCollisions(&playerMovement, playerRotation, *player->camera, player->physics, map);
-
+    correctMovementWithCollisions(&playerMovement, playerRotation, *player->camera, map);
     bundle.movement = playerMovement;
     bundle.direction = playerRotation;
     setDrawBundle(bundle); // Mise à jour pour l'affichage de débug
@@ -273,7 +272,7 @@ float getPlayerDistanceFromGround(Vector3 playerPosition, chunkedMap_t map) {
  * @param playerPhysics
  * @param map
  */
-void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, playerPhysics_t playerPhysics, chunkedMap_t map) {
+void correctMovementWithCollisions(Vector3 * movement, Vector3 playerRotation, Camera camera, chunkedMap_t map) {
 
     int caseAX;
     int caseAZ;

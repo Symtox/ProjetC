@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include "../utils/utils.h"
 #include <string.h>
-#define MAX_SAVE_COUNT 4
+#define MAX_SAVE_COUNT 6
 //////////////Varibales
 bool quitBtnAction = false;
 bool playBtnAction = false;
@@ -53,13 +53,13 @@ void initMenu() {
 
 
 
-    playBtnBounds = (Rectangle){ WINDOW_WIDTH/2.0f - playButton.width/2.0f, 400, (float)playButton.width, playButton.height };
-    creditBtnBounds = (Rectangle){ WINDOW_WIDTH/2.0f - creditButton.width/2.0f, 520 , (float)creditButton.width, creditButton.height };
-    quitBtnBounds = (Rectangle){ WINDOW_WIDTH/2.0f - quitButton.width/2.0f, 640, (float)quitButton.width, quitButton.height };
-    logoBounds = (Rectangle){WINDOW_WIDTH/50.0f - logo.width/10.0f,-360, (float)logo.width, logo.height};
-    firstSaveBounds = (Rectangle){WINDOW_WIDTH * 0.05, WINDOW_HEIGHT * 0.87, (float)newGameButton.width, (float)newGameButton.height};
+    playBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - playButton.width/2.0f, 500, (float)playButton.width, playButton.height };
+    creditBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - creditButton.width/2.0f, 650 , (float)creditButton.width, creditButton.height };
+    quitBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - quitButton.width/2.0f, 800, (float)quitButton.width, quitButton.height };
+    logoBounds = (Rectangle){GetScreenWidth()/2 - logo.width/2,-360, (float)logo.width, logo.height};
+    firstSaveBounds = (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.87, (float)newGameButton.width, (float)newGameButton.height};
 
-    newGameButtonBounds = (Rectangle){ WINDOW_WIDTH * 0.05, WINDOW_HEIGHT * 0.87, (float)newGameButton.width, newGameButton.height };
+    newGameButtonBounds = (Rectangle){ GetScreenWidth() * 0.05, GetScreenHeight() * 0.87, (float)newGameButton.width, newGameButton.height };
 
     sourceLogoRec = (Rectangle){0, 0, logo.width, logo.height};
     sourcePlayBtnRec = (Rectangle){ 0, 0, (float)playButton.width, playButton.height };
@@ -77,12 +77,12 @@ void renderMenu() {
             DrawTextureRec(quitButton, sourceQuitBtnRec, (Vector2){quitBtnBounds.x, quitBtnBounds.y}, RAYWHITE);
             break;
         case SAVE_MENU_VIEW:
-            DrawTexturePro(saveMenuBackground, (Rectangle){0, 0, (float)saveMenuBackground.width, (float)saveMenuBackground.height}, (Rectangle){0, 0, WINDOW_WIDTH, WINDOW_HEIGHT}, (Vector2){0, 0}, 0, RAYWHITE);
-            DrawTexturePro(newGameButton, (Rectangle){0, 0, (float)newGameButton.width, (float)newGameButton.height}, (Rectangle){WINDOW_WIDTH * 0.05, WINDOW_HEIGHT * 0.87, (float)newGameButton.width, (float)newGameButton.height}, (Vector2){0, 0}, 0, RAYWHITE);
+            DrawTexturePro(saveMenuBackground, (Rectangle){0, 0, (float)saveMenuBackground.width, (float)saveMenuBackground.height}, (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, (Vector2){0, 0}, 0, RAYWHITE);
+            DrawTexturePro(newGameButton, (Rectangle){0, 0, (float)newGameButton.width, (float)newGameButton.height}, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.87, (float)newGameButton.width, (float)newGameButton.height}, (Vector2){0, 0}, 0, RAYWHITE);
             for(int i = 0; i < saveCount; i++) {
                 if(saves[i] != NULL) {
-                    DrawTexturePro(saveButtonBackground, (Rectangle){0, 0, (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Rectangle){WINDOW_WIDTH * 0.05, WINDOW_HEIGHT * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Vector2){0, 0}, 0, RAYWHITE);
-                    DrawText(saves[i], WINDOW_WIDTH * 0.1, WINDOW_HEIGHT * 0.25 + (i * 125), 20, RAYWHITE);
+                    DrawTexturePro(saveButtonBackground, (Rectangle){0, 0, (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Vector2){0, 0}, 0, RAYWHITE);
+                    DrawText(saves[i], GetScreenWidth() * 0.1, GetScreenHeight() * 0.25 + (i * 125), 20, RAYWHITE);
                 }
             }
             break;
@@ -134,7 +134,7 @@ void handleSaveMenu() {
 
     for(int i = 0; i < saveCount; i++) {
         if(saves[i] != NULL) {
-            if(CheckCollisionPointRec(mousePoint, (Rectangle){WINDOW_WIDTH * 0.05, WINDOW_HEIGHT * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height})) {
+            if(CheckCollisionPointRec(mousePoint, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height})) {
                 if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
                     saveName = malloc(sizeof(char) * strlen(saves[i]));
                     strcpy(saveName, saves[i]);
@@ -175,6 +175,11 @@ char * getSaveName() {
     return saveName;
 }
 
+void setCurrentScene(Scenes_e scene) {
+    playBtnAction = false;
+    currentScene = scene;
+    EnableCursor();
+}
 
 void destroyMenu() {
     UnloadTexture(playButton);

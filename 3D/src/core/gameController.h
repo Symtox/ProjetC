@@ -16,4 +16,5 @@ int canOpenFight();
 monster_t * openClosestFight();
 void fight();
 void saveAndQuit();
+void handlePauseMenuAction();
 #endif

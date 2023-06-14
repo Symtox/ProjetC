@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include "../menu/mainMenu.h"
 int controlsToggles[4] = {0, 0, 0, 0};
 
 typedef enum controls {
@@ -29,6 +30,7 @@ chunkedMap_t * map;
 fightState_e fightState = NO_FIGHT;
 monster_t * monsterInFight = NULL;
 int isLoaded = 0;
+int isGamePaused = 0;
 
 int fd = -1;
 void pickUpItem();
@@ -87,6 +89,8 @@ void Tick() {
         return;
     } else if(player->inFight) {
         fight();
+    } else if(isGamePaused) {
+        handlePauseMenuAction();
     } else {
         handlePlayerMovement(player, *map);
         handlePlayerShortcuts();
@@ -160,6 +164,12 @@ void handlePlayerShortcuts() {
     drawBundle_t drawBundle = getDrawBundle(); // On recupere les informations de dessin afin de les mettre à jour
     if(player->inFight) {
         return;
+    }
+
+    if(IsKeyPressed(KEY_ESCAPE)) {
+        isGamePaused = !isGamePaused;
+        drawBundle.paused = isGamePaused;
+        EnableCursor();
     }
 
     if(IsKeyPressed(KEY_P)) {
@@ -360,8 +370,8 @@ void fight() {
             drawBundle.dialog.choices[0] = "Attack";
             drawBundle.dialog.choices[1] = "Run";
             strcpy(drawBundle.dialog.text,"What do you want to do?");
-            drawBundle.dialog.keys[0] = KEY_A;
-            drawBundle.dialog.keys[1] = KEY_R;
+            drawBundle.dialog.keys[0] = 'A';
+            drawBundle.dialog.keys[1] = 'R';
 
             if(IsKeyPressed(KEY_Q)) {
                 monsterInFight->statistics.health -= damageDone;
@@ -379,7 +389,7 @@ void fight() {
 
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
-            drawBundle.dialog.keys[0] = KEY_SPACE;
+            drawBundle.dialog.keys[0] = 'E';
 
             if(monsterInFight->statistics.health <= 0) {
                 strcpy(drawBundle.dialog.text, "You killed the monster!");
@@ -390,7 +400,7 @@ void fight() {
                 futureState = MONSTER_ATTACK;
             }
 
-            if(IsKeyPressed(KEY_SPACE)) {
+            if(IsKeyPressed(KEY_E)) {
                 if(!monsterInFight->isDead) {
                     player->statistics.health -= damageTaken;
                 } else {
@@ -407,8 +417,8 @@ void fight() {
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
             sprintf(drawBundle.dialog.text, "The monster attacked you!\nDamage taken: %d\nYour health: %d", damageTaken, player->statistics.health);
-            drawBundle.dialog.keys[0] = KEY_SPACE;
-            if(IsKeyPressed(KEY_SPACE)) {
+            drawBundle.dialog.keys[0] = 'E';
+            if(IsKeyPressed(KEY_E)) {
                 fightState = FIGHT_CHOICE;
             }
             break;
@@ -430,8 +440,40 @@ void saveAndQuit() {
     if(!isLoaded) {
         return;
     }
+    destroyRenderer();
     savePlayerContext(fd, *player);
     saveMap(map, fd);
     freeMap(map);
+    isLoaded = 0;
+}
+
+void handlePauseMenuAction() {
+    drawBundle_t drawBundle = getDrawBundle();
+    Vector2 mousePoint;
+    mousePoint = GetMousePosition();
+
+    if(IsKeyPressed(KEY_ESCAPE)) {
+        isGamePaused = false;
+        drawBundle.paused = false;
+    }
+    if(CheckCollisionPointRec(mousePoint, getPauseMenuResumeButtonBounds())) {
+        logFile("resume button clicked");
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            isGamePaused = false;
+            drawBundle.paused = false;
+            DisableCursor();
+        }
+    }
+    if(CheckCollisionPointRec(mousePoint, getPauseMenuQuitButtonBounds())) {
+        logFile("Quit button clicked");
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            saveAndQuit();
+            DisableCursor();
+            isGamePaused = false;
+            drawBundle.paused = false;
+            setCurrentScene(MAIN_MENU_VIEW);
+        }
+    }
+    setDrawBundle(drawBundle);
 
 }

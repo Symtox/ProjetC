@@ -1,10 +1,12 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
 #include "../../includes/rlgl.h"
-#include "../utils/utils.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #define DEBUG_INFO_LINE_COUNT 5
 
-drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
+drawBundle_t drawBundle = {0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
 
 int isRendererLoaded = 0;
 
@@ -16,7 +18,8 @@ Model powerUpAttackModel;
 Model powerUpShieldModel;
 Model powerUpHealthModel;
 
-Texture2D keyETexture;
+
+
 
 
 Texture2D heartFullTexture;
@@ -37,6 +40,9 @@ Texture2D armorTexture;
 Texture2D fightDialogBackground;
 Texture2D endScreenTexture;
 
+Texture2D pauseMenuBackground;
+Texture2D pauseMenuButton;
+
 /**
  * Charge les models
  * @param player
@@ -55,6 +61,9 @@ void initRenderer(player_t * player) {
     doorModel = LoadModel("./assets/Models/door.obj");
     potionModel = LoadModel("./assets/Models/potion1.obj");
 
+    pauseMenuBackground = LoadTexture("./assets/Textures/pauseMenu/pauseMenuBackground.png");
+    pauseMenuButton = LoadTexture("./assets/Textures/pauseMenu/pauseMenuButton.png");
+
     heartFullTexture = LoadTexture("./assets/Textures/heart.png");
     heartEmptyTexture = LoadTexture("./assets/Textures/heart_empty.png");
     armorTexture = LoadTexture("./assets/Textures/armor.png");
@@ -71,7 +80,6 @@ void initRenderer(player_t * player) {
     doorUpTexture = LoadTexture("./assets/Textures/door_up.png");
     doorDownTexture = LoadTexture("./assets/Textures/door_down.png");
     fightDialogBackground = LoadTexture("./assets/Textures/dialog.png");
-    keyETexture = LoadTexture("./assets/Textures/key_e.png");
 
     endScreenTexture = LoadTexture("./assets/Textures/endScreen.png");
 }
@@ -309,77 +317,77 @@ void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float heig
  * Dessine l'overlay (inventaire)
  */
 void DrawOverlay() {
-    int bigHeart = 0; // nombre de ligne de coeur complet
+    int bigHeart; // nombre de ligne de coeur complet
     int smallheart = drawBundle.player->statistics.health;
-    int bigArmor = 0; // nombre de ligne d'amure complet
+    int bigArmor; // nombre de ligne d'amure complet
     int smallarmor = drawBundle.player->statistics.armor;
-    int bigDamage = 0;
+    int bigDamage ;
     int smalldamage = drawBundle.player->statistics.damage;
 
+    if(drawBundle.player->statistics.health <= 0) {
+        smallheart = 0;
+        bigHeart = 0;
+    } else {
+        if(smallheart % 10 == 0){
+            smallheart = 10;
+            bigHeart = (drawBundle.player->statistics.health / 10)-1;
+        }
+        else {
+            smallheart = smallheart % 10;
+            bigHeart = drawBundle.player->statistics.health / 10;
+        }
+    }
 
-    if(smallheart % 10 == 0){
-        smallheart = 10;
-        bigHeart = (drawBundle.player->statistics.health / 10)-1;
-    }
-    else {
-        smallheart = smallheart % 10;
-        bigHeart = drawBundle.player->statistics.health / 10;
-    }
     if(smallarmor % 10 == 0){
         smallarmor = 10;
         bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
-    }
-    else {
+    } else {
         smallarmor = smallarmor % 10;
         bigArmor = drawBundle.player->statistics.armor / 10;
     }
+
     if(smalldamage % 10 == 0){
         smalldamage = 10;
         bigDamage = (drawBundle.player->statistics.damage/ 10)-1;
-    }
-    else {
+    } else {
         smalldamage = smalldamage % 10;
         bigDamage = drawBundle.player->statistics.damage / 10;
     }
 
 
-     if(drawBundle.drawOverlay) {
-        int i = 0;
-
+    if(drawBundle.drawOverlay) {
         DrawTexture(overlayBackgroundTexture, 0, 0, WHITE);
-        for(i = 0; i < 10; i++) {
+        for(int i = 0; i < 10; i++) {
             DrawTexture(heartEmptyTexture, 7 + 36 * i, 15, WHITE);
         }
-        for(i = 0; i < smallheart; i++) {
+        for(int i = 0; i < smallheart; i++) {
             DrawTexture(heartFullTexture, 7 + 36 * i, 15, WHITE);
         }
         
 
-        if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
-                DrawTexture(wingedHeartTexture, 430, 13, WHITE);
-                
+        if(drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth) {
+            DrawTexture(wingedHeartTexture, 430, 13, WHITE);
+        } else {
+            DrawTexture(bigHeartTexture,400, 13, WHITE);
+            DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
         }
-        else {
-                DrawTexture(bigHeartTexture,400, 13, WHITE);
-                DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
-            }
           
-        for(i = 0; i < smallarmor; i++) {
+        for(int i = 0; i < smallarmor; i++) {
             DrawTexture(armorTexture, 5 + 36* i, 48, WHITE);
         }
-        for(i = 0; i < smalldamage; i++) {
-            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
-        }
-        DrawTexture(keycountTexture, 150, 133, WHITE);
-        DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
-
         DrawTexture(bigArmorTexture,400, 47, WHITE);
         DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
 
+        for(int i = 0; i < smalldamage; i++) {
+            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
+        }
         DrawTexture(bigSwordTexture,400, 87, WHITE);
         DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
-     }
+
+        DrawTexture(keycountTexture, 150, 133, WHITE);
+        DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
+    }
 }
 /**
  * Affiche l'overlay de debug
@@ -418,6 +426,7 @@ void Render(chunkedMap_t map) {
         DrawOverlay(); //Overlay
         DrawDebug(); //Debug menu
         DrawFightDialog(); //Dialog
+        DrawPauseMenu();
 
 }
 
@@ -425,19 +434,21 @@ void Render(chunkedMap_t map) {
  * Affichage des dialog pour ouvrir une porte
  */
 void DrawDoorHint() {
+    int textSize = 40;
+    char * openDoorText = "Press o to open door";
+    char * needKeyText = "You need a key to open this door";
     if(drawBundle.canOpenDoor == 1) {
-        DrawText("Press E to open door", 600, 800, 40, WHITE);
+        DrawText(openDoorText, (GetScreenWidth() / 2) - strlen(openDoorText) * textSize/3, GetScreenHeight() * 0.8, textSize, WHITE);
     }
     else if(drawBundle.canOpenDoor == -1) {
-        DrawText("You need a key to open this door", 600, 800, 40, WHITE);
+        DrawText(needKeyText, (GetScreenWidth() / 2) - strlen(needKeyText) * textSize/3, GetScreenHeight() * 0.8, textSize, WHITE);
     }
 }
 
 void DrawEndScreen() {
     if(drawBundle.player->statistics.health <= 0) {
-        logFile("CACACACA");
-        DrawRectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, CLITERAL(Color){50, 50, 50, 200});
-        DrawTexturePro(endScreenTexture, (Rectangle){0, 0, endScreenTexture.width, endScreenTexture.height}, (Rectangle){0, 0, WINDOW_WIDTH, WINDOW_HEIGHT}, (Vector2){0, 0}, 0, GRAY);
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){50, 50, 50, 200});
+        DrawTexturePro(endScreenTexture, (Rectangle){0, 0, endScreenTexture.width, endScreenTexture.height}, (Rectangle){0, 0, WINDOW_GAME_WIDTH, WINDOW_GAME_HEIGHT}, (Vector2){0, 0}, 0, GRAY);
     }
 }
 
@@ -445,8 +456,9 @@ void DrawEndScreen() {
  * Affichage des dialog pour commencer un combat
  */
 void DrawFightHint() {
+    char * fightText = "Press E to start fight";
     if(drawBundle.canOpenFight == 1) {
-        DrawText("Press E to attack", 600, 800, 40, WHITE);
+        DrawText(fightText, GetScreenWidth()/2 - strlen(fightText) * 10, GetScreenHeight() * 0.9, 40, WHITE);
     }
 }
 
@@ -463,17 +475,18 @@ drawBundle_t getDrawBundle() {
  */
 void DrawFightDialog() {
     if(drawBundle.player->inFight) {
-        float dialogMarginX = WINDOW_WIDTH/2 - fightDialogBackground.width/2;
-        float dialogMarginY = (WINDOW_HEIGHT - fightDialogBackground.height) * 9/10;
+        float dialogMarginX = WINDOW_GAME_WIDTH/2 - fightDialogBackground.width/2;
+        float dialogMarginY = (WINDOW_GAME_HEIGHT - fightDialogBackground.height) * 9/10;
 
         DrawTexture(fightDialogBackground, dialogMarginX, dialogMarginY, WHITE);
         DrawText(drawBundle.dialog.text, dialogMarginX + 50, dialogMarginY + 50, 20, WHITE);
 
-        DrawTexture(getKeyTexture(drawBundle.dialog.keys[1]), dialogMarginX + 20, dialogMarginY + fightDialogBackground.height * 8/10, WHITE);
+        DrawText(TextFormat("%c :", drawBundle.dialog.keys[0]), dialogMarginX + 20, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
         DrawText(drawBundle.dialog.choices[0], dialogMarginX + 50, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
 
         if(drawBundle.dialog.choiceCount == 2) {
-            DrawText(drawBundle.dialog.choices[1], dialogMarginX + 400, dialogMarginY + fightDialogBackground.height * 8/10, 20, WHITE);
+            DrawText(TextFormat("%c :", drawBundle.dialog.keys[1]), dialogMarginX + 380, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
+            DrawText(drawBundle.dialog.choices[1], dialogMarginX + 400, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
         }
     }
 }
@@ -486,17 +499,6 @@ void DrawFightDialog() {
 void setDrawBundle(drawBundle_t bundle) {
     drawBundle = bundle;
 }
-
-//TODO
-Texture2D getKeyTexture(KeyboardKey key) {
-    switch (key) {
-        case KEY_E:
-            return keyETexture;
-        default:
-            return keyETexture;
-    }
-}
-
 
 // Le code d'en dessous viens essentiellement d'ici https://github.com/raysan5/raylib/blob/master/examples/text/text_draw_3d.c
 #define RAYLIB_NEW_RLGL
@@ -660,8 +662,8 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     float textHeight = scale;
     float textWidth = 0.0f;
 
-    int letter = 0;                 // Current character
-    int index = 0;                  // Index position in sprite font
+    int letter;                 // Current character
+    int index;                  // Index position in sprite font
 
     for (int i = 0; i < len; i++)
     {
@@ -849,6 +851,31 @@ void destroyRenderer() {
     UnloadTexture(keycountTexture);
     UnloadTexture(heartEmptyTexture);
     UnloadTexture(heartFullTexture);
-    UnloadTexture(keyETexture);
+    UnloadTexture(pauseMenuButton);
+    UnloadTexture(pauseMenuBackground);
+    isRendererLoaded = 0;
+}
 
+void DrawPauseMenu() {
+    if(!drawBundle.paused) {
+        return;
+    }
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color){0, 0, 0, 100});
+    DrawTexture(pauseMenuBackground, GetScreenWidth()/2 - pauseMenuBackground.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2, WHITE);
+    DrawTexture(pauseMenuButton, GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 85, WHITE);
+    DrawTexture(pauseMenuButton, GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 160, WHITE);
+    DrawText("Paused", GetScreenWidth()/2 - MeasureText("Paused", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 30, 20, WHITE);
+    DrawText("Resume", GetScreenWidth()/2 - MeasureText("Resume", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 110, 20, WHITE);
+    DrawText("Quit", GetScreenWidth()/2 - MeasureText("Quit", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 185, 20, WHITE);
+}
+
+
+Rectangle getPauseMenuResumeButtonBounds() {
+    Rectangle bounds = (Rectangle){GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 85, pauseMenuButton.width, pauseMenuButton.height};
+    return bounds;
+}
+
+Rectangle getPauseMenuQuitButtonBounds() {
+    Rectangle bounds = (Rectangle){GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 160, pauseMenuButton.width, pauseMenuButton.height};
+    return bounds;
 }

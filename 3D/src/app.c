@@ -13,7 +13,9 @@ int main(void)
     chunkedMap_t map;
     player_t player = {0};
 
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
+    SetConfigFlags(FLAG_FULLSCREEN_MODE);
+    InitWindow(0, 0, "Maze slayer");
+    //ToggleFullscreen();
     initLogger();
 
 
@@ -30,10 +32,9 @@ int main(void)
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
-    while (!WindowShouldClose() && !getQuitGameAction())        // Detect window close button or ESC key
+    while (!getQuitGameAction())        // Detect window close button or ESC key
     {
  		BeginDrawing();
-
 
         if(!getPlayGameAction()) {
             ClearBackground(RAYWHITE);
@@ -52,7 +53,6 @@ int main(void)
     saveAndQuit();
     endLogger();
     destroyMenu();
-    destroyRenderer();
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context

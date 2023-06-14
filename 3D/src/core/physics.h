@@ -28,7 +28,7 @@
     void updateCameraCustom(Camera *, Vector3, Vector3);
 
     float getPlayerDistanceFromGround(Vector3, chunkedMap_t);
-    void correctMovementWithCollisions(Vector3 *, Vector3 , Camera , playerPhysics_t , chunkedMap_t );
+    void correctMovementWithCollisions(Vector3 *, Vector3 , Camera , chunkedMap_t );
 
     Vector3 getNoclipMovement(playerPhysics_t *);
     float getTileDistanceFromGround(int, float, int, chunkedMap_t);

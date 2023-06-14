@@ -20,4 +20,6 @@
     #define PICKUP_DETECTION_DISTANCE 2.5f
     #define WINDOW_WIDTH 1600
     #define WINDOW_HEIGHT 1000
+    #define WINDOW_GAME_WIDTH 1920
+    #define WINDOW_GAME_HEIGHT 1080
 #endif
