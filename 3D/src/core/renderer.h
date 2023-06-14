@@ -29,6 +29,7 @@ typedef struct {
     player_t * player; // toutes les info du joueur en temps réel
     int canOpenDoor; // Pour les indices d'ouverture de porte
     int canOpenFight; // Pour les indice de début de combat
+    int win;
     dialog_t dialog; // Dialog lié au combat
 }drawBundle_t;
 

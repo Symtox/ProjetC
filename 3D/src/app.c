@@ -14,7 +14,6 @@ int main(void)
 
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(0, 0, "Maze slayer");
-    //ToggleFullscreen();
     initLogger();
 
 
@@ -41,23 +40,12 @@ int main(void)
 			handleMenu();
         }
         else {
-            benchmarkStart(0, "initGameController");
             initGameController(&player, &map, getSaveName());
-            benchmarkEnd(0);
-            benchmarkStart(1, "initRenderer");
             initRenderer(&player);
-            benchmarkEnd(1);
-            benchmarkStart(2, "render");
             Render(map);
-            benchmarkEnd(2);
-            benchmarkStart(3, "handleGame");
             Tick();
-            benchmarkEnd(3);
         }
-        benchmarkStart(4, "drawFPS");
         EndDrawing();
-        benchmarkEnd(4);
-
     }
     saveAndQuit();
     endLogger();

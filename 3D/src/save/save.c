@@ -30,7 +30,7 @@ void readPlayerContext(int fd, player_t * player) {
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
     read(fd, &player->camera->target, sizeof(Vector3));    
-
+    read(fd, &player->camera->position, sizeof(Vector3));
 }
 
 
@@ -113,6 +113,7 @@ size_t sizeofChunkTXT(chunk_txt chunk) {
     res += sizeofPowerUp() * chunk.powerUpCount;
     res += sizeofMonster() * chunk.monsterCount;
     res += sizeofPotion() * chunk.potionCount;
+    res += sizeof(int) * 2;
     return res;
 }
 
@@ -312,6 +313,10 @@ void writeChunkTXT(int fd, chunk_txt chunk) {
     for(int i = 0; i < chunk.keyCount; i++) {
         saveKey(fd, chunk.keys[i]);
     }
+
+    write(fd, &chunk.endGameX, sizeof(int));
+    write(fd, &chunk.endGameY, sizeof(int));
+
 }
 
 void writeChunk(int fd, chunk_t chunk) {
@@ -348,6 +353,8 @@ void writeChunk(int fd, chunk_t chunk) {
     for (int i = 0; i < chunk.keyCount; i++) {
         saveKey(fd, chunk.keys[i]);
     }
+    write(fd, &chunk.endGameX, sizeof(int));
+    write(fd, &chunk.endGameY, sizeof(int));
 }
 
 void readMonster(int fd, monster_t * monster) {
@@ -429,6 +436,9 @@ void readChunk(int fd, chunk_t * chunk) {
     for(int i = 0; i < chunk->keyCount; i++) {
         readKey(fd, &chunk->keys[i]);
     }
+
+    read(fd, &chunk->endGameX, sizeof(int));
+    read(fd, &chunk->endGameY, sizeof(int));
 
 }
 

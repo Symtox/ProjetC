@@ -26,7 +26,7 @@ void saveMap(chunkedMap_t * map, int fd);
 
 void savePlayerContext(int fd, player_t player);
 void readPlayerContext(int fd, player_t * player);
-off_t sizeofPlayerContext(); //TODO
+off_t sizeofPlayerContext();
 
 void readIndex(int fd, index_t * index);
 void writeIndex(int fd, index_t index);

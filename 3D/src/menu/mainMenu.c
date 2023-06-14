@@ -176,6 +176,7 @@ char * getSaveName() {
 }
 
 void setCurrentScene(Scenes_e scene) {
+    saveName = NULL;
     playBtnAction = false;
     currentScene = scene;
     EnableCursor();

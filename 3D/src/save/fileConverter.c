@@ -46,6 +46,8 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, i
     chunk->potionCount = 0;
     chunk->x = x;
     chunk->y = y;
+    chunk->endGameX = -1;
+    chunk->endGameY = -1;
 
     //Allocation du chunk
     chunk->chunk = malloc(sizeof(int**) * CHUNK_SIZE);
@@ -75,20 +77,20 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, i
         for (int j = 0; j < CHUNK_SIZE; j++) {
             char currChar = fgetc(file);
             switch (currChar) {
-                case '#':
+                case '#': //WALLS
                     for (int k = 0; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = rand()% 3 +1; // Random la texture du mur
                     }
                     break;
 
-                case -62: // §
+                case -62: // § //POTION
                     fseek(file, 1, SEEK_CUR); // On avance d'un char
                     potion[chunk->powerUpCount].pickedUp = 0;
                     potion[chunk->powerUpCount].position = (Vector3) {i, 0, j};
                     chunk->potionCount++;
                     break;
 
-                case 'o':
+                case 'o': // DOOOR
                     //Ajout de blocs au dessus de la porte
                     for (int k = DOOR_HEIGHT + 1; k < WALL_HEIGHT; k++) {
                         chunk->chunk[i][k][j] = 1;
@@ -98,10 +100,15 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, i
                     doors[chunk->doorCount].position = (Vector3) {i, 0, j};
                     chunk->doorCount++;
                     break;
-                case '+':
+                case '+': // Start
                     player->camera->position = (Vector3) {i, 0, j};
                     player->chunkX = x;
                     player->chunkY = y;
+                    break;
+                case '-': // End
+                    chunk->endGameX = i;
+                    chunk->endGameY = j;
+                    break;
                 case '!':
                     keys[chunk->keyCount].pickedUp = 0;
                     keys[chunk->keyCount].position = (Vector3){i, 0.0f, j};
@@ -286,7 +293,7 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
 
     //Chargement de la map
     createSaveFromLevelFilesR(path, filename, &player, 0, 0);
-
+    logFile(TextFormat("Camera position : %f %f %f", camera.position.x, camera.position.y, camera.position.z));
     //Calcul des coord min et max
     for(int i = 0; i < chunkCount; i++) {
         if(chunkBuffer[i].x < min.x) {
@@ -310,9 +317,12 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     }
     player.chunkX -= min.x;
     player.chunkY -= min.y;
+    logFile(TextFormat("Camera position : %d %d", player.chunkX, player.chunkY));
+
     player.camera->position.x += player.chunkX * CHUNK_SIZE;
     player.camera->position.z += player.chunkY * CHUNK_SIZE;
 
+    logFile(TextFormat("Camera position : %f %f %f", camera.position.x, camera.position.y, camera.position.z));
     if(fd == -1) {
         perror("open");
         exit(EXIT_FAILURE);

@@ -17,4 +17,6 @@ monster_t * openClosestFight();
 void fight();
 void saveAndQuit();
 void handlePauseMenuAction();
+void handlePause();
+void endGame();
 #endif

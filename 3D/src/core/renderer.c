@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #define DEBUG_INFO_LINE_COUNT 5
 
-drawBundle_t drawBundle = {0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
+drawBundle_t drawBundle = {0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0};
 
 int isRendererLoaded = 0;
 
@@ -435,7 +435,9 @@ void Render(chunkedMap_t map) {
  */
 void DrawDoorHint() {
     int textSize = 40;
-    char * openDoorText = "Press o to open door";
+    char openDoorText[100];
+    strcpy(openDoorText, "Press   to open door");
+    openDoorText[6] = IsGamepadAvailable(0) ? 'Y' : 'O';
     char * needKeyText = "You need a key to open this door";
     if(drawBundle.canOpenDoor == 1) {
         DrawText(openDoorText, (GetScreenWidth() / 2) - strlen(openDoorText) * textSize/3, GetScreenHeight() * 0.8, textSize, WHITE);
@@ -456,7 +458,9 @@ void DrawEndScreen() {
  * Affichage des dialog pour commencer un combat
  */
 void DrawFightHint() {
-    char * fightText = "Press E to start fight";
+    char fightText[100];
+    strcpy(fightText, "Press   to start fight");
+    fightText[6] = IsGamepadAvailable(0) ? 'X' : 'E';
     if(drawBundle.canOpenFight == 1) {
         DrawText(fightText, GetScreenWidth()/2 - strlen(fightText) * 10, GetScreenHeight() * 0.9, 40, WHITE);
     }

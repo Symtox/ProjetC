@@ -52,6 +52,9 @@ typedef struct {
 
     DoorKey_t * keys;
     int keyCount;
+
+    int endGameX;
+    int endGameY;
 } chunk_t;
 
 /**
@@ -82,6 +85,9 @@ typedef struct {
     char * north;
     char * west;
     char * south;
+
+    int endGameX;
+    int endGameY;
 } chunk_txt;
 
 /**
