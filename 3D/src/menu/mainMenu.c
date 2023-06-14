@@ -15,6 +15,7 @@ bool isInMenu;
 Texture2D playButton;
 Texture2D quitButton;
 Texture2D creditButton;
+Texture2D backButton;
 Texture2D logo;
 
 Texture2D saveMenuBackground;
@@ -24,6 +25,7 @@ Texture2D newGameButton;
 Rectangle playBtnBounds;
 Rectangle creditBtnBounds;
 Rectangle quitBtnBounds;
+Rectangle backBtnBounds;
 Rectangle logoBounds;
 Rectangle newGameButtonBounds;
 Rectangle firstSaveBounds;
@@ -31,6 +33,7 @@ Rectangle firstSaveBounds;
 Rectangle sourceLogoRec;
 Rectangle sourcePlayBtnRec;
 Rectangle sourceCreditBtnRec;
+Rectangle sourceBackBtnRec;
 Rectangle sourceQuitBtnRec;
 
 Vector2 mousePoint;
@@ -46,6 +49,7 @@ void initMenu() {
 	playButton = LoadTexture("assets/menu/PlayButton.png");
 	creditButton = LoadTexture("assets/menu/CreditButton.png");
 	quitButton = LoadTexture("assets/menu/QuitButton.png");
+	backButton = LoadTexture("assets/menu/backButton.png");
 	logo = LoadTexture("assets/menu/mazeSlayerLogo.png");
     saveMenuBackground = LoadTexture("assets/menu/SaveMenu.png");
     saveButtonBackground = LoadTexture("assets/menu/saveButtonBackground.png");
@@ -56,6 +60,7 @@ void initMenu() {
     playBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - playButton.width/2.0f, 500, (float)playButton.width, playButton.height };
     creditBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - creditButton.width/2.0f, 650 , (float)creditButton.width, creditButton.height };
     quitBtnBounds = (Rectangle){ GetScreenWidth()/2.0f - quitButton.width/2.0f, 800, (float)quitButton.width, quitButton.height };
+    backBtnBounds = (Rectangle){ GetScreenWidth() * 0.85 , GetScreenHeight() * 0.020, (float)backButton.width, backButton.height };
     logoBounds = (Rectangle){GetScreenWidth()/2 - logo.width/2,-360, (float)logo.width, logo.height};
     firstSaveBounds = (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.87, (float)newGameButton.width, (float)newGameButton.height};
 
@@ -65,12 +70,14 @@ void initMenu() {
     sourcePlayBtnRec = (Rectangle){ 0, 0, (float)playButton.width, playButton.height };
     sourceCreditBtnRec = (Rectangle){ 0, 0, (float)creditButton.width, creditButton.height };
     sourceQuitBtnRec = (Rectangle){ 0, 0, (float)quitButton.width, quitButton.height };
+    sourceBackBtnRec = (Rectangle) {0, 0, (float)backButton.width, backButton.height };
 
 }
 
 void renderMenu() {
     switch(currentScene) {
         case MAIN_MENU_VIEW:
+        	DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BROWN);
             DrawTextureRec(logo, sourceLogoRec, (Vector2){logoBounds.x, logoBounds.y}, RAYWHITE);
             DrawTextureRec(playButton, sourcePlayBtnRec, (Vector2){ playBtnBounds.x, playBtnBounds.y }, RAYWHITE);
             DrawTextureRec(creditButton, sourceCreditBtnRec, (Vector2){ creditBtnBounds.x, creditBtnBounds.y}, RAYWHITE);
@@ -79,6 +86,7 @@ void renderMenu() {
         case SAVE_MENU_VIEW:
             DrawTexturePro(saveMenuBackground, (Rectangle){0, 0, (float)saveMenuBackground.width, (float)saveMenuBackground.height}, (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, (Vector2){0, 0}, 0, RAYWHITE);
             DrawTexturePro(newGameButton, (Rectangle){0, 0, (float)newGameButton.width, (float)newGameButton.height}, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.87, (float)newGameButton.width, (float)newGameButton.height}, (Vector2){0, 0}, 0, RAYWHITE);
+            DrawTextureRec(backButton, sourceBackBtnRec, (Vector2){backBtnBounds.x, backBtnBounds.y}, RAYWHITE);
             for(int i = 0; i < saveCount; i++) {
                 if(saves[i] != NULL) {
                     DrawTexturePro(saveButtonBackground, (Rectangle){0, 0, (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height}, (Vector2){0, 0}, 0, RAYWHITE);
@@ -86,6 +94,10 @@ void renderMenu() {
                 }
             }
             break;
+        case CREDIT_VIEW:
+        	DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BROWN);
+        	DrawTextureRec(backButton, sourceBackBtnRec, (Vector2){backBtnBounds.x, backBtnBounds.y}, RAYWHITE);
+        	DrawText("HELLOOOOOO",  10, 10, 20, GRAY);
         default:
             break;
     }
@@ -118,8 +130,11 @@ void handleMainMenu() {
 	}
 
 	if(CheckCollisionPointRec(mousePoint, creditBtnBounds)) {
-		//if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) creditBtnAction = true;
+		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+             currentScene = CREDIT_VIEW;
+        }
 	}
+
 }
 
 void handleSaveMenu() {
@@ -131,6 +146,12 @@ void handleSaveMenu() {
             playBtnAction = true;
         }
     }
+
+    if(CheckCollisionPointRec(mousePoint, backBtnBounds)) {
+		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+			currentScene = MAIN_MENU_VIEW;
+		}
+	}
 
     for(int i = 0; i < saveCount; i++) {
         if(saves[i] != NULL) {
@@ -146,6 +167,18 @@ void handleSaveMenu() {
 
 }
 
+void handleCreditView() {
+	mousePoint = (Vector2){ 0.0f, 0.0f };
+
+	mousePoint = GetMousePosition();
+
+	if(CheckCollisionPointRec(mousePoint, backBtnBounds)) {
+            if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+                currentScene = MAIN_MENU_VIEW;
+            }
+        }
+}
+
 void handleMenu() {
     switch (currentScene) {
         case MAIN_MENU_VIEW:
@@ -154,6 +187,8 @@ void handleMenu() {
         case SAVE_MENU_VIEW:
             handleSaveMenu();
             break;
+        case CREDIT_VIEW:
+        	handleCreditView();
         default:
             break;
     }
