@@ -3,11 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
+
 #define MAX2(a,b) ((a>b)?(a):(b))
 #define MAX4(a,b,c,d) MAX2(MAX2(a,b), MAX2(c,d))
 
 FILE * fp;
-
+double benchMarkResult[10] = {0};
+char * benchMarkNames[10] = {"", "", "", "", "", "", "", "", "", ""};
 
 /**
  * Logs to the log file and to the console
@@ -43,5 +46,19 @@ float distance3D(Vector3 v1, Vector3 v2) {
  */
 void endLogger() {
     fclose(fp);
+}
+
+
+
+void benchmarkStart(int index, char * msg) {
+    benchMarkResult[index] = (double)clock() / (double)CLOCKS_PER_SEC;
+    benchMarkNames[index] = msg;
+}
+
+void benchmarkEnd(int index) {
+    double endTime = (double)clock() / (double)CLOCKS_PER_SEC;
+    double elapsed_time = (endTime - benchMarkResult[index]);
+    logFile(TextFormat("Benchmark result of %s: %f", benchMarkNames[index], elapsed_time));
+
 }
 

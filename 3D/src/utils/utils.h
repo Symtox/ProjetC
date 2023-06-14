@@ -4,6 +4,8 @@ int logFile(const char *);
 float distance3D(Vector3, Vector3);
 void initLogger();
 void endLogger();
+void benchmarkStart(int index, char * msg);
+void benchmarkEnd(int index);
 #define MAX2(a,b) ((a>b)?(a):(b))
 #define MAX4(a,b,c,d) MAX2(MAX2(a,b), MAX2(c,d))
 #define MIN2(a,b) ((a<b)?(a):(b))

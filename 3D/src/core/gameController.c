@@ -457,7 +457,6 @@ void handlePauseMenuAction() {
         drawBundle.paused = false;
     }
     if(CheckCollisionPointRec(mousePoint, getPauseMenuResumeButtonBounds())) {
-        logFile("resume button clicked");
         if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             isGamePaused = false;
             drawBundle.paused = false;
@@ -465,7 +464,6 @@ void handlePauseMenuAction() {
         }
     }
     if(CheckCollisionPointRec(mousePoint, getPauseMenuQuitButtonBounds())) {
-        logFile("Quit button clicked");
         if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             saveAndQuit();
             DisableCursor();

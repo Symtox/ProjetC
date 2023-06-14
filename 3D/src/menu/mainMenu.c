@@ -193,12 +193,10 @@ void getAllSaves() {
     saveCount = 0;
     struct dirent *dir;
     d = opendir("./bin/saves/");
-    logFile(TextFormat("Getting saves\n"));
     if (d) {
         while ((dir = readdir(d)) != NULL && saveCount < MAX_SAVE_COUNT) {
             if(strcmp(".", dir->d_name) != 0 && strcmp("..", dir->d_name) != 0) {
                 strcpy(saves[saveCount], dir->d_name);
-                logFile(TextFormat("Save %d: %s\n", saveCount, saves[saveCount]));
                 saveCount++;
             }
         }

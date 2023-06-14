@@ -29,8 +29,8 @@ void readPlayerContext(int fd, player_t * player) {
     read(fd, &player->keyCount, sizeof(int));
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
-    read(fd, &player->camera->target, sizeof(Vector3));
-    read(fd, &player->camera->position, sizeof(Vector3));
+    read(fd, &player->camera->target, sizeof(Vector3));    
+
 }
 
 
@@ -40,6 +40,7 @@ off_t sizeofPlayerContext() {
 
 
 void readIndex(int fd, index_t * index) {
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     read(fd, &index->chunkCount, sizeof(int));
     index->chunkCoords = malloc(sizeof(int*) * index->chunkCount);
     index->chunkFilePosition = malloc(sizeof(off_t*) * index->chunkCount);
@@ -53,6 +54,7 @@ void readIndex(int fd, index_t * index) {
 }
 
 void writeIndex(int fd, index_t index) {
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     write(fd, &index.chunkCount, sizeof(int));
     for(int i = 0; i < index.chunkCount; i++) {
         write(fd, index.chunkFilePosition[i], sizeof(off_t) * 2);
@@ -447,18 +449,14 @@ void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y) {
     index_t index;
     lseek(fd, sizeofPlayerContext() + sizeofMapContext(), SEEK_SET);
     readIndex(fd, &index);
-    logFile(TextFormat("Searching for chunk %d %d %d ", x, y, index.chunkCount));
 
     for(int i = 0; i < index.chunkCount; i++) {
-        logFile(TextFormat("Chunk %d %d", index.chunkCoords[i][0], index.chunkCoords[i][1]));
         if(index.chunkCoords[i][0] == x && index.chunkCoords[i][1] == y) {
-            logFile(TextFormat("Chunk %d %d found", x, y));
             lseek(fd, index.chunkFilePosition[i][0], SEEK_SET);
             readChunk(fd, chunk);
             return;
         }
     }
-    logFile(TextFormat("Chunk %d %d not found", x, y));
     chunk->x = -1;
     chunk->y = -1;
 }

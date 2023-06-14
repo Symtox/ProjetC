@@ -39,7 +39,6 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, i
     FILE *file;
 
     setlocale(LC_ALL, "");
-    logFile(TextFormat("Loading chunk from %s", path));
     chunk->monsterCount = 0;
     chunk->doorCount = 0;
     chunk->keyCount = 0;
@@ -129,7 +128,7 @@ void loadChunkFromTXT(chunk_txt * chunk, char* path, player_t * player, int x, i
 
     //fgetwc(file);
 
-    char line[30] = {0};
+    char * line = (char *) malloc( sizeof(char) * 100 );
 
     chunk->east = NULL;
     chunk->south = NULL;
@@ -239,7 +238,6 @@ int isChunkInBuffer(int x, int y) {
 void createSaveFromLevelFilesR(char * path, char * filename, player_t * player, int x, int y) {
     int currentChunkNo = chunkCount; // On stock le numéro de chunk courant (Obligatoire car la valeur globale peut changer a cause des appel réccursif)
     if(isChunkInBuffer(x, y) || filename == NULL) { // Si aucun chunk ou chunk déjà load
-        logFile(TextFormat("chunk already loaded: %s", filename));
         return;
     }
     char * fullPath = concatPath(path, filename);
@@ -265,8 +263,19 @@ void createSaveFromLevelFilesR(char * path, char * filename, player_t * player, 
  */
 void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     index_t index; // Structure de sauvegarde
-    player_t player = BASE_PLAYER; // Joueur avec stat de base
-    Camera camera = BASE_CAMERA;
+    //layer_t player = BASE_PLAYER; // Joueur avec stat de base
+    player_t player = {0}; // Joueur avec stat de base
+    player.statistics.health = 10;
+    player.statistics.maxHealth = 10;
+    player.statistics.damage = 2;
+    player.statistics.armor = 1;
+    player.physics.fallingSpeed = FALL_BASE_SPEED;
+    player.physics.jumpingSpeed = JUMP_BASE_SPEED;
+    //Camera camera = BASE_CAMERA;
+    Camera camera = {0};
+    camera.position = (Vector3){15.0f, 10.0f, 15.0f};
+    camera.fovy = 90.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
     player.camera = &camera;
 
     Vector2 min = {0,0}; //Coordonnées minimal d'un chunk (Afin de normaliser les chunk)
