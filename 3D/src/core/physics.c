@@ -123,8 +123,6 @@ Vector3 getJumpMovementFromInputs(playerPhysics_t * playerPhysics) {
             playerPhysics->jumpTime = 0;
             playerPhysics->jumpingSpeed = JUMP_BASE_SPEED;
         }
-    } else {
-        logFile(TextFormat("Falling: Jump time: %d\n", playerPhysics->jumpTime));
     }
 
     return playerMovement;
