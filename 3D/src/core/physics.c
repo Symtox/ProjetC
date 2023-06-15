@@ -2,6 +2,8 @@
 #include "../utils/utils.h"
 #include "../../includes/rcamera.h"
 #include "../core/renderer.h"
+#include <stdlib.h>
+#include <stdio.h>
 #define APPROX_Y 0.01
 
 
@@ -492,3 +494,11 @@ void toChunkCoordsF(float * x, float * z, int * chunkX, int * chunkY, chunkedMap
         }
     }
 }
+
+
+
+
+
+//Bullets physics
+
+

@@ -13,7 +13,7 @@
  * calculer la taille de chaque structure sauvegardée
  * sauvegarder chaque structure
  * lire chaque structure
- * Ces méthodes fonctionnes sur des fichiers binaire afin de garantir une taille de sauvegarde minimale
+ * Ces méthodes fonctionnent sur des fichiers binaires afin de garantir une taille de sauvegarde minimale
  */
 
 void savePlayerContext(int fd, player_t player) {
@@ -469,6 +469,7 @@ void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y) {
     }
     chunk->x = -1;
     chunk->y = -1;
+    freeIndex(index);
 }
 
 
@@ -527,4 +528,5 @@ void saveChunk(chunk_t chunk, int fd) {
     }
     lseek(fd, index.chunkFilePosition[chunkIndex][0], SEEK_SET);
     writeChunk(fd, chunk);
+    freeIndex(index);
 }

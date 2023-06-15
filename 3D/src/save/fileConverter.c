@@ -352,8 +352,8 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     //Info de la carte
     mapContext.centerY = 0;
     mapContext.centerX = 0;
-    mapContext.width = 2;
-    mapContext.height = 2;
+    mapContext.width = 3;
+    mapContext.height = 3;
     mapContext.maxX = max.x - min.x + 1;
     mapContext.maxY = max.y - min.y + 1;
 
@@ -368,3 +368,4 @@ void createSaveFromLevelFiles(char * path, char * filename, int fd) {
     }
     freeIndex(index);
 }
+

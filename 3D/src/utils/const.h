@@ -2,9 +2,9 @@
 #ifndef PROJECT_CONST_H
     #define PROJECT_CONST_H
     #define CHUNK_SIZE 30 // Dimension de la map
-    #define JUMP_DURATION 15 // Durée du saut
-    #define JUMP_BASE_SPEED 0.2f // Vitesse du saut
-    #define FALL_BASE_SPEED 0.1f // Vitesse de la chute
+    #define JUMP_DURATION 12 // Durée du saut
+    #define JUMP_BASE_SPEED 0.15f // Vitesse du saut
+    #define FALL_BASE_SPEED 0.15f // Vitesse de la chute
     #define MAX_FALL_SPEED 12 // Vitesse maximale de la chute
     #define PLAYER_HEIGHT 1.8f // Hauteur du joueur
     #define PLAYER_WIDTH 0.1f // Largeur du joueur

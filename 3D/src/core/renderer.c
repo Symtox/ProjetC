@@ -3,10 +3,11 @@
 #include "../../includes/rlgl.h"
 #include <string.h>
 #include <stdio.h>
+#include "../utils/utils.h"
 #include <stdlib.h>
 #define DEBUG_INFO_LINE_COUNT 5
 
-drawBundle_t drawBundle = {0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0};
+drawBundle_t drawBundle = (drawBundle_t){0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0, {0}, 0, 0, 0};
 
 int isRendererLoaded = 0;
 
@@ -20,8 +21,8 @@ Model powerUpHealthModel;
 
 
 
-
-
+Texture2D handsTexture;
+Texture2D winScreenTexture;
 Texture2D heartFullTexture;
 Texture2D heartEmptyTexture;
 Texture2D keycountTexture;
@@ -51,6 +52,8 @@ void initRenderer(player_t * player) {
     if(isRendererLoaded) {
         return;
     }
+    handsTexture = LoadTexture("./assets/Textures/ak.png");
+    winScreenTexture = LoadTexture("./assets/Textures/winScreen.png");
     drawBundle.player = player;
     isRendererLoaded = 1;
     powerUpAttackModel = LoadModel("./assets/Models/sword.obj");
@@ -161,6 +164,9 @@ void DrawChunk(chunk_t chunk) {
     }
     for(int i = 0; i < chunk.powerUpCount; i++) {
         DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
+    }
+    if(chunk.endGameY != -1 && chunk.endGameX != -1) {
+        DrawEndGameTile(chunk.endGameX + chunk.x * CHUNK_SIZE, chunk.endGameY + chunk.y * CHUNK_SIZE);
     }
 }
 
@@ -409,24 +415,34 @@ void DrawDebug() {
     }
 }
 
+void DrawEndGameTile(int x, int y) {
+    DrawCube((Vector3){x, fmodf(GetTime(), 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime(), 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 1, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 1, 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 2, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 2, 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 3, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 3, 4) * (PI / 4))});
+}
+
 /**
  * Fonction principale de rendering
  * @param map
  */
 void Render(chunkedMap_t map) {
-        ClearBackground(BLACK);
-        BeginMode3D(*drawBundle.player->camera);
+    ClearBackground(BLACK);
+    BeginMode3D(*drawBundle.player->camera);
 
-        DrawMap(map); // Afichage de la map
+    DrawMap(map); // Afichage de la map
+    drawBullets();
+    EndMode3D();
+    DrawEndScreen(); //Affichage de l'écran de fin
+    DrawDoorHint(); //Affichage des textes
+    DrawFightHint();
+    DrawOverlay(); //Overlay
+    DrawDebug(); //Debug menu
+    drawGodMod();
+    DrawFightDialog(); //Dialog
+    DrawWinScreen();
 
-        EndMode3D();
-        DrawEndScreen(); //Affichage de l'écran de fin
-        DrawDoorHint(); //Affichage des textes
-        DrawFightHint();
-        DrawOverlay(); //Overlay
-        DrawDebug(); //Debug menu
-        DrawFightDialog(); //Dialog
-        DrawPauseMenu();
+    DrawPauseMenu();
 
 }
 
@@ -447,10 +463,31 @@ void DrawDoorHint() {
     }
 }
 
+void drawGodMod() {
+    if(drawBundle.godMode) {
+        DrawTexture(handsTexture, (GetScreenWidth()/2 - handsTexture.width/2),GetScreenHeight()-handsTexture.height, WHITE);
+    }
+}
+
+
+void drawBullets() {
+    for(int i = 0; i < drawBundle.bulletCount; i++) {
+        DrawSphere(drawBundle.bullets[i].position, 0.05, CLITERAL(Color){120, 120, 120, 255});
+    }
+}
+
+
 void DrawEndScreen() {
     if(drawBundle.player->statistics.health <= 0) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){50, 50, 50, 200});
         DrawTexturePro(endScreenTexture, (Rectangle){0, 0, endScreenTexture.width, endScreenTexture.height}, (Rectangle){0, 0, WINDOW_GAME_WIDTH, WINDOW_GAME_HEIGHT}, (Vector2){0, 0}, 0, GRAY);
+    }
+}
+
+void DrawWinScreen() {
+    if(drawBundle.win) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){50, 50, 50, 200});
+        DrawTexturePro(winScreenTexture, (Rectangle){0, 0, winScreenTexture.width, winScreenTexture.height}, (Rectangle){0, 0, WINDOW_GAME_WIDTH, WINDOW_GAME_HEIGHT}, (Vector2){0, 0}, 0, WHITE);
     }
 }
 

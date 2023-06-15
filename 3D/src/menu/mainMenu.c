@@ -1,9 +1,7 @@
 #include "../../includes/raylib.h"
-#include "../utils/const.h"
 #include "mainMenu.h"
 #include <stdlib.h>
 #include <dirent.h>
-#include "../utils/utils.h"
 #include <string.h>
 #define MAX_SAVE_COUNT 6
 //////////////Varibales

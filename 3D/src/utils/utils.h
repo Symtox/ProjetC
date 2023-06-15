@@ -1,5 +1,12 @@
 #ifndef PROJECT_UTILS_H
 #define PROJECT_UTILS_H
+typedef struct {
+    Vector3 position;
+    Vector3 direction;
+    int timeToLive;
+}bullet_t;
+#define BULLET_SPEED 0.9f
+
 int logFile(const char *);
 float distance3D(Vector3, Vector3);
 void initLogger();

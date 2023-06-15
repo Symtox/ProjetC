@@ -3,7 +3,7 @@
 #include "../utils/const.h"
 #include "../board/board.h"
 #include "../board/entities.h"
-
+#include "../utils/utils.h"
 #ifndef PROJECT_PHYSICS_H
     #define PROJECT_PHYSICS_H
 

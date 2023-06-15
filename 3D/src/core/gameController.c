@@ -11,6 +11,9 @@
 #include "../menu/mainMenu.h"
 int controlsToggles[4] = {0, 0, 0, 0};
 
+bullet_t * bullets = NULL;
+int bulletCount = 0;
+
 typedef enum controls {
     FREE_WALK = 0,
     DRAW_CEILING = 1,
@@ -32,6 +35,7 @@ monster_t * monsterInFight = NULL;
 int isLoaded = 0;
 int isGamePaused = 0;
 int isWin = 0;
+int godMode = 0;
 
 int fd = -1;
 void pickUpItem();
@@ -80,7 +84,7 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, char * savePa
  * Sinon Appelle les fonctions de gestion du joueur et de la map
  */
 void Tick() {
-    if(!isGamePaused) {
+    if(!isGamePaused && !isWin) {
         if(player->statistics.health <= 0) {
             drawBundle_t bundle = getDrawBundle();
             bundle.canOpenFight = 0;
@@ -94,6 +98,7 @@ void Tick() {
             handlePlayerShortcuts();
             loadCurrentMap(fd, map, player->camera->position);
             pickUpItem();
+            shoot();
             endGame();
         }
     }
@@ -192,6 +197,8 @@ void handlePlayerShortcuts() {
         player->statistics.damage = 1000;
         player->statistics.armor = 1000;
         player->keyCount = 99;
+        godMode = 1;
+        drawBundle.godMode = 1;
     }
 
     if((IsKeyDown(KEY_F) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT))) && !controlsToggles[FREE_WALK]) {
@@ -252,6 +259,99 @@ void save() {
     saveMapContext(fd, *map);
 
 }
+
+
+
+void shoot() {
+    drawBundle_t drawBundle = getDrawBundle();
+    if(!godMode) {
+        return;
+    }
+
+    if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        bullet_t bullet;
+        Ray ray = GetMouseRay(GetMousePosition(), *player->camera);
+        bullet.position = ray.position;
+        Vector3 direction = Vector3Normalize(ray.direction);
+        bullet.direction.x = direction.z;
+        bullet.direction.y = Vector3Normalize(player->camera->target).y;
+        bullet.direction.z = -direction.x;
+        bullet.timeToLive = 50;
+        addBullet(bullet);
+        drawBundle.bulletCount = bulletCount;
+        drawBundle.bullets = bullets;
+    }
+    updateBullets();
+    setDrawBundle(drawBundle);
+
+}
+
+void addBullet(bullet_t target) {
+    for(int i = 0; i < bulletCount; i++) {
+        if(bullets[i].timeToLive <= 0) {
+            bullets[i].position = target.position;
+            bullets[i].direction = target.direction;
+            bullets[i].timeToLive = target.timeToLive;
+            logFile(TextFormat("remplacement d'une balle %d", bulletCount));
+            return;
+        }
+    }
+    logFile(TextFormat("Ajout d'une balle %d", bulletCount));
+    bullets = bulletCount == 0 ? malloc(sizeof(bullet_t)) : realloc(bullets, sizeof(bullet_t) * (bulletCount + 1));
+    bullets[bulletCount].position = target.position;
+    bullets[bulletCount].direction = target.direction;
+    bullets[bulletCount].timeToLive = target.timeToLive;
+    bulletCount++;
+
+
+}
+
+void updateBullets() {
+    for(int i = 0; i < bulletCount; i++) {
+        float bulletX = bullets[i].position.x;
+        float bulletZ = bullets[i].position.z;
+        float bulletY = bullets[i].position.y + 0.7f;
+        int chunkX;
+        int chunkY;
+        if(bullets[i].timeToLive <= 0) {
+            bullets[i].position.x = -1;
+            bullets[i].position.y = -1;
+            bullets[i].position.z = -1;
+            bullets[i].direction.x = 0;
+            bullets[i].direction.y = 0;
+            bullets[i].direction.z = 0;
+            bullets[i].timeToLive = 0;
+            continue;
+        }
+        bullets[i].position.x += bullets[i].direction.x * BULLET_SPEED;
+        bullets[i].position.z += bullets[i].direction.z * BULLET_SPEED;
+        bullets[i].position.y += bullets[i].direction.y * BULLET_SPEED;
+        bullets[i].timeToLive--;
+
+        toChunkCoordsF(&bulletX, &bulletZ, &chunkX, &chunkY, *map);
+        if(chunkX == -1 || chunkY == -1 || bulletY < 0 || bulletY >= MAX_Y || bulletX < 0 || bulletX >= CHUNK_SIZE || bulletZ < 0 || bulletZ >= CHUNK_SIZE) {
+            continue;
+        }
+        map->chunks[chunkX][chunkY].chunk[(int)bulletX][(int)bulletY][(int)bulletZ] = 0;
+        for(int j = 0; j < map->chunks[chunkX][chunkY].monsterCount; j++) {
+            if((int)map->chunks[chunkX][chunkY].monsters[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].monsters[j].position.z == (int)bulletZ) {
+                map->chunks[chunkX][chunkY].monsters[j].isDead = 1;
+                bullets[i].timeToLive = 0;
+            }
+        }
+
+        for(int j = 0; j < map->chunks[chunkX][chunkY].doorCount; j++) {
+            if((int)map->chunks[chunkX][chunkY].doors[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].doors[j].position.z == (int)bulletZ) {
+                map->chunks[chunkX][chunkY].doors[j].opened = 1;
+                bullets[i].timeToLive = 0;
+            }
+        }
+    }
+
+
+}
+
+
 
 /**
  * vérifie si le joueur est à proximité d'un porte + si il a une clé
@@ -454,6 +554,10 @@ void saveAndQuit() {
     if(!isLoaded) {
         return;
     }
+    if(bulletCount > 0) {
+        free(bullets);
+    }
+    bulletCount = 0;
     destroyRenderer();
     savePlayerContext(fd, *player);
     saveMap(map, fd);
@@ -480,6 +584,8 @@ void handlePauseMenuAction() {
             isGamePaused = false;
             drawBundle.paused = false;
             drawBundle.win = 0;
+            isWin = 0;
+            godMode = 0;
             monsterInFight = NULL;
             player->inFight = 0;
 
@@ -494,15 +600,17 @@ void handlePauseMenuAction() {
  * Check si le joueur est suffisament proche de la case de fin
  */
 void endGame() {
+    drawBundle_t drawBundle = getDrawBundle();
     int chunkX, chunkY;
     float x = player->camera->position.x, z = player->camera->position.z;
     toChunkCoordsF(&x, &z, &chunkX, &chunkY, *map);
-    if(chunkX == -1) {
+    if(chunkX == -1 || map->chunks[chunkX][chunkY].endGameX == -1 || map->chunks[chunkX][chunkY].endGameY == -1) {
         return;
     }
     float distanceToFinish = distance3D((Vector3){x, player->camera->position.y, z}, (Vector3){map->chunks[chunkX][chunkY].endGameX, 0, map->chunks[chunkX][chunkY].endGameY});
-    if(distanceToFinish < 1) {
-        saveAndQuit();
-        setCurrentScene(MAIN_MENU_VIEW);
+    if(distanceToFinish < 2) {
+        drawBundle.win = 1;
+        isWin = 1;
     }
+    setDrawBundle(drawBundle);
 }

@@ -4,6 +4,7 @@
 #ifndef PROJECT_RENDERER_H
 #define PROJECT_RENDERER_H
 #include "../board/entities.h"
+#include "../utils/utils.h"
 
 /**
  * Dialog de combat
@@ -31,11 +32,16 @@ typedef struct {
     int canOpenFight; // Pour les indice de début de combat
     int win;
     dialog_t dialog; // Dialog lié au combat
+    int godMode;
+    int bulletCount;
+    bullet_t * bullets;
 }drawBundle_t;
 
 Texture2D getKeyTexture(KeyboardKey key);
 
 void initRenderer(player_t * player);
+void DrawEndGameTile(int x, int y);
+void DrawWinScreen();
 void DrawEndScreen();
 void DrawFightDialog();
 void DrawDoorHint();
@@ -43,6 +49,7 @@ void DrawMap(chunkedMap_t);
 void DrawChunk(chunk_t);
 void DrawOverlay();
 void DrawDebug();
+void drawGodMod();
 void DrawCubeCustom(Texture2D blockTexture, Vector3 position, float width, float height, float length, Color color);
 void DrawFightHint();
 void Render(chunkedMap_t);
@@ -53,6 +60,7 @@ void toggleDrawOverlay();
 
 drawBundle_t getDrawBundle();
 void setDrawBundle(drawBundle_t);
+void drawBullets();
 
 int render3DText(const char * , Vector3 , float);
 void DrawKey(DoorKey_t, int, int);
