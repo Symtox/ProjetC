@@ -354,11 +354,12 @@ UTILS_DIR = utils
 SAVE_DIR = save
 BOARD_DIR = board
 OBJ_DIR = obj
+MENU_DIR = menu
 
 # Define all object files from source files
 SRC = $(call rwildcard, *.c, *.h)
 #OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-OBJS ?= $(SRC_DIR)/app.c $(SRC_DIR)/$(CORE_DIR)/physics.c $(SRC_DIR)/$(CORE_DIR)/renderer.c $(SRC_DIR)/$(CORE_DIR)/gameController.c $(SRC_DIR)/$(UTILS_DIR)/utils.c $(SRC_DIR)/$(SAVE_DIR)/save.c $(SRC_DIR)/$(SAVE_DIR)/index.c $(SRC_DIR)/$(BOARD_DIR)/board.c $(SRC_DIR)/$(SAVE_DIR)/fileConverter.c
+OBJS ?= $(SRC_DIR)/app.c $(SRC_DIR)/$(CORE_DIR)/physics.c $(SRC_DIR)/$(CORE_DIR)/renderer.c $(SRC_DIR)/$(CORE_DIR)/gameController.c $(SRC_DIR)/$(UTILS_DIR)/utils.c $(SRC_DIR)/$(SAVE_DIR)/save.c $(SRC_DIR)/$(BOARD_DIR)/board.c $(SRC_DIR)/$(SAVE_DIR)/fileConverter.c $(SRC_DIR)/$(MENU_DIR)/mainMenu.c
 
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
