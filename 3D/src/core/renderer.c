@@ -1,26 +1,31 @@
 #include "renderer.h"
 #include "../../includes/raymath.h"
-#include "../utils/utils.h"
 #include "../../includes/rlgl.h"
+#include <string.h>
+#include <stdio.h>
+#include "../utils/utils.h"
+#include <stdlib.h>
 #define DEBUG_INFO_LINE_COUNT 5
-drawBundle_t drawBundle = {0, 0, 1, {0, 0, 0}, {0, 0, 0}, 0, 0, 0};
 
+drawBundle_t drawBundle = (drawBundle_t){0, 0, 1, 0, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0, {0}, 0, 0, 0};
+
+int isRendererLoaded = 0;
 
 Model keyModel;
 Model potionModel;
-Model cubeModel;
 Model doorModel;
 Model monsterModel;
 Model powerUpAttackModel;
 Model powerUpShieldModel;
 Model powerUpHealthModel;
 
-Texture2D keyETexture;
 
 
+Texture2D handsTexture;
+Texture2D winScreenTexture;
 Texture2D heartFullTexture;
 Texture2D heartEmptyTexture;
-Texture2D keycount;
+Texture2D keycountTexture;
 Texture2D overlayBackgroundTexture;
 Texture2D bigHeartTexture;
 Texture2D bigArmorTexture;
@@ -31,49 +36,63 @@ Texture2D floorTexture;
 Texture2D crackedWallTexture;
 Texture2D doorUpTexture;
 Texture2D doorDownTexture;
-Texture2D potionTexture;
 Texture2D swordTexture;
 Texture2D armorTexture;
 Texture2D fightDialogBackground;
+Texture2D endScreenTexture;
 
+Texture2D pauseMenuBackground;
+Texture2D pauseMenuButton;
+
+/**
+ * Charge les models
+ * @param player
+ */
 void initRenderer(player_t * player) {
+    if(isRendererLoaded) {
+        return;
+    }
+    handsTexture = LoadTexture("./assets/Textures/ak.png");
+    winScreenTexture = LoadTexture("./assets/Textures/winScreen.png");
     drawBundle.player = player;
-    monsterModel = LoadModel("./assets/monster2.glTF");
-    keyModel = LoadModel("./assets/key.obj");
-    doorModel = LoadModel("./assets/door.obj");
-    potionModel = LoadModel("./assets/potion1.obj");
-    heartFullTexture = LoadTexture("./assets/heart.png");
-    heartEmptyTexture = LoadTexture("./assets/heart_empty.png");
-    armorTexture = LoadTexture("./assets/armor.png");
-    swordTexture = LoadTexture("./assets/sword.png");
-    keycount = LoadTexture("./assets/keycount.png");
-    overlayBackgroundTexture = LoadTexture("./assets/background.png");
-    bigHeartTexture = LoadTexture("./assets/bigheart.png");
-    bigArmorTexture = LoadTexture("./assets/bigarmor.png");
-    bigSwordTexture = LoadTexture("./assets/bigsword.png");
-    wingedHeartTexture = LoadTexture("./assets/wingsheart.png");
-    wallTexture = LoadTexture("./assets/mossy_stone_bricks.png");
-    floorTexture = LoadTexture("./assets/stone_bricks.png");
-    crackedWallTexture = LoadTexture("./assets/cracked_stone.png");
-    doorUpTexture = LoadTexture("./assets/door_up.png");
-    doorDownTexture = LoadTexture("./assets/door_down.png");
-    powerUpAttackModel = LoadModel("./assets/sword.obj");
-    powerUpShieldModel = LoadModel("./assets/shield.obj");
-    powerUpHealthModel = LoadModel("./assets/love_heart.glTF");
-    fightDialogBackground = LoadTexture("./assets/dialog.png");
+    isRendererLoaded = 1;
+    powerUpAttackModel = LoadModel("./assets/Models/sword.obj");
+    powerUpShieldModel = LoadModel("./assets/Models/shield.obj");
+    powerUpHealthModel = LoadModel("./assets/Models/love_heart.glTF");
+    monsterModel = LoadModel("./assets/Models/monster2.glTF");
+    keyModel = LoadModel("./assets/Models/key.obj");
+    doorModel = LoadModel("./assets/Models/door.obj");
+    potionModel = LoadModel("./assets/Models/potion1.obj");
 
-    keyETexture = LoadTexture("./assets/key_e.png");
+    pauseMenuBackground = LoadTexture("./assets/Textures/pauseMenu/pauseMenuBackground.png");
+    pauseMenuButton = LoadTexture("./assets/Textures/pauseMenu/pauseMenuButton.png");
 
+    heartFullTexture = LoadTexture("./assets/Textures/heart.png");
+    heartEmptyTexture = LoadTexture("./assets/Textures/heart_empty.png");
+    armorTexture = LoadTexture("./assets/Textures/armor.png");
+    swordTexture = LoadTexture("./assets/Textures/sword.png");
+    keycountTexture = LoadTexture("./assets/Textures/keycount.png");
+    overlayBackgroundTexture = LoadTexture("./assets/Textures/background.png");
+    bigHeartTexture = LoadTexture("./assets/Textures/bigheart.png");
+    bigArmorTexture = LoadTexture("./assets/Textures/bigarmor.png");
+    bigSwordTexture = LoadTexture("./assets/Textures/bigsword.png");
+    wingedHeartTexture = LoadTexture("./assets/Textures/wingsheart.png");
+    wallTexture = LoadTexture("./assets/Textures/mossy_stone_bricks.png");
+    floorTexture = LoadTexture("./assets/Textures/stone_bricks.png");
+    crackedWallTexture = LoadTexture("./assets/Textures/cracked_stone.png");
+    doorUpTexture = LoadTexture("./assets/Textures/door_up.png");
+    doorDownTexture = LoadTexture("./assets/Textures/door_down.png");
+    fightDialogBackground = LoadTexture("./assets/Textures/dialog.png");
 
-
-    //potion = LoadTexture("./assets/potion.png"); 
-    
-
-
+    endScreenTexture = LoadTexture("./assets/Textures/endScreen.png");
 }
 
 
-
+/**
+ * Retourne une texture de mur suivant la valeur déterminé au chargement
+ * @param type
+ * @return
+ */
 Texture2D getWallTexture(int type) {
     switch (type) {
         case 1:
@@ -87,7 +106,10 @@ Texture2D getWallTexture(int type) {
 }
 
 
-
+/**
+ * Render all chunks
+ * @param map
+ */
 void DrawMap(chunkedMap_t map) {
     for (int i = 0; i < map.width; i++) {
         for (int j = 0; j < map.height; j++) {
@@ -98,22 +120,26 @@ void DrawMap(chunkedMap_t map) {
     }
 }
 
-//TODO Add DrawCeilling & DrawGround
+/**
+ * Dessine un chunk
+ * @param chunk
+ */
 void DrawChunk(chunk_t chunk) {
-    //GROUND
     for(int x = chunk.x * CHUNK_SIZE; x < (chunk.x + 1) * CHUNK_SIZE; x++) {
         for(int y = 0; y < MAX_Y; y++) {
             for(int z = chunk.y * CHUNK_SIZE; z < (chunk.y + 1) * CHUNK_SIZE; z++) {
+                //Sol
                 if(y == 0){
                     DrawCubeCustom(floorTexture, (Vector3){x + 0.5, -0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                     continue;
                 }
-                if(y==5 && drawBundle.drawCeiling){
+                //Plafond
+                else if(y==WALL_HEIGHT + 1 && drawBundle.drawCeiling){
                     DrawCubeCustom(floorTexture, (Vector3){x + 0.5, 4.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                     
                 }
-            
-                if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0) {
+                //MUR
+                else if(chunk.chunk[x%CHUNK_SIZE][y][z%CHUNK_SIZE]!=0) {
                     DrawCubeCustom(getWallTexture(chunk.chunk[x % CHUNK_SIZE][y][z % CHUNK_SIZE]),
                                    (Vector3) {x + 0.5, y - 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, WHITE);
                     //DrawCubeWires((Vector3) {x + 0.5, y- 0.5, z + 0.5}, 1.0f, 1.0f, 1.0f, MAROON);
@@ -139,8 +165,20 @@ void DrawChunk(chunk_t chunk) {
     for(int i = 0; i < chunk.powerUpCount; i++) {
         DrawPowerUp(chunk.powerUps[i], chunk.x, chunk.y);
     }
+    if(chunk.endGameY != -1 && chunk.endGameX != -1) {
+        DrawEndGameTile(chunk.endGameX + chunk.x * CHUNK_SIZE, chunk.endGameY + chunk.y * CHUNK_SIZE);
+    }
 }
 
+/**
+ * Draw a custom cube (Comes from github)
+ * @param texture
+ * @param position
+ * @param width
+ * @param height
+ * @param length
+ * @param color
+ */
 void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float height, float length, Color color){
     float x = position.x;
     float y = position.y;
@@ -281,83 +319,85 @@ void DrawCubeCustom(Texture2D texture, Vector3 position, float width, float heig
     rlDisableTexture();
 }
 
-
-// gerer le max health et faire un design
-// quand triche faire un design armor et epee different
+/**
+ * Dessine l'overlay (inventaire)
+ */
 void DrawOverlay() {
-    int bigHeart = 0;
+    int bigHeart; // nombre de ligne de coeur complet
     int smallheart = drawBundle.player->statistics.health;
-    int bigArmor = 0;
+    int bigArmor; // nombre de ligne d'amure complet
     int smallarmor = drawBundle.player->statistics.armor;
-    int bigDamage = 0;
+    int bigDamage ;
     int smalldamage = drawBundle.player->statistics.damage;
 
+    if(drawBundle.player->statistics.health <= 0) {
+        smallheart = 0;
+        bigHeart = 0;
+    } else {
+        if(smallheart % 10 == 0){
+            smallheart = 10;
+            bigHeart = (drawBundle.player->statistics.health / 10)-1;
+        }
+        else {
+            smallheart = smallheart % 10;
+            bigHeart = drawBundle.player->statistics.health / 10;
+        }
+    }
 
-    if(smallheart % 10 == 0){
-        smallheart = 10;
-        bigHeart = (drawBundle.player->statistics.health / 10)-1;
-    }
-    else {
-        smallheart = smallheart % 10;
-        bigHeart = drawBundle.player->statistics.health / 10;
-    }
     if(smallarmor % 10 == 0){
         smallarmor = 10;
         bigArmor = (drawBundle.player->statistics.armor/ 10)-1;
-    }
-    else {
+    } else {
         smallarmor = smallarmor % 10;
         bigArmor = drawBundle.player->statistics.armor / 10;
     }
+
     if(smalldamage % 10 == 0){
         smalldamage = 10;
         bigDamage = (drawBundle.player->statistics.damage/ 10)-1;
-    }
-    else {
+    } else {
         smalldamage = smalldamage % 10;
         bigDamage = drawBundle.player->statistics.damage / 10;
     }
 
 
-     if(drawBundle.drawOverlay) {
-        int i = 0;
-
+    if(drawBundle.drawOverlay) {
         DrawTexture(overlayBackgroundTexture, 0, 0, WHITE);
-        for(i = 0; i < 10; i++) {
+        for(int i = 0; i < 10; i++) {
             DrawTexture(heartEmptyTexture, 7 + 36 * i, 15, WHITE);
         }
-        for(i = 0; i < smallheart; i++) {
+        for(int i = 0; i < smallheart; i++) {
             DrawTexture(heartFullTexture, 7 + 36 * i, 15, WHITE);
         }
         
 
-        if( drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth){
-                DrawTexture(wingedHeartTexture, 430, 13, WHITE);
-                
+        if(drawBundle.player->statistics.health == drawBundle.player->statistics.maxHealth) {
+            DrawTexture(wingedHeartTexture, 430, 13, WHITE);
+        } else {
+            DrawTexture(bigHeartTexture,400, 13, WHITE);
+            DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
         }
-        else {
-                DrawTexture(bigHeartTexture,400, 13, WHITE);
-                DrawText(TextFormat("x %d", bigHeart), 435,20, 15,WHITE);
-            }
           
-        for(i = 0; i < smallarmor; i++) {
+        for(int i = 0; i < smallarmor; i++) {
             DrawTexture(armorTexture, 5 + 36* i, 48, WHITE);
         }
-        for(i = 0; i < smalldamage; i++) {
-            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
-        }
-        DrawTexture(keycount, 150, 133, WHITE);
-        DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
-
         DrawTexture(bigArmorTexture,400, 47, WHITE);
         DrawText(TextFormat("x %d", bigArmor), 435 ,55, 15,WHITE);
 
+        for(int i = 0; i < smalldamage; i++) {
+            DrawTexture(swordTexture, 2 + 36 * i, 86, WHITE);
+        }
         DrawTexture(bigSwordTexture,400, 87, WHITE);
         DrawText(TextFormat("x %d", bigDamage), 435 ,92, 15,WHITE);
 
-     }
-}
 
+        DrawTexture(keycountTexture, 150, 133, WHITE);
+        DrawText(TextFormat("x %d", drawBundle.player->keyCount),190,140, 15, WHITE);
+    }
+}
+/**
+ * Affiche l'overlay de debug
+ */
 void DrawDebug() {
     if(drawBundle.drawDebug) {
 
@@ -374,74 +414,134 @@ void DrawDebug() {
         }
     }
 }
+
+void DrawEndGameTile(int x, int y) {
+    DrawCube((Vector3){x, fmodf(GetTime(), 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime(), 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 1, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 1, 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 2, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 2, 4) * (PI / 4))});
+    DrawCube((Vector3){x, fmodf(GetTime() + 3, 4), y}, 1.5, 0.1, 1.5, CLITERAL(Color){0, 255, 0, 255 * sin(fmodf(GetTime() + 3, 4) * (PI / 4))});
+}
+
+/**
+ * Fonction principale de rendering
+ * @param map
+ */
 void Render(chunkedMap_t map) {
-        ClearBackground(BLACK);
-        BeginMode3D(*drawBundle.player->camera);
+    ClearBackground(BLACK);
+    BeginMode3D(*drawBundle.player->camera);
 
-        DrawMap(map);
+    DrawMap(map); // Afichage de la map
+    drawBullets();
+    EndMode3D();
+    DrawEndScreen(); //Affichage de l'écran de fin
+    DrawDoorHint(); //Affichage des textes
+    DrawFightHint();
+    DrawOverlay(); //Overlay
+    DrawDebug(); //Debug menu
+    drawGodMod();
+    DrawFightDialog(); //Dialog
+    DrawWinScreen();
 
-        EndMode3D();
-        DrawDoorHint();
-        DrawFightHint();
-        DrawOverlay();
-        DrawDebug();
-        DrawFightDialog();
+    DrawPauseMenu();
 
 }
 
+/**
+ * Affichage des dialog pour ouvrir une porte
+ */
 void DrawDoorHint() {
+    int textSize = 40;
+    char openDoorText[100];
+    strcpy(openDoorText, "Press   to open door");
+    openDoorText[6] = IsGamepadAvailable(0) ? 'Y' : 'O';
+    char * needKeyText = "You need a key to open this door";
     if(drawBundle.canOpenDoor == 1) {
-        DrawText("Press E to open door", 600, 800, 40, WHITE);
+        DrawText(openDoorText, (GetScreenWidth() / 2) - strlen(openDoorText) * textSize/3, GetScreenHeight() * 0.8, textSize, WHITE);
     }
     else if(drawBundle.canOpenDoor == -1) {
-        DrawText("You need a key to open this door", 600, 800, 40, WHITE);
+        DrawText(needKeyText, (GetScreenWidth() / 2) - strlen(needKeyText) * textSize/3, GetScreenHeight() * 0.8, textSize, WHITE);
     }
 }
 
-void DrawFightHint() {
-    if(drawBundle.canOpenFight == 1) {
-        DrawText("Press E to attack", 600, 800, 40, WHITE);
+void drawGodMod() {
+    if(drawBundle.godMode) {
+        DrawTexture(handsTexture, (GetScreenWidth()/2 - handsTexture.width/2),GetScreenHeight()-handsTexture.height, WHITE);
     }
 }
+
+
+void drawBullets() {
+    for(int i = 0; i < drawBundle.bulletCount; i++) {
+        DrawSphere(drawBundle.bullets[i].position, 0.05, CLITERAL(Color){120, 120, 120, 255});
+    }
+}
+
+
+void DrawEndScreen() {
+    if(drawBundle.player->statistics.health <= 0) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){50, 50, 50, 200});
+        DrawTexturePro(endScreenTexture, (Rectangle){0, 0, endScreenTexture.width, endScreenTexture.height}, (Rectangle){0, 0, WINDOW_GAME_WIDTH, WINDOW_GAME_HEIGHT}, (Vector2){0, 0}, 0, GRAY);
+    }
+}
+
+void DrawWinScreen() {
+    if(drawBundle.win) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){50, 50, 50, 200});
+        DrawTexturePro(winScreenTexture, (Rectangle){0, 0, winScreenTexture.width, winScreenTexture.height}, (Rectangle){0, 0, WINDOW_GAME_WIDTH, WINDOW_GAME_HEIGHT}, (Vector2){0, 0}, 0, WHITE);
+    }
+}
+
+/**
+ * Affichage des dialog pour commencer un combat
+ */
+void DrawFightHint() {
+    char fightText[100];
+    strcpy(fightText, "Press   to start fight");
+    fightText[6] = IsGamepadAvailable(0) ? 'X' : 'E';
+    if(drawBundle.canOpenFight == 1) {
+        DrawText(fightText, GetScreenWidth()/2 - strlen(fightText) * 10, GetScreenHeight() * 0.9, 40, WHITE);
+    }
+}
+
+/**
+ * getter pour les options d'affichage
+ * @return
+ */
 drawBundle_t getDrawBundle() {
     return drawBundle;
 }
 
-
+/**
+ * Affichage des dialog de combat
+ */
 void DrawFightDialog() {
     if(drawBundle.player->inFight) {
-        float dialogMarginX = WINDOW_WIDTH/2 - fightDialogBackground.width/2;
-        float dialogMarginY = (WINDOW_HEIGHT - fightDialogBackground.height) * 9/10;
+        float dialogMarginX = WINDOW_GAME_WIDTH/2 - fightDialogBackground.width/2;
+        float dialogMarginY = (WINDOW_GAME_HEIGHT - fightDialogBackground.height) * 9/10;
 
         DrawTexture(fightDialogBackground, dialogMarginX, dialogMarginY, WHITE);
         DrawText(drawBundle.dialog.text, dialogMarginX + 50, dialogMarginY + 50, 20, WHITE);
 
-        DrawTexture(getKeyTexture(drawBundle.dialog.keys[1]), dialogMarginX + 20, dialogMarginY + fightDialogBackground.height * 8/10, WHITE);
+        DrawText(TextFormat("%c :", drawBundle.dialog.keys[0]), dialogMarginX + 20, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
         DrawText(drawBundle.dialog.choices[0], dialogMarginX + 50, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
 
         if(drawBundle.dialog.choiceCount == 2) {
-            DrawText(drawBundle.dialog.choices[1], dialogMarginX + 400, dialogMarginY + fightDialogBackground.height * 8/10, 20, WHITE);
+            DrawText(TextFormat("%c :", drawBundle.dialog.keys[1]), dialogMarginX + 380, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
+            DrawText(drawBundle.dialog.choices[1], dialogMarginX + 400, dialogMarginY + fightDialogBackground.height * 8/10, 15, WHITE);
         }
     }
 }
 
 
-
+/**
+ * Modification des options d'affichage
+ * @param bundle
+ */
 void setDrawBundle(drawBundle_t bundle) {
     drawBundle = bundle;
 }
 
-Texture2D getKeyTexture(KeyboardKey key) {
-    switch (key) {
-        case KEY_E:
-            return keyETexture;
-        default:
-            return keyETexture;
-    }
-}
-
-
-
+// Le code d'en dessous viens essentiellement d'ici https://github.com/raysan5/raylib/blob/master/examples/text/text_draw_3d.c
 #define RAYLIB_NEW_RLGL
 
 // Draw a codepoint in 3D space
@@ -451,6 +551,14 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 // Measure a text works but the text is not drin 3D. For some reason `MeasureTextEx()` just doesn't seem to work so i had to use this instead.
 static Vector3 MeasureText3D(Font font, const char *text, float fontSize, float fontSpacing, float lineSpacing);
 
+/**
+ * Notre code: Permet d'afficher un texte en 3D et de l'orienter vers le joueur
+ * @param font
+ * @param codepoint
+ * @param position
+ * @param fontSize
+ * @param tint
+ */
 int render3DText(const char * text, Vector3 position,float fontSize)
 {
     Vector3 textDimension;
@@ -475,10 +583,7 @@ int render3DText(const char * text, Vector3 position,float fontSize)
     return 0;
 }
 
-//--------------------------------------------------------------------------------------
-// Module Functions Definitions
-//--------------------------------------------------------------------------------------raylib
-// Draw codepoint at specified position in 3D space
+
 static void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, float fontSize, Color tint)
 {
     // Character index position in sprite font
@@ -567,7 +672,6 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
         if (codepoint == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += scale + lineSpacing/(float)font.baseSize*scale;
             textOffsetX = 0.0f;
         }
@@ -599,8 +703,8 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     float textHeight = scale;
     float textWidth = 0.0f;
 
-    int letter = 0;                 // Current character
-    int index = 0;                  // Index position in sprite font
+    int letter;                 // Current character
+    int index;                  // Index position in sprite font
 
     for (int i = 0; i < len; i++)
     {
@@ -641,23 +745,41 @@ static Vector3 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+
+/**
+ * Affiche une épée (power up)
+ * @param sword
+ * @param x
+ * @param y
+ */
 void DrawSword(powerUp_t sword, int x, int y) {
     sword.position.y = sword.position.y + sin((float)GetTime() * 2) * 0.1f + 0.5f;
     sword.position.x += 0.5f + x * CHUNK_SIZE;
     sword.position.z += 0.5f + y * CHUNK_SIZE - 0.2;
-    powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 30 * DEG2RAD, 0, 0});
+    powerUpAttackModel.transform = MatrixRotateXYZ((Vector3){ 30 * DEG2RAD, 0, 0}); // Rotation du model 3D pour faire jolie
     DrawModel(powerUpAttackModel, sword.position, 1.0f, (Color){60,60,60,255});
-   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
 }
 
+/**
+ * Affiche un bouclier
+ * @param shield
+ * @param x
+ * @param y
+ */
 void DrawShield(powerUp_t shield,int x,int y) {
     shield.position.y = shield.position.y + sin((float)GetTime() * 2) * 0.1f + 0.7f;
     shield.position.x += 0.5f + x * CHUNK_SIZE;
     shield.position.z += 0.5f + y * CHUNK_SIZE;
     powerUpShieldModel.transform = MatrixRotateXYZ((Vector3){ 0, 0, 0});
     DrawModel(powerUpShieldModel, shield.position, 0.3f, (Color){100, 100, 100, 200});
-   // potionModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture=potion;
 }
+
+/**
+ * En fonction du type de power up on dessine le model associé
+ * @param powerUp
+ * @param x
+ * @param y
+ */
 void DrawPowerUp(powerUp_t powerUp,int x, int y) {
     if(powerUp.pickedUp) {
         return;
@@ -737,23 +859,64 @@ void DrawMonster(monster_t monster, int x, int y){
         (Vector3){monster.position.x,(monster.position.y)+2,monster.position.z},
         2.0
     );
-
-
-    
-
-
 }
 
 
+/**
+ * Déchargement des textures
+ */
+void destroyRenderer() {
+    if(!isRendererLoaded) {
+        return;
+    }
+    UnloadModel(monsterModel);
+    UnloadModel(powerUpAttackModel);
+    UnloadModel(powerUpHealthModel);
+    UnloadModel(powerUpShieldModel);
+    UnloadModel(potionModel);
+    UnloadModel(keyModel);
+
+    UnloadTexture(doorUpTexture);
+    UnloadTexture(doorDownTexture);
+    UnloadTexture(crackedWallTexture);
+    UnloadTexture(floorTexture);
+    UnloadTexture(wallTexture);
+    UnloadTexture(wingedHeartTexture);
+    UnloadTexture(armorTexture);
+    UnloadTexture(swordTexture);
+    UnloadTexture(fightDialogBackground);
+    UnloadTexture(bigArmorTexture);
+    UnloadTexture(bigHeartTexture);
+    UnloadTexture(bigSwordTexture);
+    UnloadTexture(overlayBackgroundTexture);
+    UnloadTexture(keycountTexture);
+    UnloadTexture(heartEmptyTexture);
+    UnloadTexture(heartFullTexture);
+    UnloadTexture(pauseMenuButton);
+    UnloadTexture(pauseMenuBackground);
+    isRendererLoaded = 0;
+}
+
+void DrawPauseMenu() {
+    if(!drawBundle.paused) {
+        return;
+    }
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color){0, 0, 0, 100});
+    DrawTexture(pauseMenuBackground, GetScreenWidth()/2 - pauseMenuBackground.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2, WHITE);
+    DrawTexture(pauseMenuButton, GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 85, WHITE);
+    DrawTexture(pauseMenuButton, GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 160, WHITE);
+    DrawText("Paused", GetScreenWidth()/2 - MeasureText("Paused", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 30, 20, WHITE);
+    DrawText("Resume", GetScreenWidth()/2 - MeasureText("Resume", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 110, 20, WHITE);
+    DrawText("Quit", GetScreenWidth()/2 - MeasureText("Quit", 20)/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 185, 20, WHITE);
+}
 
 
+Rectangle getPauseMenuResumeButtonBounds() {
+    Rectangle bounds = (Rectangle){GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 85, pauseMenuButton.width, pauseMenuButton.height};
+    return bounds;
+}
 
-
-
-
-
-
-
-
-
-
+Rectangle getPauseMenuQuitButtonBounds() {
+    Rectangle bounds = (Rectangle){GetScreenWidth()/2 - pauseMenuButton.width/2, GetScreenHeight()/2 - pauseMenuBackground.height/2 + 160, pauseMenuButton.width, pauseMenuButton.height};
+    return bounds;
+}

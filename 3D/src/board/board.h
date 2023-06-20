@@ -3,10 +3,7 @@
 #include "../utils/const.h"
 #include "../../includes/raylib.h"
 #include "entities.h"
-#define POTION_HEALING 1
-#define POWER_UP_ATTACK 1
-#define POWER_UP_DEFENSE 1
-#define POWER_UP_MAX_HP 1
+
 typedef struct {
     int opened;
     Vector3 position;
@@ -17,6 +14,7 @@ typedef struct {
     Vector3 position;
 } potion_t;
 
+// Type de power up
 typedef enum {
     ATTACK = 1,
     DEFENSE = 2,
@@ -34,8 +32,9 @@ typedef struct {
     Vector3 position;
 } DoorKey_t;
 
+//UN chunk défini un troncon de la map global, soit un tableau de 30 x 30, les block en Y sont extrapolés du fichier txt
 typedef struct {
-    int x;
+    int x; // Coordonnées du chunk dans la map
     int y;
     int *** chunk;
 
@@ -53,9 +52,15 @@ typedef struct {
 
     DoorKey_t * keys;
     int keyCount;
+
+    int endGameX;
+    int endGameY;
 } chunk_t;
 
-
+/**
+ * Structure permettant uniquement la lecture du fichier txt
+ * Les données sont ensuite copiées dans la structure chunk_t
+ */
 typedef struct {
     int x;
     int y;
@@ -80,18 +85,24 @@ typedef struct {
     char * north;
     char * west;
     char * south;
+
+    int endGameX;
+    int endGameY;
 } chunk_txt;
 
+/**
+ * Structure de map. Ceci ne représente pas la map globale
+ */
 typedef struct {
-    int centerX;
+    int centerX; // Coordonées du chunk central
     int centerY;
+    // Tableau de chunk de taille width x height
     chunk_t ** chunks;
-    int width;
+    int width; // Taille du tableau, correspond à la "render distance", taille de rendu
     int height;
-    int maxX;
+    int maxX; // Taille de la map globale (afin de corriger les problèmes de bordure)
     int maxY;
 } chunkedMap_t;
-
 
 void freeMap(chunkedMap_t * map);
 void freeChunk(chunk_t * chunk);

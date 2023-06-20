@@ -5,18 +5,17 @@
 #include "board/board.h"
 #include "core/renderer.h"
 #include "core/gameController.h"
-
+#include "menu/mainMenu.h"
 
 int main(void)
 {
     chunkedMap_t map;
     player_t player = {0};
 
-    int loadMapFromSave = 0;
-
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Maze slayer");
-    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetConfigFlags(FLAG_FULLSCREEN_MODE);
+    InitWindow(0, 0, "Maze slayer");
     initLogger();
+
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 8.0f };    // Camera position
@@ -27,22 +26,30 @@ int main(void)
 
     player.camera = &camera;
 
-    initRenderer(&player);
-    initGameController(&player, &map, loadMapFromSave);
+    initMenu();
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!getQuitGameAction())        // Detect window close button or ESC key
     {
-        BeginDrawing();
-        Tick();
-        Render(map);
-        //----------------------------------------------------------------------------------
-        EndDrawing();
+ 		BeginDrawing();
 
+        if(!getPlayGameAction()) {
+            ClearBackground(RAYWHITE);
+			renderMenu();
+			handleMenu();
+        }
+        else {
+            initGameController(&player, &map, getSaveName());
+            initRenderer(&player);
+            Render(map);
+            Tick();
+        }
+        EndDrawing();
     }
-    //savePlayer();
+    saveAndQuit();
     endLogger();
+    destroyMenu();
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
@@ -50,6 +57,3 @@ int main(void)
 
     return 0;
 }
-
-
-

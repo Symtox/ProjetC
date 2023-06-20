@@ -6,7 +6,13 @@
 #include <fcntl.h>
 #include "../utils/utils.h"
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include "../menu/mainMenu.h"
 int controlsToggles[4] = {0, 0, 0, 0};
+
+bullet_t * bullets = NULL;
+int bulletCount = 0;
 
 typedef enum controls {
     FREE_WALK = 0,
@@ -26,45 +32,96 @@ player_t * player;
 chunkedMap_t * map;
 fightState_e fightState = NO_FIGHT;
 monster_t * monsterInFight = NULL;
+int isLoaded = 0;
+int isGamePaused = 0;
+int isWin = 0;
+int godMode = 0;
 
 int fd = -1;
 void pickUpItem();
 
-/*
+/**
  * Initialise la sauvegarde si besoin, sinon charge la sauvegarde
  * @param playerP: pointeur vers le joueur
  * @param mapPtr: pointeur vers la map
  * @param save: 1 si on veut jouer depuis une sauvegarde existante, 0 sinon
  */
-void initGameController(player_t * playerP, chunkedMap_t * mapPtr, int save) {
-    int flags = save ? O_RDWR | O_CREAT: O_RDWR | O_CREAT | O_TRUNC;
-    map = mapPtr;
-    fd = open("bin/saves/caca", flags, 0666);
-    if(!save) {
-        createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
+void initGameController(player_t * playerP, chunkedMap_t * mapPtr, char * savePath) {
+    if(isLoaded) {
+        return;
     }
+    DisableCursor();
+    srand(time(NULL));
+    if(savePath == NULL) {
+        char * fullPath = malloc(sizeof(char) * 100);
+        char * saveName = malloc(sizeof(char) * 100);
+        sprintf(saveName, "save%d.bin", rand() % 1000);
+        strcpy(fullPath, "./bin/saves/");
+        strcat(fullPath, saveName);
+        fd = open(fullPath, O_RDWR | O_CREAT | O_TRUNC, 0666);
+        createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
+        free(fullPath);
+        free(saveName);
+        free(savePath);
+    } else {
+        char * fullPath = malloc(sizeof(char) * 100);
+        strcpy(fullPath, "./bin/saves/");
+        strcat(fullPath, savePath);
+        fd = open(fullPath, O_RDWR, 0666);
+    }
+    map = mapPtr;
     loadMapContext(fd, map);
-    logFile(TextFormat("mapContext: %d %d %d %d", map->height, map->width, map->maxX, map->maxY));
     loadPlayerFromSave(fd, playerP);
     *map = loadMapFromSave(fd, map->centerX, map->centerY, map->width, map->height, map->maxX, map->maxY);
 
     player = playerP;
+    isLoaded = 1;
 }
 
-/*
+/**
  * Gère un tick de jeu
  * Si joueur en combat bloque les actions
  * Sinon Appelle les fonctions de gestion du joueur et de la map
  */
 void Tick() {
-    if(player->inFight) {
-        fight();
-    } else {
-        handlePlayerMovement(player, *map);
-        handlePlayerShortcuts();
-        loadCurrentMap(fd, map, player->camera->position);
-        pickUpItem();
+    if(!isGamePaused && !isWin) {
+        if(player->statistics.health <= 0) {
+            drawBundle_t bundle = getDrawBundle();
+            bundle.canOpenFight = 0;
+            bundle.canOpenDoor = 0;
+            bundle.player->inFight = 0;
+            setDrawBundle(bundle);
+        } else if(player->inFight) {
+            fight();
+        } else {
+            handlePlayerMovement(player, *map);
+            handlePlayerShortcuts();
+            loadCurrentMap(fd, map, player->camera->position);
+            pickUpItem();
+            shoot();
+            endGame();
+        }
     }
+    handlePause();
+    if(isGamePaused) {
+        handlePauseMenuAction();
+    }
+}
+
+void handlePause() {
+    drawBundle_t drawBundle = getDrawBundle();
+    if(IsKeyPressed(KEY_ESCAPE) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT))) {
+        isGamePaused = !isGamePaused;
+        drawBundle.paused = isGamePaused;
+        if(isGamePaused) {
+            EnableCursor();
+            SetMousePosition(GetScreenWidth() / 2, GetScreenHeight() / 2);
+        } else {
+            DisableCursor();
+        }
+    }
+    setDrawBundle(drawBundle);
+
 }
 
 /**
@@ -110,13 +167,13 @@ void pickUpItem() {
             map->chunks[chunkX][chunkY].powerUps[i].pickedUp = 1;
             switch (map->chunks[chunkX][chunkY].powerUps[i].type) {
                 case ATTACK:
-                    player->statistics.damage += POWER_UP_ATTACK;
+                    player->statistics.damage += 1;
                     break;
                 case DEFENSE:
-                    player->statistics.armor += POWER_UP_DEFENSE;
+                    player->statistics.armor += 1;
                     break;
                 case MAX_HP:
-                    player->statistics.maxHealth += POWER_UP_MAX_HP;
+                    player->statistics.maxHealth += 1;
                     break;
             }
         }
@@ -134,7 +191,17 @@ void handlePlayerShortcuts() {
         return;
     }
 
-    if(IsKeyDown(KEY_F) && !controlsToggles[FREE_WALK]) {
+    if(IsKeyPressed(KEY_P) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN))) {
+        player->statistics.health = 1000;
+        player->statistics.maxHealth = 1000;
+        player->statistics.damage = 1000;
+        player->statistics.armor = 1000;
+        player->keyCount = 99;
+        godMode = 1;
+        drawBundle.godMode = 1;
+    }
+
+    if((IsKeyDown(KEY_F) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT))) && !controlsToggles[FREE_WALK]) {
         player->physics.noclip = !player->physics.noclip;
         controlsToggles[FREE_WALK] = 1;
     }
@@ -143,41 +210,41 @@ void handlePlayerShortcuts() {
     drawBundle.canOpenDoor = canOpenDoor();
     drawBundle.canOpenFight = canOpenFight();
 
-    if(IsKeyUp(KEY_F) && controlsToggles[FREE_WALK]) {
+    if((IsKeyUp(KEY_F) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT))) && controlsToggles[FREE_WALK]) {
         controlsToggles[FREE_WALK] = 0;
     }
 
-    if(IsKeyDown(KEY_C) && !controlsToggles[DRAW_CEILING]) {
+    if((IsKeyDown(KEY_C) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT))) && !controlsToggles[DRAW_CEILING]) {
         drawBundle.drawCeiling = !drawBundle.drawCeiling;
         controlsToggles[DRAW_CEILING] = 1;
     }
-    if(IsKeyUp(KEY_C) && controlsToggles[DRAW_CEILING]) {
+    if((IsKeyUp(KEY_C) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT))) && controlsToggles[DRAW_CEILING]) {
         controlsToggles[DRAW_CEILING] = 0;
     }
 
-    if(IsKeyDown(KEY_F3) && !controlsToggles[DEBUG]) {
+    if((IsKeyDown(KEY_F3) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_LEFT))) && !controlsToggles[DEBUG]) {
         drawBundle.drawDebug = !drawBundle.drawDebug;
         controlsToggles[DEBUG] = 1;
     }
-    if(IsKeyUp(KEY_F3) && controlsToggles[DEBUG]) {
+    if((IsKeyUp(KEY_F3) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_LEFT))) && controlsToggles[DEBUG]) {
         controlsToggles[DEBUG] = 0;
     }
 
-    if(IsKeyDown(KEY_F1) && !controlsToggles[DRAW_OVERLAY]) {
+    if((IsKeyDown(KEY_F1) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP))) && !controlsToggles[DRAW_OVERLAY]) {
         drawBundle.drawOverlay = !drawBundle.drawOverlay;
         controlsToggles[DRAW_OVERLAY] = 1;
     }
-    if(IsKeyUp(KEY_F1) && controlsToggles[DRAW_OVERLAY]) {
+    if((IsKeyUp(KEY_F1) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP))) && controlsToggles[DRAW_OVERLAY]) {
         controlsToggles[DRAW_OVERLAY] = 0;
     }
-    if(IsKeyPressed(KEY_O) && drawBundle.canOpenDoor == 1) {
+    if((IsKeyPressed(KEY_O) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP))) && drawBundle.canOpenDoor == 1) {
         openClosestDoor();
         drawBundle.canOpenDoor = 0;
         player->keyCount--;
     }
 
     // Entrée en combat
-    if(IsKeyPressed(KEY_E) && drawBundle.canOpenFight == 1) {
+    if((IsKeyPressed(KEY_E) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT))) && drawBundle.canOpenFight == 1) {
         drawBundle.canOpenFight = 0;
         player->inFight = 1;
         monsterInFight = openClosestFight();
@@ -192,6 +259,99 @@ void save() {
     saveMapContext(fd, *map);
 
 }
+
+
+
+void shoot() {
+    drawBundle_t drawBundle = getDrawBundle();
+    if(!godMode) {
+        return;
+    }
+
+    if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        bullet_t bullet;
+        Ray ray = GetMouseRay(GetMousePosition(), *player->camera);
+        bullet.position = ray.position;
+        Vector3 direction = Vector3Normalize(ray.direction);
+        bullet.direction.x = direction.z;
+        bullet.direction.y = Vector3Normalize(player->camera->target).y;
+        bullet.direction.z = -direction.x;
+        bullet.timeToLive = 50;
+        addBullet(bullet);
+        drawBundle.bulletCount = bulletCount;
+        drawBundle.bullets = bullets;
+    }
+    updateBullets();
+    setDrawBundle(drawBundle);
+
+}
+
+void addBullet(bullet_t target) {
+    for(int i = 0; i < bulletCount; i++) {
+        if(bullets[i].timeToLive <= 0) {
+            bullets[i].position = target.position;
+            bullets[i].direction = target.direction;
+            bullets[i].timeToLive = target.timeToLive;
+            logFile(TextFormat("remplacement d'une balle %d", bulletCount));
+            return;
+        }
+    }
+    logFile(TextFormat("Ajout d'une balle %d", bulletCount));
+    bullets = bulletCount == 0 ? malloc(sizeof(bullet_t)) : realloc(bullets, sizeof(bullet_t) * (bulletCount + 1));
+    bullets[bulletCount].position = target.position;
+    bullets[bulletCount].direction = target.direction;
+    bullets[bulletCount].timeToLive = target.timeToLive;
+    bulletCount++;
+
+
+}
+
+void updateBullets() {
+    for(int i = 0; i < bulletCount; i++) {
+        float bulletX = bullets[i].position.x;
+        float bulletZ = bullets[i].position.z;
+        float bulletY = bullets[i].position.y + 0.7f;
+        int chunkX;
+        int chunkY;
+        if(bullets[i].timeToLive <= 0) {
+            bullets[i].position.x = -1;
+            bullets[i].position.y = -1;
+            bullets[i].position.z = -1;
+            bullets[i].direction.x = 0;
+            bullets[i].direction.y = 0;
+            bullets[i].direction.z = 0;
+            bullets[i].timeToLive = 0;
+            continue;
+        }
+        bullets[i].position.x += bullets[i].direction.x * BULLET_SPEED;
+        bullets[i].position.z += bullets[i].direction.z * BULLET_SPEED;
+        bullets[i].position.y += bullets[i].direction.y * BULLET_SPEED;
+        bullets[i].timeToLive--;
+
+        toChunkCoordsF(&bulletX, &bulletZ, &chunkX, &chunkY, *map);
+        if(chunkX == -1 || chunkY == -1 || bulletY < 0 || bulletY >= MAX_Y || bulletX < 0 || bulletX >= CHUNK_SIZE || bulletZ < 0 || bulletZ >= CHUNK_SIZE) {
+            continue;
+        }
+        map->chunks[chunkX][chunkY].chunk[(int)bulletX][(int)bulletY][(int)bulletZ] = 0;
+        for(int j = 0; j < map->chunks[chunkX][chunkY].monsterCount; j++) {
+            if((int)map->chunks[chunkX][chunkY].monsters[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].monsters[j].position.z == (int)bulletZ) {
+                map->chunks[chunkX][chunkY].monsters[j].isDead = 1;
+                bullets[i].timeToLive = 0;
+            }
+        }
+
+        for(int j = 0; j < map->chunks[chunkX][chunkY].doorCount; j++) {
+            if((int)map->chunks[chunkX][chunkY].doors[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].doors[j].position.z == (int)bulletZ) {
+                map->chunks[chunkX][chunkY].doors[j].opened = 1;
+                bullets[i].timeToLive = 0;
+            }
+        }
+    }
+
+
+}
+
+
 
 /**
  * vérifie si le joueur est à proximité d'un porte + si il a une clé
@@ -243,7 +403,8 @@ void openClosestDoor() {
         map->chunks[chunkX][chunkY].doors[minIndex].opened = 1;
     }
 }
-/*
+
+/**
  * Verifie si un monstre est  à proximité du joueur
  */
 int canOpenFight() {
@@ -268,7 +429,7 @@ int canOpenFight() {
     return 0;
 }
 
-/*
+/**
  * Ouvre le combat avec le monstre le plus proche
  */
 monster_t * openClosestFight() {
@@ -324,15 +485,14 @@ void fight() {
             drawBundle.dialog.choices[0] = "Attack";
             drawBundle.dialog.choices[1] = "Run";
             strcpy(drawBundle.dialog.text,"What do you want to do?");
-            drawBundle.dialog.keys[0] = KEY_A;
-            drawBundle.dialog.keys[1] = KEY_R;
-
-            if(IsKeyPressed(KEY_Q)) {
+            drawBundle.dialog.keys[0] = 'A';
+            drawBundle.dialog.keys[1] = IsGamepadAvailable(0) ? 'B' : 'R';
+            if(IsKeyPressed(KEY_Q) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
                 monsterInFight->statistics.health -= damageDone;
                 fightState = FIGHT_RESULT;
             }
 
-            if(IsKeyPressed(KEY_R)) {
+            if(IsKeyPressed(KEY_R) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) {
                 fightState = NO_FIGHT;
                 player->inFight = 0;
                 monsterInFight = NULL;
@@ -343,7 +503,7 @@ void fight() {
 
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
-            drawBundle.dialog.keys[0] = KEY_SPACE;
+            drawBundle.dialog.keys[0] = IsGamepadAvailable(0) ? 'A' : 'E';
 
             if(monsterInFight->statistics.health <= 0) {
                 strcpy(drawBundle.dialog.text, "You killed the monster!");
@@ -354,7 +514,7 @@ void fight() {
                 futureState = MONSTER_ATTACK;
             }
 
-            if(IsKeyPressed(KEY_SPACE)) {
+            if(IsKeyPressed(KEY_E) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
                 if(!monsterInFight->isDead) {
                     player->statistics.health -= damageTaken;
                 } else {
@@ -371,8 +531,8 @@ void fight() {
             drawBundle.dialog.choiceCount = 1;
             drawBundle.dialog.choices[0] = "Continue";
             sprintf(drawBundle.dialog.text, "The monster attacked you!\nDamage taken: %d\nYour health: %d", damageTaken, player->statistics.health);
-            drawBundle.dialog.keys[0] = KEY_SPACE;
-            if(IsKeyPressed(KEY_SPACE)) {
+            drawBundle.dialog.keys[0] = IsGamepadAvailable(0) ? 'A' : 'E';
+            if(IsKeyPressed(KEY_E) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
                 fightState = FIGHT_CHOICE;
             }
             break;
@@ -383,4 +543,74 @@ void fight() {
             break;
     }
     setDrawBundle(drawBundle); //UPdate des options d'affichage
+}
+
+
+/**
+ * Si le jeu est chargé, on sauevgarde et on free les ressources
+ * TODO: free index
+ */
+void saveAndQuit() {
+    if(!isLoaded) {
+        return;
+    }
+    if(bulletCount > 0) {
+        free(bullets);
+    }
+    bulletCount = 0;
+    destroyRenderer();
+    savePlayerContext(fd, *player);
+    saveMap(map, fd);
+    freeMap(map);
+    isLoaded = 0;
+}
+
+void handlePauseMenuAction() {
+    drawBundle_t drawBundle = getDrawBundle();
+    Vector2 mousePoint;
+    mousePoint = GetMousePosition();
+
+    if(CheckCollisionPointRec(mousePoint, getPauseMenuResumeButtonBounds())) {
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            isGamePaused = false;
+            drawBundle.paused = false;
+            DisableCursor();
+        }
+    }
+    if(CheckCollisionPointRec(mousePoint, getPauseMenuQuitButtonBounds())) {
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            saveAndQuit();
+            DisableCursor();
+            isGamePaused = false;
+            drawBundle.paused = false;
+            drawBundle.win = 0;
+            isWin = 0;
+            godMode = 0;
+            monsterInFight = NULL;
+            player->inFight = 0;
+
+            setCurrentScene(MAIN_MENU_VIEW);
+        }
+    }
+    setDrawBundle(drawBundle);
+
+}
+
+/**
+ * Check si le joueur est suffisament proche de la case de fin
+ */
+void endGame() {
+    drawBundle_t drawBundle = getDrawBundle();
+    int chunkX, chunkY;
+    float x = player->camera->position.x, z = player->camera->position.z;
+    toChunkCoordsF(&x, &z, &chunkX, &chunkY, *map);
+    if(chunkX == -1 || map->chunks[chunkX][chunkY].endGameX == -1 || map->chunks[chunkX][chunkY].endGameY == -1) {
+        return;
+    }
+    float distanceToFinish = distance3D((Vector3){x, player->camera->position.y, z}, (Vector3){map->chunks[chunkX][chunkY].endGameX, 0, map->chunks[chunkX][chunkY].endGameY});
+    if(distanceToFinish < 2) {
+        drawBundle.win = 1;
+        isWin = 1;
+    }
+    setDrawBundle(drawBundle);
 }

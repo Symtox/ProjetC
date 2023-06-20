@@ -3,12 +3,18 @@
 #include "../utils/utils.h"
 #include "../board/board.h"
 #include "save.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 
+/**
+ * LEs méthodes suivante permettent de:
+ * calculer la taille de chaque structure sauvegardée
+ * sauvegarder chaque structure
+ * lire chaque structure
+ * Ces méthodes fonctionnent sur des fichiers binaires afin de garantir une taille de sauvegarde minimale
+ */
 
 void savePlayerContext(int fd, player_t player) {
     lseek(fd, sizeofMapContext(), SEEK_SET);
@@ -23,7 +29,7 @@ void readPlayerContext(int fd, player_t * player) {
     read(fd, &player->keyCount, sizeof(int));
     readStatistics(fd, &player->statistics);
     readPhysics(fd, &player->physics);
-    read(fd, &player->camera->target, sizeof(Vector3));
+    read(fd, &player->camera->target, sizeof(Vector3));    
     read(fd, &player->camera->position, sizeof(Vector3));
 }
 
@@ -34,7 +40,7 @@ off_t sizeofPlayerContext() {
 
 
 void readIndex(int fd, index_t * index) {
-    logFile(TextFormat("Reading index at %d", lseek(fd, 0, SEEK_CUR)));
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     read(fd, &index->chunkCount, sizeof(int));
     index->chunkCoords = malloc(sizeof(int*) * index->chunkCount);
     index->chunkFilePosition = malloc(sizeof(off_t*) * index->chunkCount);
@@ -48,8 +54,7 @@ void readIndex(int fd, index_t * index) {
 }
 
 void writeIndex(int fd, index_t index) {
-    logFile(TextFormat("Writing index with %d chunks", index.chunkCount));
-    logFile(TextFormat("Writing index at %d", lseek(fd, 0, SEEK_CUR)));
+    lseek(fd, sizeofPlayerContext()+sizeofMapContext(), SEEK_SET);
     write(fd, &index.chunkCount, sizeof(int));
     for(int i = 0; i < index.chunkCount; i++) {
         write(fd, index.chunkFilePosition[i], sizeof(off_t) * 2);
@@ -108,6 +113,7 @@ size_t sizeofChunkTXT(chunk_txt chunk) {
     res += sizeofPowerUp() * chunk.powerUpCount;
     res += sizeofMonster() * chunk.monsterCount;
     res += sizeofPotion() * chunk.potionCount;
+    res += sizeof(int) * 2;
     return res;
 }
 
@@ -121,11 +127,9 @@ chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int ma
 
     int ltcx = MAX2(x - width / 2, 0);
     int ltcy = MAX2(y - height / 2, 0);
+    ltcy = MIN2(ltcy, mapHeight - height);
+    ltcx = MIN2(ltcx, mapWidth - width);
 
-    logFile(TextFormat("before: ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, mapHeight, mapWidth));
-    ltcy = MIN2(ltcy, 0);
-    ltcx = MIN2(ltcx, 0);
-    logFile(TextFormat("after: ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, mapHeight, mapWidth));
     map.centerX = x;
     map.centerY = y;
 
@@ -139,8 +143,6 @@ chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int ma
     for (int i = 0; i < height; i++) {
         map.chunks[i] = malloc(sizeof(chunk_t) * height);
     }
-    logFile("Loading map from save\n");
-    logFile(TextFormat("ltcx: %d, ltcy: %d mapHeight: %d mapWidth: %d \n", ltcx, ltcy, map.centerX, map.centerY));
     for (int i = 0; i < map.width; i++) {
         for (int j = 0; j < map.height; j++) {
             if (ltcx + i < 0 || ltcy + j < 0 || ltcx + i > mapWidth || ltcy + j > mapHeight) {
@@ -156,47 +158,13 @@ chunkedMap_t loadMapFromSave(int fd, int x, int y, int width, int height, int ma
 }
 
 
-void loadRandomChunk(chunk_t * chunk, int chunkX, int chunkY) {
-    int *** board;
-    board = malloc(sizeof(int**) * CHUNK_SIZE);
-    for(int x=0; x < CHUNK_SIZE; x++) {
-        board[x] = malloc(sizeof(int*) * MAX_Y);
-        for(int y=0; y < MAX_Y; y++) {
-            board[x][y] = calloc(sizeof(int), CHUNK_SIZE);
-        }
-    }
-
-    for(int x=0; x < CHUNK_SIZE; x++) {
-        for(int y=0; y < MAX_Y; y++) {
-
-            for(int z=0; z < CHUNK_SIZE; z++) {
-                if(y > 3) {
-                    board[x][y][z] = 0;
-                    continue;
-                }
-                board[x][y][z] = rand() % 2;
-            }
-        }
-    }
-    chunk->x = chunkX;
-    chunk->y = chunkY;
-    chunk->chunk = board;
-}
-
-
 size_t sizeofIndex(int indexSize) {
     return sizeof(int) * 2 * indexSize + sizeof(off_t) * 2 * indexSize + sizeof(int);
 }
 
 void loadCurrentMap(int fd, chunkedMap_t * map, Vector3 playerPos) {
     if (hasLeftChunk(*map, playerPos)) {
-        for(int i=0; i < map->height; i++) {
-            for(int j=0; j < map->width; j++) {
-                if(map->chunks[i][j].x == map->centerX && map->chunks[i][j].y == map->centerY) {
-                    saveChunk(map->chunks[i][j], fd);
-                }
-            }
-        }
+        saveMap(map, fd);
         map->centerX = (int)playerPos.x / CHUNK_SIZE;
         map->centerY = (int)playerPos.z / CHUNK_SIZE;
         freeMap(map);
@@ -204,6 +172,16 @@ void loadCurrentMap(int fd, chunkedMap_t * map, Vector3 playerPos) {
     }
 }
 
+void saveMap(chunkedMap_t * map, int fd) {
+    saveMapContext(fd, *map);
+    for(int i=0; i < map->height; i++) {
+        for(int j=0; j < map->width; j++) {
+            if(map->chunks[i][j].x == map->centerX && map->chunks[i][j].y == map->centerY) {
+                saveChunk(map->chunks[i][j], fd);
+            }
+        }
+    }
+}
 
 void saveMonster(int fd, monster_t monster) {
     write(fd, &monster.position.x, sizeof(float));
@@ -335,6 +313,10 @@ void writeChunkTXT(int fd, chunk_txt chunk) {
     for(int i = 0; i < chunk.keyCount; i++) {
         saveKey(fd, chunk.keys[i]);
     }
+
+    write(fd, &chunk.endGameX, sizeof(int));
+    write(fd, &chunk.endGameY, sizeof(int));
+
 }
 
 void writeChunk(int fd, chunk_t chunk) {
@@ -371,13 +353,15 @@ void writeChunk(int fd, chunk_t chunk) {
     for (int i = 0; i < chunk.keyCount; i++) {
         saveKey(fd, chunk.keys[i]);
     }
+    write(fd, &chunk.endGameX, sizeof(int));
+    write(fd, &chunk.endGameY, sizeof(int));
 }
 
 void readMonster(int fd, monster_t * monster) {
     read(fd, &monster->position.x, sizeof(float));
     read(fd, &monster->position.y, sizeof(float));
     read(fd, &monster->position.z, sizeof(float));
-    read(fd, &monster->isDead, sizeof(float));
+    read(fd, &monster->isDead, sizeof(int));
     readStatistics(fd, &monster->statistics);
 }
 
@@ -423,11 +407,6 @@ void readChunk(int fd, chunk_t * chunk) {
         }
     }
 
-
-
-    logFile("Chunk %d %d loaded");
-
-
     read(fd, &chunk->monsterCount, sizeof(int));
     chunk->monsters = malloc(sizeof(monster_t) * chunk->monsterCount);
     for(int i = 0; i < chunk->monsterCount; i++) {
@@ -458,6 +437,9 @@ void readChunk(int fd, chunk_t * chunk) {
         readKey(fd, &chunk->keys[i]);
     }
 
+    read(fd, &chunk->endGameX, sizeof(int));
+    read(fd, &chunk->endGameY, sizeof(int));
+
 }
 
 void loadPlayerFromSave(int fd, player_t * player) {
@@ -477,20 +459,17 @@ void loadChunkFromSave(int fd, chunk_t * chunk, int x, int y) {
     index_t index;
     lseek(fd, sizeofPlayerContext() + sizeofMapContext(), SEEK_SET);
     readIndex(fd, &index);
-    logFile(TextFormat("Searching for chunk %d %d %d ", x, y, index.chunkCount));
 
     for(int i = 0; i < index.chunkCount; i++) {
-        logFile(TextFormat("Chunk %d %d", index.chunkCoords[i][0], index.chunkCoords[i][1]));
         if(index.chunkCoords[i][0] == x && index.chunkCoords[i][1] == y) {
-            logFile(TextFormat("Chunk %d %d found", x, y));
             lseek(fd, index.chunkFilePosition[i][0], SEEK_SET);
             readChunk(fd, chunk);
             return;
         }
     }
-    logFile(TextFormat("Chunk %d %d not found", x, y));
     chunk->x = -1;
     chunk->y = -1;
+    freeIndex(index);
 }
 
 
@@ -548,6 +527,6 @@ void saveChunk(chunk_t chunk, int fd) {
         return;
     }
     lseek(fd, index.chunkFilePosition[chunkIndex][0], SEEK_SET);
-    logFile(TextFormat("Saving chunk %d %d at pos %d", chunk.x, chunk.y, index.chunkFilePosition[chunkIndex][0]));
     writeChunk(fd, chunk);
+    freeIndex(index);
 }

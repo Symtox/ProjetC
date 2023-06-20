@@ -1,6 +1,3 @@
-//
-// Created by 20015007@hq.corp.leroymerlin.com on 23/05/23.
-//
 
 #ifndef PROJECT_SAVE_H
 #include <unistd.h>
@@ -25,12 +22,11 @@ int sizeofMapContext();
 void saveMapContext(int fd, chunkedMap_t context);
 void readMapContext(int fd, chunkedMap_t * context);
 void loadMapContext(int fd, chunkedMap_t * context);
+void saveMap(chunkedMap_t * map, int fd);
 
-
-void loadRandomChunk(chunk_t * chunk, int chunkX, int chunkY);
 void savePlayerContext(int fd, player_t player);
 void readPlayerContext(int fd, player_t * player);
-off_t sizeofPlayerContext(); //TODO
+off_t sizeofPlayerContext();
 
 void readIndex(int fd, index_t * index);
 void writeIndex(int fd, index_t index);
