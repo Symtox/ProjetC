@@ -4,15 +4,18 @@
 #include "../save/save.h"
 #include "../save/fileConverter.h"
 #include <fcntl.h>
-#include "../utils/utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include "../../includes/rcamera.h"
 #include "../menu/mainMenu.h"
 int controlsToggles[4] = {0, 0, 0, 0};
 
 bullet_t * bullets = NULL;
 int bulletCount = 0;
+
+grenade_t * grenades = NULL;
+int grenadeCount = 0;
 
 typedef enum controls {
     FREE_WALK = 0,
@@ -32,10 +35,12 @@ player_t * player;
 chunkedMap_t * map;
 fightState_e fightState = NO_FIGHT;
 monster_t * monsterInFight = NULL;
+
 int isLoaded = 0;
 int isGamePaused = 0;
 int isWin = 0;
 int godMode = 0;
+int tickAfterLastShot = 0;
 
 int fd = -1;
 void pickUpItem();
@@ -50,6 +55,10 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, char * savePa
     if(isLoaded) {
         return;
     }
+    bulletCount = 0;
+    bullets = NULL;
+    grenadeCount = 0;
+    grenades = NULL;
     DisableCursor();
     srand(time(NULL));
     if(savePath == NULL) {
@@ -58,6 +67,7 @@ void initGameController(player_t * playerP, chunkedMap_t * mapPtr, char * savePa
         sprintf(saveName, "save%d.bin", rand() % 1000);
         strcpy(fullPath, "./bin/saves/");
         strcat(fullPath, saveName);
+
         fd = open(fullPath, O_RDWR | O_CREAT | O_TRUNC, 0666);
         createSaveFromLevelFiles("./bin/levels/testLevel/", "niveau1.level", fd);
         free(fullPath);
@@ -268,20 +278,31 @@ void shoot() {
         return;
     }
 
-    if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || (IsGamepadAvailable(0) && IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2))) && tickAfterLastShot > 10) {
         bullet_t bullet;
-        Ray ray = GetMouseRay(GetMousePosition(), *player->camera);
-        bullet.position = ray.position;
-        Vector3 direction = Vector3Normalize(ray.direction);
-        bullet.direction.x = direction.z;
-        bullet.direction.y = Vector3Normalize(player->camera->target).y;
-        bullet.direction.z = -direction.x;
-        bullet.timeToLive = 50;
+        bullet.position = player->camera->position;
+        bullet.direction = GetCameraForward(player->camera);
+        bullet.timeToLive = 100;
         addBullet(bullet);
+
         drawBundle.bulletCount = bulletCount;
         drawBundle.bullets = bullets;
+
+        tickAfterLastShot = 0;
     }
+
+    if((IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) || (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)))) {
+        grenade_t grenade;
+        grenade.position = player->camera->position;
+        grenade.direction = GetCameraForward(player->camera);
+        grenade.timeToLive = 1000;
+        addGrenade(grenade);
+        drawBundle.grenades = grenades;
+        drawBundle.grenadeCount = grenadeCount;
+    }
+    tickAfterLastShot++;
     updateBullets();
+    updateGrenades();
     setDrawBundle(drawBundle);
 
 }
@@ -292,25 +313,40 @@ void addBullet(bullet_t target) {
             bullets[i].position = target.position;
             bullets[i].direction = target.direction;
             bullets[i].timeToLive = target.timeToLive;
-            logFile(TextFormat("remplacement d'une balle %d", bulletCount));
             return;
         }
     }
-    logFile(TextFormat("Ajout d'une balle %d", bulletCount));
     bullets = bulletCount == 0 ? malloc(sizeof(bullet_t)) : realloc(bullets, sizeof(bullet_t) * (bulletCount + 1));
     bullets[bulletCount].position = target.position;
     bullets[bulletCount].direction = target.direction;
     bullets[bulletCount].timeToLive = target.timeToLive;
     bulletCount++;
+}
 
-
+void addGrenade(grenade_t grenade) {
+    for(int i = 0; i < grenadeCount; i++) {
+        if(grenades[i].timeToLive <= 0) {
+            grenades[i].position = grenade.position;
+            grenades[i].direction = grenade.direction;
+            grenades[i].timeToLive = grenade.timeToLive;
+            grenades[i].speed.x = GRENADE_SPEED;
+            grenades[i].speed.y = GRENADE_SPEED;
+            grenades[i].speed.z = GRENADE_SPEED;
+            return;
+        }
+    }
+    grenades = grenadeCount == 0 ? malloc(sizeof(grenade_t)) : realloc(grenades, sizeof(grenade_t) * (grenadeCount + 1));
+    grenades[grenadeCount].position = grenade.position;
+    grenades[grenadeCount].direction = grenade.direction;
+    grenades[grenadeCount].timeToLive = grenade.timeToLive;
+    grenadeCount++;
 }
 
 void updateBullets() {
     for(int i = 0; i < bulletCount; i++) {
         float bulletX = bullets[i].position.x;
         float bulletZ = bullets[i].position.z;
-        float bulletY = bullets[i].position.y + 0.7f;
+        float bulletY = bullets[i].position.y + 1;
         int chunkX;
         int chunkY;
         if(bullets[i].timeToLive <= 0) {
@@ -334,20 +370,44 @@ void updateBullets() {
         }
         map->chunks[chunkX][chunkY].chunk[(int)bulletX][(int)bulletY][(int)bulletZ] = 0;
         for(int j = 0; j < map->chunks[chunkX][chunkY].monsterCount; j++) {
-            if((int)map->chunks[chunkX][chunkY].monsters[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].monsters[j].position.z == (int)bulletZ) {
+            if((int)map->chunks[chunkX][chunkY].monsters[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].monsters[j].position.z == (int)bulletZ && !map->chunks[chunkX][chunkY].monsters[j].isDead) {
                 map->chunks[chunkX][chunkY].monsters[j].isDead = 1;
                 bullets[i].timeToLive = 0;
             }
         }
 
         for(int j = 0; j < map->chunks[chunkX][chunkY].doorCount; j++) {
-            if((int)map->chunks[chunkX][chunkY].doors[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].doors[j].position.z == (int)bulletZ) {
+            if((int)map->chunks[chunkX][chunkY].doors[j].position.x == (int)bulletX && (int)map->chunks[chunkX][chunkY].doors[j].position.z == (int)bulletZ && !map->chunks[chunkX][chunkY].doors[j].opened) {
                 map->chunks[chunkX][chunkY].doors[j].opened = 1;
                 bullets[i].timeToLive = 0;
             }
         }
     }
+}
 
+
+void updateGrenades() {
+    for(int i = 0; i < grenadeCount; i++) {
+        if (grenades[i].timeToLive <= 0) {
+            grenades[i].position.x = -1;
+            grenades[i].position.y = -1;
+            grenades[i].position.z = -1;
+            grenades[i].direction.x = 0;
+            grenades[i].direction.y = 0;
+            grenades[i].direction.z = 0;
+            grenades[i].speed.x = 0;
+            grenades[i].speed.y = 0;
+
+            grenades[i].timeToLive = 0;
+            continue;
+        }
+        grenades[i].position.x += grenades[i].direction.x * GRENADE_SPEED;
+        grenades[i].position.z += grenades[i].direction.z * GRENADE_SPEED;
+        grenades[i].position.y += grenades[i].direction.y * GRENADE_SPEED;
+        grenades[i].direction.y -= 0.05 * (1000 - grenades[i].timeToLive)/50;
+        grenades[i].timeToLive--;
+
+    }
 
 }
 

@@ -87,6 +87,7 @@ size_t sizeofKey() {
 }
 
 size_t sizeofPowerUp() {
+
     size_t res = 0;
     res += sizeof(float) * 3;
     res += sizeof(int) * 2;
@@ -176,9 +177,7 @@ void saveMap(chunkedMap_t * map, int fd) {
     saveMapContext(fd, *map);
     for(int i=0; i < map->height; i++) {
         for(int j=0; j < map->width; j++) {
-            if(map->chunks[i][j].x == map->centerX && map->chunks[i][j].y == map->centerY) {
-                saveChunk(map->chunks[i][j], fd);
-            }
+            saveChunk(map->chunks[i][j], fd);
         }
     }
 }

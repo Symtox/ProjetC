@@ -22,4 +22,6 @@ void endGame();
 void shoot();
 void addBullet(bullet_t target);
 void updateBullets();
+void addGrenade(grenade_t grenade);
+void updateGrenades();
 #endif

@@ -95,7 +95,24 @@ void renderMenu() {
         case CREDIT_VIEW:
         	DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BROWN);
         	DrawTextureRec(backButton, sourceBackBtnRec, (Vector2){backBtnBounds.x, backBtnBounds.y}, RAYWHITE);
-        	DrawText("HELLOOOOOO",  10, 10, 20, GRAY);
+            DrawText("Developement :", 50, 50, 30, CLITERAL(Color){255, 255, 255, 255});
+            DrawText("Maxime Millat", 300, 50, 30, CLITERAL(Color){200, 200, 200, 200});
+            DrawText("Enzo Dupré", 300, 100, 30, CLITERAL(Color){200, 200, 200, 200});
+            DrawText("Théo Mouisse", 300, 150, 30, CLITERAL(Color){200, 200, 200, 200});
+            DrawText("Clément Mabile", 300, 200, 30, CLITERAL(Color){200, 200, 200, 200});
+
+            DrawText("Textures :", 50, 300, 30, CLITERAL(Color){255, 255, 255, 255});
+            DrawText("Clément Mabile", 300, 300, 30, CLITERAL(Color){200, 200, 200, 200});
+            DrawText("Enzo Dupré", 300, 350, 30, CLITERAL(Color){200, 200, 200, 200});
+
+            DrawText("Modeling :", 50, 450, 30, CLITERAL(Color){255, 255, 255, 255});
+            DrawText("Clément Mabile", 300, 450, 30, CLITERAL(Color){200, 200, 200, 200});
+
+            DrawText("Sources :", 50, 550, 30, CLITERAL(Color){255, 255, 255, 255});
+            DrawText("https://www.raylib.com/examples.html", 300, 550, 30, CLITERAL(Color){200, 200, 200, 200});
+            DrawText("https://discord.com/invite/raylib", 300, 600, 30, CLITERAL(Color){200, 200, 200, 200});
+
+            DrawText("Dernière modification: 19/06/2023", 1500, 1100, 20, CLITERAL(Color){200, 200, 200, 200});
         default:
             break;
     }
@@ -114,7 +131,7 @@ void handleMainMenu() {
 	mousePoint = GetMousePosition();
 
 	if(CheckCollisionPointRec(mousePoint, playBtnBounds)) {
-		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             currentScene = SAVE_MENU_VIEW;
             getAllSaves();
         }
@@ -122,13 +139,13 @@ void handleMainMenu() {
 	}
 
 	if(CheckCollisionPointRec(mousePoint, quitBtnBounds)) {
-		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 			 quitBtnAction = true;
 		}
 	}
 
 	if(CheckCollisionPointRec(mousePoint, creditBtnBounds)) {
-		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
              currentScene = CREDIT_VIEW;
         }
 	}
@@ -140,13 +157,13 @@ void handleSaveMenu() {
 
     mousePoint = GetMousePosition();
     if(CheckCollisionPointRec(mousePoint, newGameButtonBounds)) {
-        if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             playBtnAction = true;
         }
     }
 
     if(CheckCollisionPointRec(mousePoint, backBtnBounds)) {
-		if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 			currentScene = MAIN_MENU_VIEW;
 		}
 	}
@@ -154,7 +171,7 @@ void handleSaveMenu() {
     for(int i = 0; i < saveCount; i++) {
         if(saves[i] != NULL) {
             if(CheckCollisionPointRec(mousePoint, (Rectangle){GetScreenWidth() * 0.05, GetScreenHeight() * 0.2 + (i * 125), (float)saveButtonBackground.width, (float)saveButtonBackground.height})) {
-                if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+                if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                     saveName = malloc(sizeof(char) * strlen(saves[i]));
                     strcpy(saveName, saves[i]);
                     playBtnAction = true;
@@ -171,7 +188,7 @@ void handleCreditView() {
 	mousePoint = GetMousePosition();
 
 	if(CheckCollisionPointRec(mousePoint, backBtnBounds)) {
-            if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 currentScene = MAIN_MENU_VIEW;
             }
         }

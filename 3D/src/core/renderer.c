@@ -432,6 +432,7 @@ void Render(chunkedMap_t map) {
 
     DrawMap(map); // Afichage de la map
     drawBullets();
+    drawGrenades();
     EndMode3D();
     DrawEndScreen(); //Affichage de l'écran de fin
     DrawDoorHint(); //Affichage des textes
@@ -472,7 +473,18 @@ void drawGodMod() {
 
 void drawBullets() {
     for(int i = 0; i < drawBundle.bulletCount; i++) {
-        DrawSphere(drawBundle.bullets[i].position, 0.05, CLITERAL(Color){120, 120, 120, 255});
+        if(drawBundle.bullets[i].timeToLive > 0) {
+            DrawModel(powerUpHealthModel, drawBundle.bullets[i].position, 0.1, CLITERAL(Color){255, 0, 0, 255});
+        }
+        //DrawSphere(drawBundle.bullets[i].position, 0.01, CLITERAL(Color){120, 120, 120, 255});
+    }
+}
+
+void drawGrenades() {
+    for(int i = 0; i < drawBundle.grenadeCount; i++) {
+        if(drawBundle.grenades[i].timeToLive > 0) {
+            DrawModel(powerUpHealthModel, drawBundle.grenades[i].position, 0.1, CLITERAL(Color){255, 0, 0, 255});
+        }
     }
 }
 

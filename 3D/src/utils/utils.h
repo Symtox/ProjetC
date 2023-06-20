@@ -5,7 +5,17 @@ typedef struct {
     Vector3 direction;
     int timeToLive;
 }bullet_t;
-#define BULLET_SPEED 0.9f
+
+typedef struct {
+    Vector3 position;
+    Vector3 direction;
+    int timeToLive;
+    Vector3 speed;
+}grenade_t;
+
+
+#define BULLET_SPEED 1.0f
+#define GRENADE_SPEED 0.3f
 
 int logFile(const char *);
 float distance3D(Vector3, Vector3);

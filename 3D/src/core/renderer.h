@@ -35,6 +35,8 @@ typedef struct {
     int godMode;
     int bulletCount;
     bullet_t * bullets;
+    int grenadeCount;
+    grenade_t * grenades;
 }drawBundle_t;
 
 Texture2D getKeyTexture(KeyboardKey key);
@@ -70,6 +72,7 @@ void DrawHealth(powerUp_t health, int x, int y);
 void DrawDoor(door_t, int, int);
 void DrawMonster(monster_t, int, int);
 void destroyRenderer();
+void drawGrenades();
 void DrawPauseMenu();
 Rectangle getPauseMenuResumeButtonBounds();
 Rectangle getPauseMenuQuitButtonBounds();
